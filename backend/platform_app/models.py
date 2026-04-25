@@ -15,6 +15,7 @@ class User(AbstractUser):
 
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default=IS_STUDENT, verbose_name='Роль')
     skills = models.ManyToManyField('Skill', blank=True, related_name='users', verbose_name='Навыки пользователя')
+    friends = models.ManyToManyField('self', blank=True, symmetrical=True)
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
     bio = models.TextField(max_length=500, blank=True, verbose_name='О себе')
     is_verified = models.BooleanField(default=False, verbose_name='Верифицирован')

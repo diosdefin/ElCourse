@@ -15,7 +15,7 @@ class EmployerStudentSearchView(APIView):
             return Response({"error": "Доступ только для работодателей"}, status=403)
 
         skills_query = request.query_params.get('skills', '')
-        users = User.objects.filter(role='student').prefetch_related('skills').order_by('-is_verified', 'username')
+        users = User.objects.filter(role='student').prefetch_related('skills', 'friends').order_by('-is_verified', 'username')
 
         if skills_query:
             skill_list = [skill.strip() for skill in skills_query.split(',') if skill.strip()]
@@ -23,7 +23,7 @@ class EmployerStudentSearchView(APIView):
                 users = users.filter(skills__name__iexact=skill_name)
             users = users.distinct()
 
-        serializer = UserSerializer(users, many=True)
+        serializer = UserSerializer(users, many=True, context={'request': request})
         return Response(serializer.data)
 
 

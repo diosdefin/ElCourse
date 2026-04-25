@@ -1,9 +1,9 @@
 import base64
 import os
-from datetime import timedelta
+from datetime import date, timedelta
 
 from django.conf import settings
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.template.loader import get_template
@@ -13,14 +13,20 @@ from rest_framework.generics import RetrieveAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from xhtml2pdf import pisa
+
+try:
+    from xhtml2pdf import pisa
+except ImportError:  # pragma: no cover - depends on local optional dependency
+    pisa = None
 
 from .models import ActivityLog, Choice, Course, JobOffer, Lesson, LessonProgress, Question, Skill, User
 from .serializers import (
     ActivityDaySerializer,
+    CommunityUserSerializer,
     CourseSerializer,
     JobOfferSerializer,
     LessonSerializer,
+    PublicProfileSerializer,
     RegisterSerializer,
     SkillSerializer,
     UserProfileSerializer,
@@ -41,10 +47,25 @@ def record_daily_activity(user, action_type):
     return activity
 
 
+def get_yearly_activity_queryset(user, year):
+    start_date = date(year, 1, 1)
+    end_date = date(year, 12, 31)
+    return (
+        ActivityLog.objects
+        .filter(user=user, date__range=(start_date, end_date))
+        .values('date')
+        .annotate(count=Sum('count'))
+        .order_by('date')
+    )
+
+
 class ResumeExportView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        if pisa is None:
+            return HttpResponse('Генерация PDF временно недоступна: библиотека xhtml2pdf не установлена.', status=503)
+
         user = request.user
         target_user = user
         requested_user_id = request.query_params.get('user_id')
@@ -133,7 +154,7 @@ class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        serializer = UserProfileSerializer(request.user)
+        serializer = UserProfileSerializer(request.user, context={'request': request})
         return Response(serializer.data)
 
 
@@ -150,6 +171,88 @@ class UserActivityView(APIView):
             .order_by('date')
         )
         serializer = ActivityDaySerializer(activity, many=True)
+        return Response(serializer.data)
+
+
+class PublicProfileView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, username):
+        profile_user = get_object_or_404(
+            User.objects.prefetch_related('skills', 'friends'),
+            username=username,
+        )
+        serializer = PublicProfileSerializer(profile_user, context={'request': request})
+        return Response(serializer.data)
+
+
+class PublicUserActivityView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, username):
+        profile_user = get_object_or_404(User, username=username)
+        current_year = timezone.localdate().year
+        registration_year = profile_user.date_joined.year
+        requested_year = request.query_params.get('year')
+
+        if requested_year is None:
+            year = current_year
+        else:
+            try:
+                year = int(requested_year)
+            except (TypeError, ValueError):
+                return Response({'detail': 'Параметр year должен быть числом.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if year < registration_year or year > current_year:
+            return Response(
+                {'detail': f'Доступный диапазон годов: {registration_year}-{current_year}.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = ActivityDaySerializer(get_yearly_activity_queryset(profile_user, year), many=True)
+        return Response(serializer.data)
+
+
+class FriendToggleView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, username):
+        target_user = get_object_or_404(User, username=username)
+        if target_user == request.user:
+            return Response({'detail': 'Нельзя добавлять себя в друзья.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if request.user.friends.filter(pk=target_user.pk).exists():
+            request.user.friends.remove(target_user)
+            is_friend = False
+            message = 'Пользователь удален из друзей.'
+        else:
+            request.user.friends.add(target_user)
+            is_friend = True
+            message = 'Пользователь добавлен в друзья.'
+
+        return Response({
+            'is_friend': is_friend,
+            'friends_count': target_user.friends.count(),
+            'message': message,
+        })
+
+
+class CommunityView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        users = User.objects.prefetch_related('skills', 'friends').order_by('-is_verified', 'username')
+
+        search_query = (request.query_params.get('search') or '').strip()
+        if search_query:
+            users = users.filter(Q(username__icontains=search_query) | Q(bio__icontains=search_query))
+
+        skills_query = request.query_params.get('skills', '')
+        skill_names = [skill.strip() for skill in skills_query.split(',') if skill.strip()]
+        for skill_name in skill_names:
+            users = users.filter(skills__name__icontains=skill_name)
+
+        serializer = CommunityUserSerializer(users.distinct(), many=True, context={'request': request})
         return Response(serializer.data)
 
 

@@ -15,11 +15,11 @@ class QuestionAdmin(admin.ModelAdmin):
 class CustomUserAdmin(UserAdmin):
     # Исправлено: заменяем 'skill' на 'skills' (как в модели)
     fieldsets = UserAdmin.fieldsets + (
-        ('Дополнительная информация', {'fields': ('role', 'is_verified', 'avatar', 'bio', 'skills')}),
+        ('Дополнительная информация', {'fields': ('role', 'is_verified', 'avatar', 'bio', 'skills', 'friends')}),
     )
     
     # Исправлено: заменяем 'skill' на 'skills'
-    filter_horizontal = ('skills',)
+    filter_horizontal = ('skills', 'friends')
     
     list_display = ('username', 'email', 'role', 'is_staff', 'is_verified')
     list_filter = ('role', 'is_staff', 'is_verified')
