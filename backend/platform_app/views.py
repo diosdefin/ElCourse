@@ -1,0 +1,313 @@
+import base64
+import os
+from datetime import timedelta
+
+from django.conf import settings
+from django.db.models import Sum
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from django.template.loader import get_template
+from django.utils import timezone
+from rest_framework import generics, status, viewsets
+from rest_framework.generics import RetrieveAPIView
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from xhtml2pdf import pisa
+
+from .models import ActivityLog, Choice, Course, JobOffer, Lesson, LessonProgress, Question, Skill, User
+from .serializers import (
+    ActivityDaySerializer,
+    CourseSerializer,
+    JobOfferSerializer,
+    LessonSerializer,
+    RegisterSerializer,
+    SkillSerializer,
+    UserProfileSerializer,
+)
+
+
+def record_daily_activity(user, action_type):
+    today = timezone.localdate()
+    activity, created = ActivityLog.objects.get_or_create(
+        user=user,
+        date=today,
+        action_type=action_type,
+        defaults={'count': 1},
+    )
+    if not created:
+        activity.count += 1
+        activity.save(update_fields=['count'])
+    return activity
+
+
+class ResumeExportView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        target_user = user
+        requested_user_id = request.query_params.get('user_id')
+
+        if requested_user_id:
+            if str(user.id) == requested_user_id:
+                target_user = user
+            elif user.role == User.IS_EMPLOYER or user.is_staff:
+                try:
+                    target_user = User.objects.prefetch_related('skills').get(id=requested_user_id, role=User.IS_STUDENT)
+                except User.DoesNotExist:
+                    return HttpResponse('Студент для резюме не найден', status=404)
+            else:
+                return HttpResponse('Недостаточно прав для скачивания чужого резюме', status=403)
+
+        font_path = os.path.join(settings.BASE_DIR, 'fonts', 'Roboto-Regular.ttf')
+        try:
+            with open(font_path, 'rb') as font_file:
+                font_data = base64.b64encode(font_file.read()).decode('utf-8')
+        except Exception as exc:
+            return HttpResponse(f'Ошибка чтения шрифта: {exc}', status=500)
+
+        context = {
+            'username': target_user.username,
+            'email': target_user.email,
+            'bio': target_user.bio,
+            'skills': target_user.skills.all(),
+            'font_base64': font_data,
+        }
+
+        template = get_template('resume_template.html')
+        html = template.render(context)
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="Resume_{target_user.username}.pdf"'
+
+        pisa_status = pisa.CreatePDF(html, dest=response, encoding='utf-8')
+        if pisa_status.err:
+            return HttpResponse('Ошибка генерации PDF', status=500)
+        return response
+
+
+class CompleteLessonView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, lesson_id):
+        user = request.user
+        if user.role != User.IS_STUDENT:
+            return Response({'error': 'Только студенты могут завершать уроки'}, status=status.HTTP_403_FORBIDDEN)
+
+        lesson = get_object_or_404(Lesson.objects.select_related('course'), id=lesson_id)
+        progress, created = LessonProgress.objects.get_or_create(
+            user=user,
+            lesson=lesson,
+            defaults={'is_completed': True},
+        )
+
+        newly_completed = False
+        if created:
+            newly_completed = True
+        elif not progress.is_completed:
+            progress.is_completed = True
+            progress.completed_at = timezone.now()
+            progress.save(update_fields=['is_completed', 'completed_at'])
+            newly_completed = True
+
+        if newly_completed:
+            record_daily_activity(user, ActivityLog.ACTION_LESSON_COMPLETED)
+
+        total_lessons = lesson.course.lessons.count()
+        completed_lessons = LessonProgress.objects.filter(
+            user=user,
+            lesson__course=lesson.course,
+            is_completed=True,
+        ).count()
+        progress_percentage = int((completed_lessons / total_lessons) * 100) if total_lessons else 0
+
+        return Response({
+            'is_completed': True,
+            'already_completed': not newly_completed,
+            'course_completed': total_lessons > 0 and completed_lessons == total_lessons,
+            'course_progress_percentage': progress_percentage,
+        })
+
+
+class UserProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        serializer = UserProfileSerializer(request.user)
+        return Response(serializer.data)
+
+
+class UserActivityView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        since_date = timezone.localdate() - timedelta(days=364)
+        activity = (
+            ActivityLog.objects
+            .filter(user=request.user, date__gte=since_date)
+            .values('date')
+            .annotate(count=Sum('count'))
+            .order_by('date')
+        )
+        serializer = ActivityDaySerializer(activity, many=True)
+        return Response(serializer.data)
+
+
+class RegisterView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    permission_classes = (AllowAny,)
+    serializer_class = RegisterSerializer
+
+
+class CourseViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Course.objects.all()
+    serializer_class = CourseSerializer
+
+
+class CourseDetailAPIView(RetrieveAPIView):
+    queryset = Course.objects.all()
+    serializer_class = CourseSerializer
+
+
+class LessonDetailAPIView(RetrieveAPIView):
+    queryset = Lesson.objects.all()
+    serializer_class = LessonSerializer
+
+
+class GetQuizView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, course_id):
+        questions = Question.objects.filter(course_id=course_id)
+        if not questions.exists():
+            return Response({'error': 'Вопросы для этого курса не найдены'}, status=status.HTTP_404_NOT_FOUND)
+
+        data = []
+        for question in questions:
+            choices = Choice.objects.filter(question=question)
+            data.append({
+                'id': question.id,
+                'text': question.text,
+                'choices': [{'id': choice.id, 'text': choice.text} for choice in choices],
+            })
+        return Response(data)
+
+
+class CheckQuizView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, course_id):
+        user = request.user
+        if user.role != User.IS_STUDENT:
+            return Response({'error': 'Только студенты могут проходить тесты'}, status=status.HTTP_403_FORBIDDEN)
+
+        course = get_object_or_404(Course.objects.prefetch_related('skills_covered'), id=course_id)
+        questions = Question.objects.filter(course=course)
+        answers = request.data.get('answers', {})
+
+        correct_count = 0
+        for question in questions:
+            selected_choice_id = answers.get(str(question.id))
+            if not selected_choice_id:
+                continue
+
+            try:
+                choice = Choice.objects.get(id=selected_choice_id, question=question)
+            except Choice.DoesNotExist:
+                continue
+
+            if choice.is_correct:
+                correct_count += 1
+
+        total_count = questions.count()
+        is_passed = total_count > 0 and (correct_count / total_count) >= 0.8
+
+        skills_added = []
+        if is_passed:
+            current_skill_ids = set(user.skills.values_list('id', flat=True))
+            new_skills = [skill for skill in course.skills_covered.all() if skill.id not in current_skill_ids]
+            if new_skills:
+                user.skills.add(*new_skills)
+                skills_added = [skill.name for skill in new_skills]
+
+            record_daily_activity(user, ActivityLog.ACTION_QUIZ_PASSED)
+
+        return Response({
+            'is_passed': is_passed,
+            'correct_count': correct_count,
+            'total_count': total_count,
+            'skills_added': skills_added,
+        })
+
+
+class StudentJobOffersView(generics.ListAPIView):
+    serializer_class = JobOfferSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return JobOffer.objects.filter(student=self.request.user).order_by('-created_at')
+
+
+class NotificationCountView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if user.role == User.IS_STUDENT:
+            count = JobOffer.objects.filter(student=user, is_read_by_student=False).count()
+        elif user.role == User.IS_EMPLOYER:
+            count = JobOffer.objects.filter(employer=user, is_read_by_employer=False).exclude(status='pending').count()
+        else:
+            count = 0
+        return Response({'unread_count': count})
+
+
+class JobOfferUpdateView(generics.UpdateAPIView):
+    serializer_class = JobOfferSerializer
+    permission_classes = [IsAuthenticated]
+    queryset = JobOffer.objects.all()
+
+    def patch(self, request, *args, **kwargs):
+        offer = self.get_object()
+        user = request.user
+
+        if user == offer.student:
+            if 'status' in request.data:
+                offer.status = request.data['status']
+                offer.is_read_by_employer = False
+
+            if 'is_read_by_student' in request.data:
+                offer.is_read_by_student = request.data['is_read_by_student']
+
+        elif user == offer.employer:
+            if 'is_read_by_employer' in request.data:
+                offer.is_read_by_employer = request.data['is_read_by_employer']
+
+        offer.save()
+        return Response(JobOfferSerializer(offer).data)
+
+
+class SkillViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Skill.objects.all()
+    serializer_class = SkillSerializer
+
+
+class ProfileUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request):
+        user = request.user
+
+        if 'bio' in request.data:
+            user.bio = request.data['bio']
+
+        if 'avatar' in request.FILES:
+            user.avatar = request.FILES['avatar']
+
+        user.save()
+
+        return Response({
+            'message': 'Профиль обновлен',
+            'bio': user.bio,
+            'avatar': user.avatar.url if user.avatar else None,
+        })
