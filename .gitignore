@@ -1,0 +1,170 @@
+# ===================
+# Python (Django)
+# ===================
+
+# Виртуальное окружение
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Кэш и скомпилированные файлы
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyc
+
+# Локальные настройки
+*.log
+*.pot
+*.pid
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Миграции БД (обычно их хранят в репе, но можно игнорировать)
+# */migrations/*.py
+# !*/migrations/__init__.py
+
+# Статика и медиа
+staticfiles/
+static/
+media/
+mediafiles/
+uploads/
+
+# Файлы отладки и тестов
+.coverage
+htmlcov/
+.tox/
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# ===================
+# Node.js / Vue (Frontend)
+# ===================
+
+# Зависимости
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Сборка
+dist/
+dist-ssr/
+*.local
+.env.local
+.env.*.local
+
+# Логи
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Кэш
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+
+# Рендер функция
+*.render.js
+
+# ===================
+# IDE и редакторы
+# ===================
+
+# VS Code
+.vscode/
+*.code-workspace
+.history/
+
+# IntelliJ IDEA / PyCharm / WebStorm
+.idea/
+*.iml
+*.iws
+out/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+.*.swp
+
+# ===================
+# Операционные системы
+# ===================
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ===================
+# Прочее
+# ===================
+
+# Файлы окружения
+.env
+.env.production
+.env.development
+
+# Утилиты
+*.bak
+*.tmp
+*.temp
+*.orig
+
+# Ключи и сертификаты
+*.pem
+*.key
+*.crt
+*.p12
+
+# Пользовательские загрузки
+downloads/
+temp/
+tmp/
+
+# Документация сборки
+docs/_build/
+site/
+
+# Файлы, создаваемые Composer (если используете)
+composer.phar
+vendor/
+
+# ===================
+# Ваши специфические файлы
+# ===================
+
+# Старые дампы базы данных
+*.sql
+*.dump
+
+# Проектные заметки (если не хотите их коммитить)
+*_notes.md
+TODO.md
