@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import axios from 'axios'
+
+import api from '../api'
 
 const API_BASE_URL = 'http://127.0.0.1:8000'
 
@@ -26,7 +27,7 @@ const offerModal = ref({
 })
 
 const normalizeValue = (value = '') => value.toString().trim().toLowerCase()
-const getAuthHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem('access_token')}` })
+
 
 const getStudentSkillNames = (student) => {
   if (!Array.isArray(student?.skills)) {
@@ -190,16 +191,12 @@ const fetchData = async ({ silent = false } = {}) => {
   if (!silent) {
     loading.value = true
   }
-
   pageError.value = ''
-
   try {
-    const headers = getAuthHeaders()
     const [studentsRes, offersRes] = await Promise.all([
-      axios.get(`${API_BASE_URL}/api/employer/search/`, { headers }),
-      axios.get(`${API_BASE_URL}/api/employer/offers/`, { headers }),
+      api.get('/employer/search/'),
+      api.get('/employer/offers/'),
     ])
-
     students.value = studentsRes.data
     myOffers.value = offersRes.data
   } catch (error) {
@@ -260,21 +257,14 @@ const submitOffer = async () => {
   if (!offerModal.value.student || !offerModal.value.message.trim()) {
     return
   }
-
   offerModal.value.submitting = true
   offerModal.value.error = ''
-
   try {
-    await axios.post(
-      `${API_BASE_URL}/api/employer/offer/`,
-      {
-        student_id: offerModal.value.student.id,
-        message: offerModal.value.message.trim(),
-        contact_link: offerModal.value.contact.trim(),
-      },
-      { headers: getAuthHeaders() }
-    )
-
+    await api.post('/employer/offer/', {
+      student_id: offerModal.value.student.id,
+      message: offerModal.value.message.trim(),
+      contact_link: offerModal.value.contact.trim(),
+    })
     const studentName = offerModal.value.student.username
     closeOfferModal()
     await fetchData({ silent: true })
@@ -284,10 +274,8 @@ const submitOffer = async () => {
     }
   } catch (error) {
     console.error('Ошибка отправки оффера:', error)
-
     offerModal.value.error =
       error.response?.data?.detail || 'Не удалось отправить оффер. Попробуйте еще раз.'
-
     if (error.response?.data?.existing_offer) {
       await fetchData({ silent: true })
     }
@@ -300,16 +288,12 @@ const downloadResume = async (student) => {
   if (!student) {
     return
   }
-
   resumeLoadingId.value = student.id
-
   try {
-    const response = await axios.get(`${API_BASE_URL}/api/resume/export/`, {
-      headers: getAuthHeaders(),
+    const response = await api.get('/resume/export/', {
       params: { user_id: student.id },
       responseType: 'blob',
     })
-
     const blobUrl = window.URL.createObjectURL(response.data)
     const link = document.createElement('a')
     link.href = blobUrl

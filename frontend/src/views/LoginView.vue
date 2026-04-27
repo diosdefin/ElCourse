@@ -40,7 +40,8 @@
 
 <script setup>
 import { ref } from 'vue'
-import axios from 'axios'
+
+import api from '../api'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
@@ -51,26 +52,29 @@ const authStore = useAuthStore()
 
 const handleLogin = async () => {
   try {
-    // 1. Получаем токены
-    const tokenResponse = await axios.post('http://127.0.0.1:8000/api/token/', {
+    // 1. Получаем токены через наш настроенный api
+    const tokenResponse = await api.post('/token/', {
       username: username.value,
       password: password.value
     })
     
     const { access, refresh } = tokenResponse.data
     
-    // 2. Устанавливаем заголовок сразу, чтобы запрос /api/me/ прошел успешно
-    axios.defaults.headers.common['Authorization'] = `Bearer ${access}`
-    
-    // 3. Получаем данные пользователя (включая роль)
-    const userResponse = await axios.get('http://127.0.0.1:8000/api/me/')
-    const userRole = userResponse.data.role
-    
-    // 4. Обновляем хранилище (внутри authStore.login уже должно быть сохранение в localStorage)
-    authStore.login(access, userRole)
+    // 2. СРАЗУ сохраняем токены в localStorage!
+    // Это критически важно: теперь наш api.js автоматически подхватит этот токен
+    // для всех последующих запросов.
+    localStorage.setItem('access_token', access)
     localStorage.setItem('refresh_token', refresh)
     
-    // 5. Умная переадресация
+    // 3. Получаем данные пользователя. 
+    // Заметь: никаких http://127.0.0.1 и сырого axios.
+    const userResponse = await api.get('/me/')
+    const userRole = userResponse.data.role
+    
+    // 4. Обновляем глобальное хранилище Pinia
+    authStore.login(access, userRole)
+    
+    // 5. Умная переадресация в зависимости от роли
     if (userRole === 'teacher') {
       router.push('/teacher') // Учителя сразу в кабинет
     } else {
@@ -79,7 +83,11 @@ const handleLogin = async () => {
     
   } catch (error) {
     console.error('Ошибка входа:', error)
+    // Очищаем хранилище на всякий случай, если что-то пошло не так
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('refresh_token')
     alert('Неверный логин или пароль')
   }
 }
+
 </script>

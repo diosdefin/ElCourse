@@ -1,7 +1,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import axios from 'axios'
+
+import api from '../api'
 
 const route = useRoute()
 const questions = ref([])
@@ -16,17 +17,13 @@ const newQuestion = ref({
 
 const fetchQuiz = async () => {
   const token = localStorage.getItem('access_token')
-  const res = await axios.get(`http://127.0.0.1:8000/api/teacher/courses/${route.params.id}/quiz-editor/`, {
-    headers: { Authorization: `Bearer ${token}` }
-  })
+  const res = await api.get(`/teacher/courses/${route.params.id}/quiz-editor/`)
   questions.value = res.data
 }
 
 const saveQuestion = async () => {
   const token = localStorage.getItem('access_token')
-  await axios.post(`http://127.0.0.1:8000/api/teacher/courses/${route.params.id}/quiz-editor/`, newQuestion.value, {
-    headers: { Authorization: `Bearer ${token}` }
-  })
+  await api.post(`/teacher/courses/${route.params.id}/quiz-editor/`, newQuestion.value)
   newQuestion.value = { text: '', choices: [{ text: '', is_correct: true }, { text: '', is_correct: false }, { text: '', is_correct: false }] }
   fetchQuiz()
 }

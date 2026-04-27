@@ -1,7 +1,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import axios from 'axios'
+
+import api from '../api'
 
 const route = useRoute()
 const course = ref(null)
@@ -10,9 +11,7 @@ const loading = ref(true)
 onMounted(async () => {
   try {
     const token = localStorage.getItem('access_token')
-    const response = await axios.get(`http://127.0.0.1:8000/api/courses/${route.params.id}/`, {
-        headers: { Authorization: `Bearer ${token}` }
-    })
+    const response = await api.get(`/courses/${route.params.id}/`)
     course.value = response.data
   } catch (error) {
     console.error('Ошибка загрузки курса:', error)

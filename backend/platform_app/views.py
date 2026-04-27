@@ -238,15 +238,27 @@ class FriendToggleView(APIView):
 
 
 class CommunityView(APIView):
+    # Оставляем AllowAny, чтобы гости тоже могли видеть список
     permission_classes = [AllowAny]
 
     def get(self, request):
-        users = User.objects.prefetch_related('skills', 'friends').order_by('-is_verified', 'username')
+        # 1. Сразу фильтруем: только обычные юзеры, не админы и не стафф
+        users = User.objects.filter(
+            is_staff=False, 
+            is_superuser=False
+        ).prefetch_related('skills', 'friends').order_by('-is_verified', 'username')
 
+        # 2. Исключаем текущего пользователя из общего списка
+        if request.user.is_authenticated:
+            users = users.exclude(id=request.user.id)
+
+        # Логика поиска по имени/био
         search_query = (request.query_params.get('search') or '').strip()
         if search_query:
+            # Если юзер ищет кого-то конкретного, фильтры ICONTANS сработают тут
             users = users.filter(Q(username__icontains=search_query) | Q(bio__icontains=search_query))
 
+        # Логика фильтрации по навыкам
         skills_query = request.query_params.get('skills', '')
         skill_names = [skill.strip() for skill in skills_query.split(',') if skill.strip()]
         for skill_name in skill_names:
@@ -254,8 +266,7 @@ class CommunityView(APIView):
 
         serializer = CommunityUserSerializer(users.distinct(), many=True, context={'request': request})
         return Response(serializer.data)
-
-
+    
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     permission_classes = (AllowAny,)
@@ -270,6 +281,7 @@ class CourseViewSet(viewsets.ReadOnlyModelViewSet):
 class CourseDetailAPIView(RetrieveAPIView):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
+    permission_classes = [AllowAny]
 
 
 class LessonDetailAPIView(RetrieveAPIView):

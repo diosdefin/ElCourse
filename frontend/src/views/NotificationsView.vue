@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import axios from 'axios'
+
+import api from '../api'
 import { useAuthStore } from '../stores/auth'
 
 const authStore = useAuthStore()
@@ -14,10 +15,9 @@ const fetchOffers = async () => {
   try {
     const token = localStorage.getItem('access_token')
     const url = authStore.isStudent 
-      ? 'http://127.0.0.1:8000/api/student/offers/' 
-      : 'http://127.0.0.1:8000/api/employer/offers/'
-    
-    const res = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } })
+      ? '/student/offers/' 
+      : '/employer/offers/'
+    const res = await api.get(url)
     offers.value = res.data
   } catch (e) { 
     console.error('Ошибка загрузки офферов:', e) 
@@ -34,20 +34,14 @@ const openOffer = async (offer) => {
   // Логика прочтения для студента
   if (authStore.isStudent && !offer.is_read_by_student) {
     try {
-      await axios.patch(`http://127.0.0.1:8000/api/offers/${offer.id}/update/`, 
-        { is_read_by_student: true }, 
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
+      await api.patch(`/offers/${offer.id}/update/`, { is_read_by_student: true })
       isUpdated = true
     } catch (e) { console.error(e) }
   } 
   // Логика прочтения для работодателя
   else if (authStore.isEmployer && !offer.is_read_by_employer) {
     try {
-      await axios.patch(`http://127.0.0.1:8000/api/offers/${offer.id}/update/`, 
-        { is_read_by_employer: true }, 
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
+      await api.patch(`/offers/${offer.id}/update/`, { is_read_by_employer: true })
       isUpdated = true
     } catch (e) { console.error(e) }
   }

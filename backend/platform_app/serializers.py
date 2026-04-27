@@ -244,6 +244,7 @@ class PublicProfileSerializer(ViewerContextMixin, serializers.ModelSerializer):
         return LearningSkillSerializer(build_learning_skills(obj), many=True).data
 
 
+
 class LessonSerializer(serializers.ModelSerializer):
     is_completed = serializers.SerializerMethodField()
 
@@ -256,6 +257,14 @@ class LessonSerializer(serializers.ModelSerializer):
         if user.is_authenticated:
             return LessonProgress.objects.filter(user=user, lesson=obj, is_completed=True).exists()
         return False
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+        if request and getattr(request, 'user', None) and request.user.is_anonymous:
+            data['video_url'] = None
+            data['content'] = 'Доступно только для зарегистрированных пользователей'
+        return data
 
 
 class CourseSerializer(serializers.ModelSerializer):

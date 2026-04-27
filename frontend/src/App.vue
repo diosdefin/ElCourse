@@ -1,7 +1,8 @@
 <script setup>
 import { onMounted, ref, watch } from 'vue'
 import { RouterLink, RouterView } from 'vue-router'
-import axios from 'axios'
+
+import api from './api'
 import { useAuthStore } from './stores/auth'
 
 const authStore = useAuthStore()
@@ -15,9 +16,7 @@ const checkNotifications = async () => {
 
   try {
     const token = localStorage.getItem('access_token')
-    const response = await axios.get('http://127.0.0.1:8000/api/notifications/count/', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    const response = await api.get('/notifications/count/')
     unreadCount.value = response.data.unread_count
   } catch (error) {
     console.error('Ошибка загрузки уведомлений:', error)

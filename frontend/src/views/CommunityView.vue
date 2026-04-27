@@ -1,7 +1,8 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+
+import api from '../api'
 import { useAuthStore } from '../stores/auth'
 
 const API_BASE_URL = 'http://127.0.0.1:8000'
@@ -31,10 +32,7 @@ const offerModal = ref({
 
 let searchTimer = null
 
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('access_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
+
 
 const getAvatarUrl = (user) => {
   if (!user?.avatar) {
@@ -104,7 +102,7 @@ const getOfferStatusMeta = (user) => {
 
 const fetchSkills = async () => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/api/skills/`)
+    const response = await api.get('/skills/')
     allSkills.value = response.data.sort((left, right) => left.name.localeCompare(right.name, 'ru'))
   } catch (error) {
     console.error('Ошибка загрузки навыков:', error)
@@ -116,11 +114,8 @@ const fetchOffers = async () => {
     myOffers.value = []
     return
   }
-
   try {
-    const response = await axios.get(`${API_BASE_URL}/api/employer/offers/`, {
-      headers: getAuthHeaders(),
-    })
+    const response = await api.get('/employer/offers/')
     myOffers.value = response.data
   } catch (error) {
     console.error('Ошибка загрузки офферов:', error)
@@ -131,16 +126,13 @@ const fetchUsers = async ({ silent = false } = {}) => {
   if (!silent) {
     loading.value = true
   }
-
   pageError.value = ''
-
   try {
-    const response = await axios.get(`${API_BASE_URL}/api/community/`, {
+    const response = await api.get('/community/', {
       params: {
         search: searchText.value.trim() || undefined,
         skills: selectedSkills.value.join(',') || undefined,
       },
-      headers: getAuthHeaders(),
     })
     users.value = response.data
   } catch (error) {
@@ -301,12 +293,14 @@ onUnmounted(() => {
 
 <template>
   <div class="space-y-6 pb-16">
-    <section class="sticky top-24 z-40 rounded-[2rem] border border-slate-800/80 bg-slate-950/75 p-4 shadow-[0_30px_80px_rgba(2,6,23,0.35)] backdrop-blur-xl sm:p-5">
+    <section
+      class="top-24 z-40 rounded-[2rem] border border-slate-800/80 bg-slate-950/75 p-4 shadow-[0_30px_80px_rgba(2,6,23,0.35)] backdrop-blur-xl sm:p-5">
       <div class="flex flex-col gap-4">
         <div class="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p class="text-xs font-bold uppercase tracking-[0.35em] text-slate-500">Community</p>
-            <h1 class="mt-2 text-2xl font-black text-white sm:text-3xl">Единый поиск людей, навыков и карьерных сигналов</h1>
+            <h1 class="mt-2 text-2xl font-black text-white sm:text-3xl">Единый поиск людей, навыков и карьерных сигналов
+            </h1>
           </div>
           <div class="rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-3 text-right">
             <p class="text-xs uppercase tracking-[0.24em] text-slate-500">Найдено</p>
@@ -317,46 +311,35 @@ onUnmounted(() => {
         <div class="rounded-[1.6rem] border border-slate-800 bg-slate-900/80 p-3">
           <div class="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-3">
             <svg class="h-5 w-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
 
-            <span
-              v-for="skill in selectedSkills"
-              :key="skill"
-              class="inline-flex items-center gap-2 rounded-full border border-indigo-400/20 bg-indigo-500/10 px-3 py-1 text-xs font-semibold text-indigo-200"
-            >
+            <span v-for="skill in selectedSkills" :key="skill"
+              class="inline-flex items-center gap-2 rounded-full border border-indigo-400/20 bg-indigo-500/10 px-3 py-1 text-xs font-semibold text-indigo-200">
               {{ skill }}
               <button class="text-indigo-200 transition hover:text-white" @click="toggleSkill(skill)">
                 ×
               </button>
             </span>
 
-            <input
-              v-model="searchText"
-              type="text"
+            <input v-model="searchText" type="text"
               placeholder="Ищите по username или bio, а навыки добавляйте тегами ниже"
-              class="min-w-[220px] flex-1 bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-500"
-            >
+              class="min-w-[220px] flex-1 bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-500">
 
-            <button
-              v-if="searchText || selectedSkills.length"
+            <button v-if="searchText || selectedSkills.length"
               class="rounded-full border border-slate-700 px-3 py-1 text-xs font-semibold text-slate-300 transition hover:border-slate-500 hover:text-white"
-              @click="clearFilters"
-            >
+              @click="clearFilters">
               Очистить
             </button>
           </div>
 
           <div class="mt-3 flex flex-wrap gap-2">
-            <button
-              v-for="skill in skillSuggestions"
-              :key="skill.id"
-              class="rounded-full border px-3 py-1.5 text-xs font-semibold transition"
-              :class="isSelectedSkill(skill.name)
+            <button v-for="skill in skillSuggestions" :key="skill.id"
+              class="rounded-full border px-3 py-1.5 text-xs font-semibold transition" :class="isSelectedSkill(skill.name)
                 ? 'border-emerald-400/20 bg-emerald-500/10 text-emerald-300'
                 : 'border-slate-700 bg-slate-900 text-slate-300 hover:border-slate-500 hover:text-white'"
-              @click="toggleSkill(skill.name)"
-            >
+              @click="toggleSkill(skill.name)">
               {{ skill.name }}
             </button>
           </div>
@@ -364,63 +347,46 @@ onUnmounted(() => {
       </div>
     </section>
 
-    <div
-      v-if="banner.message"
-      class="rounded-2xl border px-4 py-3 text-sm font-medium"
-      :class="banner.type === 'success'
-        ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300'
-        : 'border-rose-500/20 bg-rose-500/10 text-rose-300'"
-    >
+    <div v-if="banner.message" class="rounded-2xl border px-4 py-3 text-sm font-medium" :class="banner.type === 'success'
+      ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300'
+      : 'border-rose-500/20 bg-rose-500/10 text-rose-300'">
       {{ banner.message }}
     </div>
 
-    <div v-if="loading" class="rounded-[1.8rem] border border-slate-800 bg-slate-900/70 px-6 py-20 text-center text-slate-400">
+    <div v-if="loading"
+      class="rounded-[1.8rem] border border-slate-800 bg-slate-900/70 px-6 py-20 text-center text-slate-400">
       Загружаем участников сообщества...
     </div>
 
-    <div
-      v-else-if="pageError"
-      class="rounded-[1.8rem] border border-rose-500/20 bg-rose-500/10 px-6 py-12 text-center text-rose-300"
-    >
+    <div v-else-if="pageError"
+      class="rounded-[1.8rem] border border-rose-500/20 bg-rose-500/10 px-6 py-12 text-center text-rose-300">
       {{ pageError }}
     </div>
 
-    <div
-      v-else-if="users.length === 0"
-      class="rounded-[1.8rem] border border-dashed border-slate-700 bg-slate-900/50 px-6 py-20 text-center"
-    >
+    <div v-else-if="users.length === 0"
+      class="rounded-[1.8rem] border border-dashed border-slate-700 bg-slate-900/50 px-6 py-20 text-center">
       <p class="text-xl font-bold text-white">Совпадений пока нет</p>
       <p class="mt-3 text-sm text-slate-500">Попробуйте убрать часть тегов или расширить текстовый запрос.</p>
     </div>
 
     <section v-else class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-      <article
-        v-for="user in users"
-        :key="user.id"
+      <article v-for="user in users" :key="user.id"
         class="group cursor-pointer rounded-[1.7rem] border border-slate-800/80 bg-slate-900/75 p-5 transition duration-300 hover:-translate-y-1.5 hover:border-slate-600 hover:shadow-[0_25px_60px_rgba(2,6,23,0.32)]"
-        tabindex="0"
-        @click="openProfile(user)"
-        @keydown.enter.prevent="openProfile(user)"
-      >
+        tabindex="0" @click="openProfile(user)" @keydown.enter.prevent="openProfile(user)">
         <div class="flex items-start justify-between gap-4">
           <div class="flex items-center gap-4">
-            <div class="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 text-xl font-black text-slate-300">
-              <img
-                v-if="getAvatarUrl(user)"
-                :src="getAvatarUrl(user)"
-                :alt="user.username"
-                class="h-full w-full object-cover"
-              >
+            <div
+              class="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 text-xl font-black text-slate-300">
+              <img v-if="getAvatarUrl(user)" :src="getAvatarUrl(user)" :alt="user.username"
+                class="h-full w-full object-cover">
               <span v-else>{{ user.username.charAt(0).toUpperCase() }}</span>
             </div>
 
             <div>
               <div class="flex items-center gap-2">
                 <h2 class="text-xl font-black text-white">{{ user.username }}</h2>
-                <span
-                  v-if="user.is_verified"
-                  class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-sky-500/10 text-xs font-bold text-sky-300"
-                >
+                <span v-if="user.is_verified"
+                  class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-sky-500/10 text-xs font-bold text-sky-300">
                   ✓
                 </span>
               </div>
@@ -431,8 +397,7 @@ onUnmounted(() => {
           </div>
 
           <span
-            class="rounded-full border border-slate-800 bg-slate-950 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400"
-          >
+            class="rounded-full border border-slate-800 bg-slate-950 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
             {{ user.friends_count }} друзей
           </span>
         </div>
@@ -442,17 +407,12 @@ onUnmounted(() => {
         </p>
 
         <div class="mt-4 flex flex-wrap gap-2">
-          <span
-            v-for="skill in topSkills(user)"
-            :key="`${user.id}-${skill.id}`"
-            class="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300"
-          >
+          <span v-for="skill in topSkills(user)" :key="`${user.id}-${skill.id}`"
+            class="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
             {{ skill.name }}
           </span>
-          <span
-            v-if="(user.skills || []).length > 3"
-            class="rounded-full border border-slate-700 bg-slate-950 px-3 py-1 text-xs font-semibold text-slate-400"
-          >
+          <span v-if="(user.skills || []).length > 3"
+            class="rounded-full border border-slate-700 bg-slate-950 px-3 py-1 text-xs font-semibold text-slate-400">
             +{{ user.skills.length - 3 }}
           </span>
         </div>
@@ -462,59 +422,47 @@ onUnmounted(() => {
         </p>
 
         <div class="mt-5 flex flex-wrap gap-3">
-          <div
-            v-if="authStore.isEmployer && getOfferStatusMeta(user)"
-            class="rounded-2xl border px-4 py-3 text-sm font-semibold"
-            :class="getOfferStatusMeta(user).className"
-            @click.stop
-          >
+          <div v-if="authStore.isEmployer && getOfferStatusMeta(user)"
+            class="rounded-2xl border px-4 py-3 text-sm font-semibold" :class="getOfferStatusMeta(user).className"
+            @click.stop>
             <p>{{ getOfferStatusMeta(user).text }}</p>
             <p class="mt-1 text-xs text-slate-500">{{ getOfferStatusMeta(user).hint }}</p>
           </div>
 
-          <button
-            v-else-if="authStore.isEmployer && user.role === 'student' && !user.is_self"
+          <button v-else-if="authStore.isEmployer && user.role === 'student' && !user.is_self"
             class="rounded-2xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-indigo-500"
-            @click.stop="openOfferModal(user)"
-          >
+            @click.stop="openOfferModal(user)">
             Пригласить
           </button>
 
-          <button
-            v-else-if="authStore.isAuthenticated && !authStore.isEmployer && !user.is_self"
-            class="rounded-2xl border px-4 py-3 text-sm font-bold transition"
-            :class="user.is_friend
-              ? 'border-rose-500/20 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20'
-              : 'border-slate-700 bg-slate-950 text-slate-100 hover:border-slate-500'"
-            :disabled="friendLoadingUsername === user.username"
-            @click.stop="toggleFriend(user)"
-          >
-            {{ friendLoadingUsername === user.username ? 'Обновляем...' : user.is_friend ? 'Удалить из друзей' : 'В друзья' }}
-          </button>
+          <button v-else-if="authStore.isAuthenticated && !authStore.isEmployer && !user.is_self"
+  class="rounded-2xl border px-4 py-3 text-sm font-bold transition" 
+  :class="user.is_friend
+    ? 'border-rose-500/20 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20'
+    : 'border-slate-700 bg-slate-950 text-slate-100 hover:border-slate-500'"
+  :disabled="friendLoadingUsername === user.username" 
+  @click.stop="toggleFriend(user)">
+  {{ friendLoadingUsername === user.username ? 'Обновляем...' : (user.is_friend ? 'Удалить из друзей' : 'В друзья') }}
+</button>
 
-          <div
-            v-else-if="user.is_self"
+          <div v-else-if="user.is_self"
             class="rounded-2xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm font-semibold text-slate-400"
-            @click.stop
-          >
+            @click.stop>
             Это вы
           </div>
 
           <button
             class="rounded-2xl border border-slate-700 px-4 py-3 text-sm font-bold text-slate-200 transition hover:border-slate-500 hover:text-white"
-            @click.stop="openProfile(user)"
-          >
+            @click.stop="openProfile(user)">
             Профиль
           </button>
         </div>
       </article>
     </section>
 
-    <div
-      v-if="offerModal.isOpen && offerModal.user"
+    <div v-if="offerModal.isOpen && offerModal.user"
       class="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/85 p-4 backdrop-blur-md"
-      @click.self="closeOfferModal"
-    >
+      @click.self="closeOfferModal">
       <div class="w-full max-w-2xl rounded-[2rem] border border-slate-700 bg-slate-900 p-8 shadow-2xl shadow-black/60">
         <div class="flex items-start justify-between gap-4">
           <div>
@@ -535,28 +483,20 @@ onUnmounted(() => {
         <div class="mt-8 space-y-5">
           <div>
             <label class="mb-2 block text-sm font-bold text-slate-300">Сообщение</label>
-            <textarea
-              v-model="offerModal.message"
-              rows="5"
+            <textarea v-model="offerModal.message" rows="5"
               class="w-full rounded-2xl border border-slate-700 bg-slate-950/70 px-5 py-4 text-slate-100 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/30"
-              placeholder="Расскажите, почему профиль заинтересовал вас и как можно связаться..."
-            ></textarea>
+              placeholder="Расскажите, почему профиль заинтересовал вас и как можно связаться..."></textarea>
           </div>
 
           <div>
             <label class="mb-2 block text-sm font-bold text-slate-300">Контакт</label>
-            <input
-              v-model="offerModal.contact"
-              type="text"
+            <input v-model="offerModal.contact" type="text"
               class="w-full rounded-2xl border border-slate-700 bg-slate-950/70 px-5 py-4 text-slate-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/30"
-              placeholder="t.me/hr_manager или email@company.com"
-            >
+              placeholder="t.me/hr_manager или email@company.com">
           </div>
 
-          <div
-            v-if="offerModal.error"
-            class="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-300"
-          >
+          <div v-if="offerModal.error"
+            class="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
             {{ offerModal.error }}
           </div>
         </div>
@@ -564,15 +504,12 @@ onUnmounted(() => {
         <div class="mt-8 grid gap-3 sm:grid-cols-2">
           <button
             class="rounded-2xl border border-slate-700 px-4 py-3 text-sm font-bold text-slate-300 transition hover:border-slate-500 hover:text-white"
-            @click="closeOfferModal"
-          >
+            @click="closeOfferModal">
             Отмена
           </button>
           <button
             class="rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
-            :disabled="offerModal.submitting || !offerModal.message.trim()"
-            @click="submitOffer"
-          >
+            :disabled="offerModal.submitting || !offerModal.message.trim()" @click="submitOffer">
             {{ offerModal.submitting ? 'Отправляем...' : 'Отправить оффер' }}
           </button>
         </div>

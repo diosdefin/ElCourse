@@ -1,7 +1,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import axios from 'axios'
+
+import api from '../api'
 
 const route = useRoute()
 const router = useRouter()
@@ -13,9 +14,7 @@ const result = ref(null)
 onMounted(async () => {
   try {
     const token = localStorage.getItem('access_token')
-    const response = await axios.get(`http://127.0.0.1:8000/api/courses/${route.params.id}/quiz/`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    const response = await api.get(`/courses/${route.params.id}/quiz/`)
     questions.value = response.data
   } catch (error) {
     console.error('Ошибка загрузки теста:', error)
@@ -27,10 +26,7 @@ onMounted(async () => {
 const submitQuiz = async () => {
   try {
     const token = localStorage.getItem('access_token')
-    const response = await axios.post(`http://127.0.0.1:8000/api/courses/${route.params.id}/quiz/check/`, 
-      { answers: answers.value },
-      { headers: { Authorization: `Bearer ${token}` } }
-    )
+    const response = await api.post(`/courses/${route.params.id}/quiz/check/`, { answers: answers.value })
     result.value = response.data
   } catch (error) {
     alert('Пожалуйста, ответьте на все вопросы')

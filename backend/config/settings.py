@@ -42,6 +42,7 @@ INSTALLED_APPS = [
 
     'rest_framework', # Для создания API
     'corsheaders',    # Чтобы Vue.js мог безопасно общаться с Django
+    'rest_framework_simplejwt.token_blacklist', # Для ротации и черного списка токенов
     'platform_app',   # Наше основное приложение
 ]
 
@@ -148,9 +149,18 @@ REST_FRAMEWORK = {
 }
 
 # Настройки времени жизни токенов
+# Настройки времени жизни токенов с ротацией
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=1), # Обычный пропуск живет 1 день
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7), # Токен для продления живет 7 дней
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),  # Пропуск живет 1 день
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7), # Общий срок "тишины" — 7 дней
+    
+    # ВОТ ЭТО ВКЛЮЧАЕТ ПРОДЛЕНИЕ:
+    'ROTATE_REFRESH_TOKENS': True,               # Выдавать новый refresh при каждом обновлении
+    'BLACKLIST_AFTER_ROTATION': True,            # Старый refresh сразу деактивировать (безопасно)
+    
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
 MEDIA_URL = '/media/'

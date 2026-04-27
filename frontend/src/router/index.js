@@ -15,6 +15,7 @@ import QuizView from '../views/QuizView.vue'
 import TeacherDashboard from '../views/TeacherDashboard.vue'
 
 const routes = [
+  { path: '/register', name: 'register', component: LoginView },
   { path: '/', name: 'home', component: HomeView },
   { path: '/login', name: 'login', component: LoginView },
   { path: '/community', name: 'community', component: CommunityView },

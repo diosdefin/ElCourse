@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import axios from 'axios'
+
+import api from '../api'
 
 const API_BASE_URL = 'http://127.0.0.1:8000'
 
@@ -16,9 +17,7 @@ const editData = ref({
   avatarFile: null,
 })
 
-const getAuthHeaders = () => ({
-  Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-})
+
 
 const getAvatarUrl = (avatar) => {
   if (!avatar) {
@@ -95,21 +94,16 @@ const fetchProfile = async () => {
   loading.value = true
   pageError.value = ''
   activityError.value = ''
-
   try {
-    const headers = getAuthHeaders()
     const [profileResult, activityResult] = await Promise.allSettled([
-      axios.get(`${API_BASE_URL}/api/me/`, { headers }),
-      axios.get(`${API_BASE_URL}/api/me/activity/`, { headers }),
+      api.get('/me/'),
+      api.get('/me/activity/'),
     ])
-
     if (profileResult.status !== 'fulfilled') {
       throw profileResult.reason
     }
-
     userData.value = profileResult.value.data
     editData.value.bio = profileResult.value.data.bio || ''
-
     if (activityResult.status === 'fulfilled') {
       activityData.value = activityResult.value.data
     } else {
@@ -141,28 +135,23 @@ const onFileChange = (event) => {
 
 const saveProfile = async () => {
   saving.value = true
-
   try {
     const formData = new FormData()
     formData.append('bio', editData.value.bio)
     if (editData.value.avatarFile) {
       formData.append('avatar', editData.value.avatarFile)
     }
-
-    const response = await axios.patch(`${API_BASE_URL}/api/profile/update/`, formData, {
+    const response = await api.patch('/profile/update/', formData, {
       headers: {
-        ...getAuthHeaders(),
         'Content-Type': 'multipart/form-data',
       },
     })
-
     if (userData.value) {
       userData.value.bio = response.data.bio
       if (response.data.avatar) {
         userData.value.avatar = response.data.avatar
       }
     }
-
     isEditing.value = false
     alert('Профиль успешно обновлен!')
   } catch (error) {
@@ -181,11 +170,9 @@ const cancelEditing = () => {
 
 const downloadResume = async () => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/api/resume/export/`, {
-      headers: getAuthHeaders(),
+    const response = await api.get('/resume/export/', {
       responseType: 'blob',
     })
-
     const url = window.URL.createObjectURL(new Blob([response.data]))
     const link = document.createElement('a')
     link.href = url

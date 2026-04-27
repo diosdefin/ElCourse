@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import axios from 'axios'
+
+import api from '../api'
 
 export const useAuthStore = defineStore('auth', () => {
   // 1. Берем данные из localStorage сразу при создании стора
@@ -20,11 +21,11 @@ export const useAuthStore = defineStore('auth', () => {
   function login(newToken, userRole) {
     token.value = newToken
     role.value = userRole // Обновляем нашу реактивную переменную
-    
+
     localStorage.setItem('access_token', newToken)
     localStorage.setItem('user_role', userRole)
-    
-    axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`
+
+    // api.js теперь сам добавляет Authorization
   }
 
   // 5. Функция ВЫХОДА
@@ -34,26 +35,26 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('access_token')
     localStorage.removeItem('refresh_token')
     localStorage.removeItem('user_role')
-    delete axios.defaults.headers.common['Authorization']
+    // api.js теперь сам убирает Authorization
     window.location.href = '/login'
   }
 
   // 6. Функция ИНИЦИАЛИЗАЦИИ
   function initialize() {
     if (token.value) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token.value}`
+      // api.js теперь сам добавляет Authorization
     }
   }
 
-  return { 
-    token, 
-    role, 
-    isAuthenticated, 
+  return {
+    token,
+    role,
+    isAuthenticated,
     isStudent,
-    isTeacher, 
+    isTeacher,
     isEmployer,
-    login, 
-    logout, 
-    initialize 
+    login,
+    logout,
+    initialize
   }
 })

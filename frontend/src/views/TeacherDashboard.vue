@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+
+import api from '../api'
 
 const myCourses = ref([])
 const availableSkills = ref([]) // НОВОЕ: Список всех навыков из базы
@@ -21,9 +22,7 @@ const newCourse = ref({
 const fetchMyCourses = async () => {
   try {
     const token = localStorage.getItem('access_token')
-    const response = await axios.get('http://127.0.0.1:8000/api/teacher/courses/', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    const response = await api.get('/teacher/courses/')
     myCourses.value = response.data
   } catch (error) {
     console.error('Ошибка загрузки курсов:', error)
@@ -35,7 +34,7 @@ const fetchMyCourses = async () => {
 // НОВОЕ: Функция загрузки списка навыков с бэкенда
 const fetchSkills = async () => {
   try {
-    const response = await axios.get('http://127.0.0.1:8000/api/skills/')
+    const response = await api.get('/skills/')
     availableSkills.value = response.data
   } catch (error) {
     console.error('Ошибка загрузки навыков:', error)

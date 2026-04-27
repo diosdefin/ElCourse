@@ -1,7 +1,8 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import axios from 'axios'
+
+import api from '../api'
 
 const API_BASE_URL = 'http://127.0.0.1:8000'
 
@@ -41,9 +42,7 @@ const fetchLesson = async () => {
 
   try {
     const token = localStorage.getItem('access_token')
-    const response = await axios.get(`${API_BASE_URL}/api/lessons/${route.params.lessonId}/`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    const response = await api.get(`/lessons/${route.params.lessonId}/`)
 
     lesson.value = response.data
     isCompleted.value = Boolean(response.data.is_completed)

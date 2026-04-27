@@ -1,7 +1,8 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import axios from 'axios'
+
+import api from '../api'
 import { useAuthStore } from '../stores/auth'
 
 const API_BASE_URL = 'http://127.0.0.1:8000'
@@ -29,10 +30,7 @@ const offerModal = ref({
   error: '',
 })
 
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('access_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
+
 
 const getAvatarUrl = (avatar) => {
   if (!avatar) {
@@ -213,11 +211,8 @@ const fetchEmployerOffers = async () => {
     myOffers.value = []
     return
   }
-
   try {
-    const response = await axios.get(`${API_BASE_URL}/api/employer/offers/`, {
-      headers: getAuthHeaders(),
-    })
+    const response = await api.get('/employer/offers/')
     myOffers.value = response.data
   } catch (error) {
     console.error('Ошибка загрузки офферов работодателя:', error)
@@ -229,17 +224,13 @@ const fetchProfile = async (username) => {
   loading.value = true
   pageError.value = ''
   activityError.value = ''
-
   try {
-    const response = await axios.get(`${API_BASE_URL}/api/users/${username}/`, {
-      headers: getAuthHeaders(),
-    })
+    const response = await api.get(`/users/${username}/`)
     profile.value = response.data
     syncingYear.value = true
     selectedYear.value = new Date().getFullYear()
     await fetchActivity()
     syncingYear.value = false
-
     await fetchEmployerOffers()
   } catch (error) {
     console.error('Ошибка загрузки публичного профиля:', error)
@@ -254,13 +245,10 @@ const fetchActivity = async () => {
     activityData.value = []
     return
   }
-
   activityError.value = ''
-
   try {
-    const response = await axios.get(`${API_BASE_URL}/api/users/${route.params.username}/activity/`, {
+    const response = await api.get(`/users/${route.params.username}/activity/`, {
       params: { year: selectedYear.value },
-      headers: getAuthHeaders(),
     })
     activityData.value = response.data
   } catch (error) {
@@ -274,16 +262,9 @@ const toggleFriend = async () => {
   if (!profile.value || !canToggleFriend.value) {
     return
   }
-
   friendLoading.value = true
-
   try {
-    const response = await axios.post(
-      `${API_BASE_URL}/api/users/${profile.value.username}/friend/`,
-      {},
-      { headers: getAuthHeaders() }
-    )
-
+    const response = await api.post(`/users/${profile.value.username}/friend/`, {})
     profile.value = {
       ...profile.value,
       is_friend: response.data.is_friend,
@@ -301,16 +282,12 @@ const downloadResume = async () => {
   if (!profile.value || !canDownloadResume.value) {
     return
   }
-
   resumeLoading.value = true
-
   try {
-    const response = await axios.get(`${API_BASE_URL}/api/resume/export/`, {
-      headers: getAuthHeaders(),
+    const response = await api.get('/resume/export/', {
       params: { user_id: profile.value.id },
       responseType: 'blob',
     })
-
     const blobUrl = window.URL.createObjectURL(new Blob([response.data]))
     const link = document.createElement('a')
     link.href = blobUrl
@@ -355,28 +332,20 @@ const submitOffer = async () => {
   if (!profile.value || !offerModal.value.message.trim()) {
     return
   }
-
   offerModal.value.submitting = true
   offerModal.value.error = ''
-
   try {
-    await axios.post(
-      `${API_BASE_URL}/api/employer/offer/`,
-      {
-        student_id: profile.value.id,
-        message: offerModal.value.message.trim(),
-        contact_link: offerModal.value.contact.trim(),
-      },
-      { headers: getAuthHeaders() }
-    )
-
+    await api.post('/employer/offer/', {
+      student_id: profile.value.id,
+      message: offerModal.value.message.trim(),
+      contact_link: offerModal.value.contact.trim(),
+    })
     closeOfferModal()
     await fetchEmployerOffers()
   } catch (error) {
     console.error('Ошибка отправки оффера:', error)
     offerModal.value.error =
       error.response?.data?.detail || 'Не удалось отправить оффер. Попробуйте еще раз.'
-
     if (error.response?.data?.existing_offer) {
       await fetchEmployerOffers()
     }

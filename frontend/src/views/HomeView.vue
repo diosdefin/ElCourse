@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import axios from 'axios'
+import HeroAnimation from '../components/HeroAnimation.vue'
+import api from '../api'
 import { useAuthStore } from '../stores/auth'
 
 const authStore = useAuthStore()
@@ -46,7 +47,7 @@ const skillCount = computed(() => {
 
 onMounted(async () => {
   try {
-    const response = await axios.get('http://127.0.0.1:8000/api/courses/')
+    const response = await api.get('/courses/')
     courses.value = response.data
   } catch (error) {
     console.error('Ошибка загрузки курсов:', error)
@@ -109,9 +110,14 @@ onMounted(async () => {
           </div>
         </div>
 
-        <div class="relative">
-          <div class="absolute inset-0 rounded-[2rem] bg-gradient-to-br from-indigo-500/15 via-transparent to-emerald-400/10 blur-2xl"></div>
-          <div class="relative rounded-[2rem] border border-slate-800/80 bg-slate-950/50 p-6 shadow-2xl backdrop-blur-xl">
+  <div class="relative">
+  <div class="absolute inset-0 rounded-[2rem] bg-gradient-to-br from-indigo-500/15 via-transparent to-emerald-400/10 blur-2xl"></div>
+  
+  <div class="relative z-10 mb-8">
+    <HeroAnimation />
+  </div>
+
+  <div class="relative rounded-[2rem] border border-slate-800/80 bg-slate-950/50 p-6 shadow-2xl backdrop-blur-xl">
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-xs font-bold uppercase tracking-[0.28em] text-slate-500">Витрина роста</p>
@@ -137,6 +143,7 @@ onMounted(async () => {
             </div>
           </div>
         </div>
+
       </div>
     </section>
 
