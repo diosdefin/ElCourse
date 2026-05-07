@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 
 import api from '../api'
 import { useAuthStore } from '../stores/auth'
+import { showError, showSuccess } from '../utils/toast'
 
 const API_BASE_URL = 'http://127.0.0.1:8000'
 const WEEKDAY_LABELS = ['Вс', '', 'Вт', '', 'Чт', '', 'Сб']
@@ -270,9 +271,10 @@ const toggleFriend = async () => {
       is_friend: response.data.is_friend,
       friends_count: response.data.friends_count,
     }
+    showSuccess(response.data.message || 'Список друзей обновлен.')
   } catch (error) {
     console.error('Ошибка обновления друзей:', error)
-    window.alert(error.response?.data?.detail || 'Не удалось обновить друзей.')
+    showError(error.response?.data?.detail || 'Не удалось обновить друзей.')
   } finally {
     friendLoading.value = false
   }
@@ -298,7 +300,7 @@ const downloadResume = async () => {
     window.URL.revokeObjectURL(blobUrl)
   } catch (error) {
     console.error('Ошибка скачивания резюме:', error)
-    window.alert('Не удалось скачать PDF-резюме.')
+    showError('Не удалось скачать PDF-резюме.')
   } finally {
     resumeLoading.value = false
   }
@@ -342,6 +344,7 @@ const submitOffer = async () => {
     })
     closeOfferModal()
     await fetchEmployerOffers()
+    showSuccess('Оффер отправлен.')
   } catch (error) {
     console.error('Ошибка отправки оффера:', error)
     offerModal.value.error =

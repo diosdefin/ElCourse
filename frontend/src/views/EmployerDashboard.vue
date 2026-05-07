@@ -1,34 +1,35 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+
+import api from '../api'
+import { showError, showSuccess } from '../utils/toast'
 
 const students = ref([])
 const searchSkills = ref('')
 const loading = ref(false)
+const API_BASE_URL = 'http://127.0.0.1:8000'
 
 const sendOffer = async (studentId, studentName) => {
   try {
-    const token = localStorage.getItem('access_token')
-    await axios.post('http://127.0.0.1:8000/api/employer/offer/', {
+    await api.post('/employer/offer/', {
       student: studentId,
       message: 'Привет! Нам понравились твои навыки на ELCOURSE. Хотим пригласить на собеседование.'
-    }, {
-      headers: { Authorization: `Bearer ${token}` }
     })
-    
-    alert(`Предложение успешно отправлено студенту ${studentName}!`)
+
+    showSuccess(`Предложение успешно отправлено студенту ${studentName}.`)
   } catch (error) {
     console.error('Ошибка отправки:', error)
-    alert('Не удалось отправить предложение.')
+    showError('Не удалось отправить предложение.')
   }
 }
 
 const searchTalents = async () => {
   loading.value = true
   try {
-    const token = localStorage.getItem('access_token')
-    const response = await axios.get(`http://127.0.0.1:8000/api/employer/search/?skills=${searchSkills.value}`, {
-      headers: { Authorization: `Bearer ${token}` }
+    const response = await api.get('/employer/search/', {
+      params: {
+        skills: searchSkills.value || undefined,
+      },
     })
     students.value = response.data
   } catch (error) {
@@ -40,7 +41,7 @@ const searchTalents = async () => {
 
 const getAvatarUrl = (student) => {
   if (student.avatar) {
-    return `http://127.0.0.1:8000${student.avatar}`
+    return `${API_BASE_URL}${student.avatar}`
   }
   return null
 }

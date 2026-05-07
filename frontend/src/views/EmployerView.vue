@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 
 import api from '../api'
+import { showError, showSuccess } from '../utils/toast'
 
 const API_BASE_URL = 'http://127.0.0.1:8000'
 
@@ -302,9 +303,10 @@ const downloadResume = async (student) => {
     link.click()
     link.remove()
     window.URL.revokeObjectURL(blobUrl)
+    showSuccess('Резюме загружено.')
   } catch (error) {
     console.error('Ошибка скачивания резюме:', error)
-    window.alert('Не удалось скачать PDF-резюме студента.')
+    showError('Не удалось скачать PDF-резюме студента.')
   } finally {
     resumeLoadingId.value = null
   }

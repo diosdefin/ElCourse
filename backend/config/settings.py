@@ -10,7 +10,6 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
-from pathlib import Path
 import os
 from pathlib import Path
 
@@ -43,6 +42,7 @@ INSTALLED_APPS = [
     'rest_framework', # Для создания API
     'corsheaders',    # Чтобы Vue.js мог безопасно общаться с Django
     'rest_framework_simplejwt.token_blacklist', # Для ротации и черного списка токенов
+    'django_celery_results',
     'platform_app',   # Наше основное приложение
 ]
 
@@ -151,7 +151,7 @@ REST_FRAMEWORK = {
 # Настройки времени жизни токенов
 # Настройки времени жизни токенов с ротацией
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),  # Пропуск живет 1 день
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=7),  # Пропуск живет 7 дней
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7), # Общий срок "тишины" — 7 дней
     
     # ВОТ ЭТО ВКЛЮЧАЕТ ПРОДЛЕНИЕ:
@@ -165,3 +165,11 @@ SIMPLE_JWT = {
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://127.0.0.1:6379/0')
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_TRACK_STARTED = True

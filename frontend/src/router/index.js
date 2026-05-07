@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { showError } from '../utils/toast'
 
 import CommunityView from '../views/CommunityView.vue'
 import CourseDetailView from '../views/CourseDetailView.vue'
@@ -65,7 +66,7 @@ router.beforeEach((to) => {
   const authStore = useAuthStore()
 
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    alert('Сначала войдите в аккаунт.')
+    showError('Сначала войдите в аккаунт.')
     return '/login'
   }
 
@@ -74,7 +75,7 @@ router.beforeEach((to) => {
       return true
     }
 
-    alert('Доступ только для преподавателей!')
+    showError('Доступ только для преподавателей.')
     return '/'
   }
 
@@ -83,7 +84,7 @@ router.beforeEach((to) => {
       return true
     }
 
-    alert('Доступ только для работодателей!')
+    showError('Доступ только для работодателей.')
     return '/'
   }
 

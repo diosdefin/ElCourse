@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 
 import api from '../api'
 import { useAuthStore } from '../stores/auth'
+import { showError, showSuccess } from '../utils/toast'
 
 const authStore = useAuthStore()
 const offers = ref([])
@@ -13,7 +14,6 @@ const confirmAction = ref(null) // 'accepted' или 'rejected'
 
 const fetchOffers = async () => {
   try {
-    const token = localStorage.getItem('access_token')
     const url = authStore.isStudent 
       ? '/student/offers/' 
       : '/employer/offers/'
@@ -28,7 +28,6 @@ const fetchOffers = async () => {
 
 const openOffer = async (offer) => {
   selectedOffer.value = offer
-  const token = localStorage.getItem('access_token')
   let isUpdated = false
 
   // Логика прочтения для студента
@@ -58,11 +57,7 @@ const handleAction = async () => {
   if (!selectedOffer.value) return
   
   try {
-    const token = localStorage.getItem('access_token')
-    await axios.patch(`http://127.0.0.1:8000/api/offers/${selectedOffer.value.id}/update/`, 
-      { status: confirmAction.value },
-      { headers: { Authorization: `Bearer ${token}` } }
-    )
+    await api.patch(`/offers/${selectedOffer.value.id}/update/`, { status: confirmAction.value })
     
     showConfirmModal.value = false
     
@@ -73,9 +68,10 @@ const handleAction = async () => {
     selectedOffer.value = offers.value.find(o => o.id === selectedOffer.value.id)
     
     window.dispatchEvent(new CustomEvent('update-bell')) // Дергаем колокольчик
+    showSuccess(confirmAction.value === 'accepted' ? 'Предложение принято.' : 'Предложение отклонено.')
   } catch (e) { 
     console.error('Ошибка при обновлении статуса:', e)
-    alert('Не удалось обновить статус предложения')
+    showError('Не удалось обновить статус предложения.')
   }
 }
 

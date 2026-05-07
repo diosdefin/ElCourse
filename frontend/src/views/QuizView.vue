@@ -1,11 +1,11 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 
 import api from '../api'
+import { showError } from '../utils/toast'
 
 const route = useRoute()
-const router = useRouter()
 const questions = ref([])
 const answers = ref({}) // Формат: { question_id: choice_id }
 const loading = ref(true)
@@ -13,7 +13,6 @@ const result = ref(null)
 
 onMounted(async () => {
   try {
-    const token = localStorage.getItem('access_token')
     const response = await api.get(`/courses/${route.params.id}/quiz/`)
     questions.value = response.data
   } catch (error) {
@@ -24,12 +23,17 @@ onMounted(async () => {
 })
 
 const submitQuiz = async () => {
+  const answeredCount = Object.keys(answers.value).length
+  if (answeredCount < questions.value.length) {
+    showError('Пожалуйста, ответьте на все вопросы.')
+    return
+  }
+
   try {
-    const token = localStorage.getItem('access_token')
     const response = await api.post(`/courses/${route.params.id}/quiz/check/`, { answers: answers.value })
     result.value = response.data
   } catch (error) {
-    alert('Пожалуйста, ответьте на все вопросы')
+    showError(error.response?.data?.error || 'Не удалось отправить тест. Попробуйте еще раз.')
   }
 }
 </script>

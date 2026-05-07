@@ -1,7 +1,7 @@
 from django.db.models import Count
 from rest_framework import serializers
 
-from .models import ActivityLog, Choice, Course, JobOffer, Lesson, LessonProgress, Question, Skill, User
+from .models import ActivityLog, Choice, Course, JobOffer, Lesson, LessonProgress, LessonVideo, Question, Skill, User
 
 
 def build_learning_skills(user):
@@ -253,7 +253,8 @@ class LessonSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'video_url', 'content', 'order', 'is_completed']
 
     def get_is_completed(self, obj):
-        user = self.context['request'].user
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
         if user.is_authenticated:
             return LessonProgress.objects.filter(user=user, lesson=obj, is_completed=True).exists()
         return False
@@ -263,8 +264,20 @@ class LessonSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if request and getattr(request, 'user', None) and request.user.is_anonymous:
             data['video_url'] = None
-            data['content'] = 'Доступно только для зарегистрированных пользователей'
+            data['content'] = None
         return data
+
+
+class LessonVideoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LessonVideo
+        fields = ['status', 'm3u8_url', 'error_message']
+
+
+class LessonProgressSecondsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LessonProgress
+        fields = ['watched_seconds']
 
 
 class CourseSerializer(serializers.ModelSerializer):
@@ -278,7 +291,11 @@ class CourseSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'description', 'image', 'author_name', 'skills_covered', 'lessons', 'progress_percentage']
 
     def get_progress_percentage(self, obj):
-        user = self.context['request'].user
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        if user is None:
+            return 0
+
         if not user.is_authenticated:
             return 0
 

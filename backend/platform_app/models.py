@@ -57,6 +57,7 @@ class LessonProgress(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='lesson_progress')
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='user_progress')
     is_completed = models.BooleanField(default=False)
+    watched_seconds = models.IntegerField(default=0)
     completed_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -64,6 +65,30 @@ class LessonProgress(models.Model):
 
     def __str__(self):
         return f'{self.user.username} - {self.lesson.title} - {"Пройден" if self.is_completed else "В процессе"}'
+
+
+class LessonVideo(models.Model):
+    STATUS_PENDING = 'pending'
+    STATUS_PROCESSING = 'processing'
+    STATUS_READY = 'ready'
+    STATUS_FAILED = 'failed'
+
+    STATUS_CHOICES = [
+        (STATUS_PENDING, 'Ожидает'),
+        (STATUS_PROCESSING, 'Обрабатывается'),
+        (STATUS_READY, 'Готово'),
+        (STATUS_FAILED, 'Ошибка'),
+    ]
+
+    lesson = models.OneToOneField(Lesson, on_delete=models.CASCADE, related_name='video_asset')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    m3u8_url = models.CharField(max_length=500, blank=True)
+    error_message = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'{self.lesson.title} - {self.status}'
 
 
 class ActivityLog(models.Model):

@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 
 import api from '../api'
+import { showError, showSuccess } from '../utils/toast'
 
 const myCourses = ref([])
 const availableSkills = ref([]) // НОВОЕ: Список всех навыков из базы
@@ -74,7 +75,6 @@ const handleFileUpload = (event) => {
 // Главная функция сохранения (Создание или Обновление)
 const saveCourse = async () => {
   try {
-    const token = localStorage.getItem('access_token')
     const formData = new FormData()
     formData.append('title', newCourse.value.title)
     formData.append('description', newCourse.value.description)
@@ -89,21 +89,17 @@ const saveCourse = async () => {
     })
 
     if (isEditMode.value) {
-      await axios.patch(`http://127.0.0.1:8000/api/teacher/courses/${currentCourseId.value}/`, formData, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      await api.patch(`/teacher/courses/${currentCourseId.value}/`, formData)
     } else {
-      await axios.post('http://127.0.0.1:8000/api/teacher/courses/', formData, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      await api.post('/teacher/courses/', formData)
     }
 
     isModalOpen.value = false
     await fetchMyCourses()
-    alert(isEditMode.value ? 'Курс обновлен!' : 'Курс создан!')
+    showSuccess(isEditMode.value ? 'Курс обновлен.' : 'Курс создан.')
   } catch (error) {
     console.error(error)
-    alert('Ошибка при сохранении курса')
+    showError('Ошибка при сохранении курса.')
   }
 }
 

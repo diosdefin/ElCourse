@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import ActivityLog, Course, Lesson, LessonProgress, Skill, User
+from .models import ActivityLog, Course, Lesson, LessonProgress, LessonVideo, Skill, User
 from .models import Question, Choice
 
 class ChoiceInline(admin.TabularInline):
@@ -32,4 +32,5 @@ admin.site.register(Course)
 admin.site.register(Skill)
 admin.site.register(Lesson)
 admin.site.register(LessonProgress)
+admin.site.register(LessonVideo)
 admin.site.register(ActivityLog)

@@ -3,6 +3,7 @@ import { onMounted, ref, watch } from 'vue'
 import { RouterLink, RouterView } from 'vue-router'
 
 import api from './api'
+import ToastHost from './components/ToastHost.vue'
 import { useAuthStore } from './stores/auth'
 
 const authStore = useAuthStore()
@@ -15,7 +16,6 @@ const checkNotifications = async () => {
   }
 
   try {
-    const token = localStorage.getItem('access_token')
     const response = await api.get('/notifications/count/')
     unreadCount.value = response.data.unread_count
   } catch (error) {
@@ -43,6 +43,8 @@ onMounted(() => {
 
 <template>
   <div class="min-h-screen bg-slate-900 text-slate-300 selection:bg-indigo-500/30">
+    <ToastHost />
+
     <header class="sticky top-0 z-50 border-b border-slate-800 bg-slate-900/80 shadow-lg backdrop-blur-lg">
       <div class="container mx-auto flex flex-wrap items-center justify-between gap-4 px-6 py-4">
         <RouterLink to="/" class="flex items-center gap-2 text-2xl font-black tracking-widest text-white">

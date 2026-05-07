@@ -1,6 +1,7 @@
 import base64
 import os
 from datetime import date, timedelta
+from pathlib import Path
 
 from django.conf import settings
 from django.db.models import Q, Sum
@@ -19,18 +20,21 @@ try:
 except ImportError:  # pragma: no cover - depends on local optional dependency
     pisa = None
 
-from .models import ActivityLog, Choice, Course, JobOffer, Lesson, LessonProgress, Question, Skill, User
+from .models import ActivityLog, Choice, Course, JobOffer, Lesson, LessonProgress, LessonVideo, Question, Skill, User
 from .serializers import (
     ActivityDaySerializer,
     CommunityUserSerializer,
     CourseSerializer,
     JobOfferSerializer,
+    LessonProgressSecondsSerializer,
     LessonSerializer,
+    LessonVideoSerializer,
     PublicProfileSerializer,
     RegisterSerializer,
     SkillSerializer,
     UserProfileSerializer,
 )
+from .tasks import convert_to_hls
 
 
 def record_daily_activity(user, action_type):
@@ -148,6 +152,99 @@ class CompleteLessonView(APIView):
             'course_completed': total_lessons > 0 and completed_lessons == total_lessons,
             'course_progress_percentage': progress_percentage,
         })
+
+
+class LessonVideoUploadView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, lesson_id):
+        lesson = get_object_or_404(Lesson.objects.select_related('course__author'), id=lesson_id)
+
+        if request.user.role != User.IS_TEACHER and not request.user.is_staff:
+            return Response({'detail': 'Только преподаватели могут загружать видео.'}, status=status.HTTP_403_FORBIDDEN)
+
+        if not request.user.is_staff and lesson.course.author_id != request.user.id:
+            return Response({'detail': 'Нельзя загружать видео в чужой урок.'}, status=status.HTTP_403_FORBIDDEN)
+
+        uploaded_file = request.FILES.get('video')
+        if not uploaded_file:
+            return Response({'detail': 'Файл video обязателен.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        upload_dir = Path(settings.MEDIA_ROOT) / 'uploads' / f'lesson_{lesson.id}'
+        upload_dir.mkdir(parents=True, exist_ok=True)
+        extension = Path(uploaded_file.name).suffix or '.mp4'
+        source_path = upload_dir / f'source{extension}'
+
+        with source_path.open('wb+') as destination:
+            for chunk in uploaded_file.chunks():
+                destination.write(chunk)
+
+        video_asset, _ = LessonVideo.objects.get_or_create(lesson=lesson)
+        video_asset.status = LessonVideo.STATUS_PENDING
+        video_asset.m3u8_url = ''
+        video_asset.error_message = ''
+        video_asset.save(update_fields=['status', 'm3u8_url', 'error_message', 'updated_at'])
+
+        task = convert_to_hls.delay(lesson.id, str(source_path))
+
+        return Response(
+            {
+                'status': video_asset.status,
+                'task_id': task.id,
+            },
+            status=status.HTTP_202_ACCEPTED,
+        )
+
+
+class LessonVideoManifestView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, lesson_id):
+        lesson = get_object_or_404(Lesson, id=lesson_id)
+        video_asset, _ = LessonVideo.objects.get_or_create(lesson=lesson)
+        payload = LessonVideoSerializer(video_asset).data
+
+        manifest_url = payload.get('m3u8_url')
+        if manifest_url:
+            payload['m3u8_url'] = request.build_absolute_uri(manifest_url)
+
+        return Response(payload)
+
+
+class LessonWatchProgressView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, lesson_id):
+        if request.user.role != User.IS_STUDENT and not request.user.is_staff:
+            return Response({'detail': 'Только студенты могут получать прогресс просмотра.'}, status=status.HTTP_403_FORBIDDEN)
+
+        lesson = get_object_or_404(Lesson, id=lesson_id)
+        progress, _ = LessonProgress.objects.get_or_create(user=request.user, lesson=lesson)
+
+        return Response({
+            'watched_seconds': progress.watched_seconds,
+            'is_completed': progress.is_completed,
+        })
+
+    def patch(self, request, lesson_id):
+        if request.user.role != User.IS_STUDENT and not request.user.is_staff:
+            return Response({'detail': 'Только студенты могут обновлять прогресс просмотра.'}, status=status.HTTP_403_FORBIDDEN)
+
+        lesson = get_object_or_404(Lesson, id=lesson_id)
+        progress, _ = LessonProgress.objects.get_or_create(user=request.user, lesson=lesson)
+
+        raw_seconds = request.data.get('watched_seconds', 0)
+        try:
+            watched_seconds = int(float(raw_seconds))
+        except (TypeError, ValueError):
+            return Response({'detail': 'watched_seconds должен быть числом.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        watched_seconds = max(0, watched_seconds)
+        if watched_seconds > progress.watched_seconds:
+            progress.watched_seconds = watched_seconds
+            progress.save(update_fields=['watched_seconds'])
+
+        return Response(LessonProgressSecondsSerializer(progress).data)
 
 
 class UserProfileView(APIView):

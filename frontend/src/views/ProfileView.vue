@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 
 import api from '../api'
+import { showError, showSuccess } from '../utils/toast'
 
 const API_BASE_URL = 'http://127.0.0.1:8000'
 
@@ -153,10 +154,10 @@ const saveProfile = async () => {
       }
     }
     isEditing.value = false
-    alert('Профиль успешно обновлен!')
+    showSuccess('Профиль успешно обновлен.')
   } catch (error) {
     console.error('Ошибка при сохранении профиля:', error)
-    alert('Ошибка при сохранении профиля')
+    showError('Ошибка при сохранении профиля.')
   } finally {
     saving.value = false
   }
@@ -183,7 +184,7 @@ const downloadResume = async () => {
     window.URL.revokeObjectURL(url)
   } catch (error) {
     console.error('Ошибка при скачивании PDF:', error)
-    alert('Не удалось сгенерировать резюме')
+    showError('Не удалось сгенерировать резюме.')
   }
 }
 
