@@ -1,7 +1,21 @@
 from django.db.models import Count
 from rest_framework import serializers
 
-from .models import ActivityLog, Choice, Course, JobOffer, Lesson, LessonProgress, LessonVideo, Question, Skill, User
+from .models import (
+    ActivityLog,
+    Choice,
+    Course,
+    JobOffer,
+    Lesson,
+    LessonAttachment,
+    LessonProgress,
+    LessonVideo,
+    Module,
+    Question,
+    QuizConfig,
+    Skill,
+    User,
+)
 
 
 def build_learning_skills(user):
@@ -263,10 +277,25 @@ class PublicProfileSerializer(ViewerContextMixin, serializers.ModelSerializer):
 
 class LessonSerializer(serializers.ModelSerializer):
     is_completed = serializers.SerializerMethodField()
+    module = serializers.PrimaryKeyRelatedField(queryset=Module.objects.all(), required=False, allow_null=True, write_only=True)
+    module_id = serializers.IntegerField(source='module.id', read_only=True)
+    lesson_type = serializers.CharField(source='type', read_only=True)
 
     class Meta:
         model = Lesson
-        fields = ['id', 'title', 'video_url', 'content', 'order', 'is_completed']
+        fields = [
+            'id',
+            'module',
+            'module_id',
+            'title',
+            'video_url',
+            'content',
+            'order',
+            'type',
+            'lesson_type',
+            'is_published',
+            'is_completed',
+        ]
 
     def get_is_completed(self, obj):
         request = self.context.get('request')
@@ -377,3 +406,98 @@ class JobOfferSerializer(serializers.ModelSerializer):
             'is_read_by_employer',
         ]
         read_only_fields = ['employer', 'created_at']
+
+
+class ModuleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Module
+        fields = ['id', 'course', 'title', 'order']
+        read_only_fields = ['course']
+
+
+class LessonAttachmentSerializer(serializers.ModelSerializer):
+    file_url = serializers.SerializerMethodField()
+    size = serializers.SerializerMethodField()
+
+    class Meta:
+        model = LessonAttachment
+        fields = ['id', 'lesson', 'original_name', 'file', 'file_url', 'size', 'uploaded_at']
+        read_only_fields = ['lesson', 'original_name', 'file_url', 'size', 'uploaded_at']
+
+    def get_file_url(self, obj):
+        return obj.file.url if obj.file else ''
+
+    def get_size(self, obj):
+        try:
+            return obj.file.size
+        except Exception:
+            return 0
+
+
+class QuizConfigSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = QuizConfig
+        fields = [
+            'id',
+            'lesson',
+            'passing_score_percentage',
+            'max_attempts',
+            'penalty_hours',
+            'time_limit_minutes',
+        ]
+        read_only_fields = ['lesson']
+
+
+class ChoiceWriteSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False)
+
+    class Meta:
+        model = Choice
+        fields = ['id', 'text', 'is_correct']
+
+
+class TeacherQuestionSerializer(serializers.ModelSerializer):
+    choices = ChoiceWriteSerializer(many=True)
+    lesson_id = serializers.IntegerField(source='lesson.id', read_only=True)
+
+    class Meta:
+        model = Question
+        fields = ['id', 'course', 'lesson', 'lesson_id', 'text', 'is_multiple', 'explanation', 'choices']
+        read_only_fields = ['course']
+
+    def create(self, validated_data):
+        choices_data = validated_data.pop('choices', [])
+        question = Question.objects.create(**validated_data)
+        for choice_data in choices_data:
+            Choice.objects.create(question=question, **choice_data)
+        return question
+
+    def update(self, instance, validated_data):
+        choices_data = validated_data.pop('choices', None)
+        for field, value in validated_data.items():
+            setattr(instance, field, value)
+        instance.save()
+
+        if choices_data is not None:
+            existing_choices = {choice.id: choice for choice in instance.choices.all()}
+            keep_ids = set()
+
+            for choice_data in choices_data:
+                choice_id = choice_data.get('id')
+                if choice_id and choice_id in existing_choices:
+                    choice = existing_choices[choice_id]
+                    choice.text = choice_data.get('text', choice.text)
+                    choice.is_correct = choice_data.get('is_correct', choice.is_correct)
+                    choice.save(update_fields=['text', 'is_correct'])
+                    keep_ids.add(choice.id)
+                else:
+                    choice = Choice.objects.create(
+                        question=instance,
+                        text=choice_data.get('text', ''),
+                        is_correct=choice_data.get('is_correct', False),
+                    )
+                    keep_ids.add(choice.id)
+
+            instance.choices.exclude(id__in=keep_ids).delete()
+
+        return instance

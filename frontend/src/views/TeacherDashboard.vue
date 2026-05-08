@@ -1,19 +1,13 @@
 <script setup>
-import { computed, ref, onMounted, watch } from 'vue'
+import { onMounted, ref } from 'vue'
 
-import api, { getTeacherActivity } from '../api'
-import Heatmap from '../components/Heatmap.vue'
+import api from '../api'
 import { showError, showSuccess } from '../utils/toast'
 
 const myCourses = ref([])
-const teacherActivity = ref([])
-const teacherActivityError = ref('')
-const selectedActivityYear = ref(new Date().getFullYear())
-const registrationYear = ref(new Date().getFullYear())
-const availableSkills = ref([]) // НОВОЕ: Список всех навыков из базы
+const availableSkills = ref([])
 const loading = ref(true)
 
-// Состояния модального окна
 const isModalOpen = ref(false)
 const isEditMode = ref(false)
 const currentCourseId = ref(null)
@@ -22,24 +16,11 @@ const newCourse = ref({
   title: '',
   description: '',
   image: null,
-  skills_covered: [] // НОВОЕ: Массив для выбранных навыков
-})
-
-const availableActivityYears = computed(() => {
-  const currentYear = new Date().getFullYear()
-  const startYear = registrationYear.value || currentYear
-  const years = []
-
-  for (let year = currentYear; year >= startYear; year -= 1) {
-    years.push(year)
-  }
-
-  return years
+  skills_covered: [],
 })
 
 const fetchMyCourses = async () => {
   try {
-    const token = localStorage.getItem('access_token')
     const response = await api.get('/teacher/courses/')
     myCourses.value = response.data
   } catch (error) {
@@ -49,7 +30,6 @@ const fetchMyCourses = async () => {
   }
 }
 
-// НОВОЕ: Функция загрузки списка навыков с бэкенда
 const fetchSkills = async () => {
   try {
     const response = await api.get('/skills/')
@@ -59,49 +39,25 @@ const fetchSkills = async () => {
   }
 }
 
-// Открыть модалку для СОЗДАНИЯ
-const fetchTeacherProfile = async () => {
-  try {
-    const response = await api.get('/me/')
-    registrationYear.value = response.data.registration_year || new Date().getFullYear()
-  } catch (error) {
-    console.error('РћС€РёР±РєР° Р·Р°РіСЂСѓР·РєРё РїСЂРѕС„РёР»СЏ Р°РІС‚РѕСЂР°:', error)
-  }
-}
-
-const fetchTeacherActivity = async () => {
-  teacherActivityError.value = ''
-  try {
-    const response = await getTeacherActivity(selectedActivityYear.value)
-    teacherActivity.value = response.data
-  } catch (error) {
-    console.error('РћС€РёР±РєР° Р·Р°РіСЂСѓР·РєРё Р°РєС‚РёРІРЅРѕСЃС‚Рё Р°РІС‚РѕСЂР°:', error)
-    teacherActivity.value = []
-    teacherActivityError.value = error.response?.data?.detail || 'Не удалось загрузить активность автора.'
-  }
-}
-
 const openCreateModal = () => {
   isEditMode.value = false
   newCourse.value = { title: '', description: '', image: null, skills_covered: [] }
   isModalOpen.value = true
 }
 
-// Открыть модалку для РЕДАКТИРОВАНИЯ
 const openEditModal = (course) => {
   isEditMode.value = true
   currentCourseId.value = course.id
-  
-  // Аккуратно достаем ID навыков (если бэкенд отдает объекты, берем их .id)
-  const preselectedSkills = course.skills_covered 
-    ? course.skills_covered.map(s => typeof s === 'object' ? s.id : s) 
+
+  const preselectedSkills = course.skills_covered
+    ? course.skills_covered.map((item) => (typeof item === 'object' ? item.id : item))
     : []
 
-  newCourse.value = { 
-    title: course.title, 
-    description: course.description, 
+  newCourse.value = {
+    title: course.title,
+    description: course.description,
     image: null,
-    skills_covered: preselectedSkills // Подставляем уже выбранные галочки
+    skills_covered: preselectedSkills,
   }
   isModalOpen.value = true
 }
@@ -110,19 +66,17 @@ const handleFileUpload = (event) => {
   newCourse.value.image = event.target.files[0]
 }
 
-// Главная функция сохранения (Создание или Обновление)
 const saveCourse = async () => {
   try {
     const formData = new FormData()
     formData.append('title', newCourse.value.title)
     formData.append('description', newCourse.value.description)
-    
+
     if (newCourse.value.image) {
       formData.append('image', newCourse.value.image)
     }
 
-    // НОВОЕ: Правильно добавляем массив навыков в FormData для Django
-    newCourse.value.skills_covered.forEach(skillId => {
+    newCourse.value.skills_covered.forEach((skillId) => {
       formData.append('skills_covered', skillId)
     })
 
@@ -134,9 +88,6 @@ const saveCourse = async () => {
 
     isModalOpen.value = false
     await fetchMyCourses()
-    if (!isEditMode.value) {
-      await fetchTeacherActivity()
-    }
     showSuccess(isEditMode.value ? 'Курс обновлен.' : 'Курс создан.')
   } catch (error) {
     console.error(error)
@@ -144,138 +95,144 @@ const saveCourse = async () => {
   }
 }
 
-watch(selectedActivityYear, () => {
-  fetchTeacherActivity()
-})
-
 onMounted(() => {
   fetchMyCourses()
-  fetchTeacherProfile()
-  fetchTeacherActivity()
-  fetchSkills() // НОВОЕ: Загружаем навыки при открытии страницы
+  fetchSkills()
 })
 </script>
 
 <template>
-  <div class="max-w-6xl mx-auto mt-8 px-4">
-    <div class="flex justify-between items-center mb-10">
+  <div class="mx-auto mt-8 max-w-6xl px-4">
+    <div class="mb-10 flex items-center justify-between">
       <div>
         <h1 class="text-4xl font-black text-slate-100">Кабинет автора</h1>
-        <p class="text-slate-500 mt-2">Управление контентом и аналитика</p>
+        <p class="mt-2 text-slate-500">Управление контентом</p>
       </div>
-      <button 
-        @click="openCreateModal"  
-        class="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl transition-all shadow-lg shadow-indigo-600/20 active:scale-95"
+      <button
+        class="rounded-2xl bg-indigo-600 px-6 py-3 font-bold text-white shadow-lg shadow-indigo-600/20 transition-all hover:bg-indigo-500 active:scale-95"
+        @click="openCreateModal"
       >
         + Создать новый курс
       </button>
     </div>
-    <Heatmap
-      v-model:selected-year="selectedActivityYear"
-      class="mb-8"
-      :activity-data="teacherActivity"
-      :available-years="availableActivityYears"
-      title="���������� ������"
-      description="������� heatmap ��������� ������, ������, ����������� HLS-����� � ���������� Quiz."
-      counter-label="����������� �� ���"
-      :error="teacherActivityError"
-    />
 
-
-    <div v-if="loading" class="text-center py-20 text-slate-500">Загрузка...</div>
+    <div v-if="loading" class="py-20 text-center text-slate-500">Загрузка...</div>
     <div v-else class="grid gap-6">
-      <div v-for="course in myCourses" :key="course.id" 
-        class="bg-slate-800/30 backdrop-blur-md p-6 rounded-3xl border border-slate-700/50 flex justify-between items-center group">
-        
+      <div
+        v-for="course in myCourses"
+        :key="course.id"
+        class="group flex items-center justify-between rounded-3xl border border-slate-700/50 bg-slate-800/30 p-6 backdrop-blur-md"
+      >
         <div class="flex items-center gap-6">
-          <div class="w-20 h-20 bg-slate-900 rounded-2xl overflow-hidden border border-slate-700">
-            <img v-if="course.image" :src="course.image" class="w-full h-full object-cover">
-            <div v-else class="w-full h-full bg-slate-700 flex items-center justify-center text-slate-500 text-xs">Нет фото</div>
+          <div class="h-20 w-20 overflow-hidden rounded-2xl border border-slate-700 bg-slate-900">
+            <img v-if="course.image" :src="course.image" class="h-full w-full object-cover">
+            <div v-else class="flex h-full w-full items-center justify-center bg-slate-700 text-xs text-slate-500">Нет фото</div>
           </div>
           <div>
             <h3 class="text-xl font-bold text-slate-100">{{ course.title }}</h3>
-            <p class="text-slate-500 text-sm">Уроков: {{ course.lessons?.length || 0 }}</p>
+            <p class="text-sm text-slate-500">Уроков: {{ course.lessons?.length || 0 }}</p>
           </div>
         </div>
 
         <div class="flex gap-2">
-          <RouterLink :to="{ name: 'teacher-lesson-editor', params: { id: course.id } }"
-            class="p-3 bg-slate-700/30 text-slate-300 rounded-xl hover:bg-indigo-600 transition-all text-sm font-bold">
-            Уроки
+          <RouterLink
+            :to="{ name: 'teacher-lesson-editor', params: { id: course.id } }"
+            class="rounded-xl bg-slate-700/30 p-3 text-sm font-bold text-slate-300 transition-all hover:bg-indigo-600"
+          >
+            Конструктор
           </RouterLink>
 
-          <RouterLink :to="{ name: 'quiz-editor', params: { id: course.id } }"
-            class="p-3 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl hover:bg-emerald-500 hover:text-white transition-all text-sm font-bold">
+          <RouterLink
+            :to="{ name: 'quiz-editor', params: { id: course.id } }"
+            class="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm font-bold text-emerald-400 transition-all hover:bg-emerald-500 hover:text-white"
+          >
             Тесты
           </RouterLink>
 
-          <button @click="openEditModal(course)"
-            class="p-3 bg-slate-700/30 text-slate-300 rounded-xl hover:bg-amber-500 hover:text-white transition-all text-sm font-bold">
+          <button
+            class="rounded-xl bg-slate-700/30 p-3 text-sm font-bold text-slate-300 transition-all hover:bg-amber-500 hover:text-white"
+            @click="openEditModal(course)"
+          >
             Изменить
           </button>
         </div>
       </div>
     </div>
 
-    <div v-if="isModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-      <div class="bg-slate-900 border border-slate-700 w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
-        <div class="p-8 overflow-y-auto">
-          <h2 class="text-2xl font-black text-slate-100 mb-6">
+    <div v-if="isModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
+      <div class="flex max-h-[90vh] w-full max-w-xl flex-col overflow-hidden rounded-3xl border border-slate-700 bg-slate-900 shadow-2xl">
+        <div class="overflow-y-auto p-8">
+          <h2 class="mb-6 text-2xl font-black text-slate-100">
             {{ isEditMode ? 'Редактировать курс' : 'Новый курс' }}
           </h2>
-          
-          <form @submit.prevent="saveCourse" class="space-y-5"> 
+
+          <form class="space-y-5" @submit.prevent="saveCourse">
             <div>
-              <label class="block text-sm font-bold text-slate-400 mb-2">Название курса</label>
-              <input v-model="newCourse.title" type="text" required
-                class="w-full px-5 py-3 bg-slate-800 border border-slate-700 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none text-slate-100"
-                placeholder="Например: Основы Python для начинающих">
+              <label class="mb-2 block text-sm font-bold text-slate-400">Название курса</label>
+              <input
+                v-model="newCourse.title"
+                type="text"
+                required
+                class="w-full rounded-2xl border border-slate-700 bg-slate-800 px-5 py-3 text-slate-100 outline-none focus:ring-2 focus:ring-indigo-500"
+              >
             </div>
 
             <div>
-              <label class="block text-sm font-bold text-slate-400 mb-2">Описание</label>
-              <textarea v-model="newCourse.description" rows="4" required
-                class="w-full px-5 py-3 bg-slate-800 border border-slate-700 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none text-slate-100"
-                placeholder="О чем этот курс?"></textarea>
+              <label class="mb-2 block text-sm font-bold text-slate-400">Описание</label>
+              <textarea
+                v-model="newCourse.description"
+                rows="4"
+                required
+                class="w-full rounded-2xl border border-slate-700 bg-slate-800 px-5 py-3 text-slate-100 outline-none focus:ring-2 focus:ring-indigo-500"
+              ></textarea>
             </div>
 
             <div>
-              <label class="block text-sm font-bold text-slate-400 mb-2">Обложка курса</label>
-              <input type="file" @change="handleFileUpload" accept="image/*"
-                class="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 cursor-pointer">
+              <label class="mb-2 block text-sm font-bold text-slate-400">Обложка курса</label>
+              <input
+                type="file"
+                accept="image/*"
+                class="w-full cursor-pointer text-sm text-slate-400 file:mr-4 file:rounded-full file:border-0 file:bg-indigo-600 file:px-4 file:py-2 file:text-sm file:font-bold file:text-white hover:file:bg-indigo-500"
+                @change="handleFileUpload"
+              >
             </div>
 
-            <div class="p-5 bg-slate-800/50 rounded-2xl border border-slate-700 mt-4">
-              <label class="block text-sm font-bold text-slate-300 mb-3">Какие навыки дает курс?</label>
-              
+            <div class="mt-4 rounded-2xl border border-slate-700 bg-slate-800/50 p-5">
+              <label class="mb-3 block text-sm font-bold text-slate-300">Какие навыки дает курс?</label>
+
               <div v-if="availableSkills.length > 0" class="flex flex-wrap gap-3">
-                <label 
-                  v-for="skill in availableSkills" 
+                <label
+                  v-for="skill in availableSkills"
                   :key="skill.id"
-                  class="flex items-center gap-2 cursor-pointer bg-slate-800 px-3 py-2 rounded-xl hover:bg-slate-700 transition-colors border border-slate-700"
+                  class="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 transition-colors hover:bg-slate-700"
                 >
-                  <input 
-                    type="checkbox" 
-                    :value="skill.id" 
+                  <input
                     v-model="newCourse.skills_covered"
-                    class="w-4 h-4 text-indigo-500 rounded focus:ring-indigo-500 bg-slate-900 border-slate-600"
+                    type="checkbox"
+                    :value="skill.id"
+                    class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-indigo-500 focus:ring-indigo-500"
                   >
-                  <span class="text-slate-300 text-sm font-medium">{{ skill.name }}</span>
+                  <span class="text-sm font-medium text-slate-300">{{ skill.name }}</span>
                 </label>
               </div>
-              
-              <div v-else class="text-sm text-amber-500 bg-amber-500/10 p-3 rounded-lg border border-amber-500/20">
-                Навыки пока не добавлены в систему. Зайдите в панель администратора Django и создайте несколько навыков (например "Python", "Vue").
+
+              <div v-else class="rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-sm text-amber-500">
+                Навыки пока не добавлены в систему.
               </div>
             </div>
 
-            <div class="flex gap-4 mt-8 pt-4 border-t border-slate-800">
-              <button type="button" @click="isModalOpen = false"
-                class="flex-1 px-6 py-4 bg-slate-800 text-slate-300 font-bold rounded-2xl hover:bg-slate-700 transition-all">
+            <div class="mt-8 flex gap-4 border-t border-slate-800 pt-4">
+              <button
+                type="button"
+                class="flex-1 rounded-2xl bg-slate-800 px-6 py-4 font-bold text-slate-300 transition-all hover:bg-slate-700"
+                @click="isModalOpen = false"
+              >
                 Отмена
               </button>
-              <button type="submit"
-                class="flex-1 px-6 py-4 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/20">
+              <button
+                type="submit"
+                class="flex-1 rounded-2xl bg-indigo-600 px-6 py-4 font-bold text-white shadow-lg shadow-indigo-600/20 transition-all hover:bg-indigo-500"
+              >
                 {{ isEditMode ? 'Сохранить изменения' : 'Создать курс' }}
               </button>
             </div>

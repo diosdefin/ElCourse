@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 
-import api from '../api'
+import api, { getTeacherActivity } from '../api'
 import { showError, showSuccess } from '../utils/toast'
 
 const API_BASE_URL = 'http://127.0.0.1:8000'
@@ -47,6 +47,14 @@ const getAvatarUrl = (avatar) => {
 
 const completedSkills = computed(() => userData.value?.completed_skills || [])
 const learningSkills = computed(() => userData.value?.learning_skills || [])
+const isTeacherProfile = computed(() => userData.value?.role === 'teacher')
+const showActivityHeatmap = computed(() => ['student', 'teacher'].includes(userData.value?.role))
+const activityTitle = computed(() => (isTeacherProfile.value ? 'Активность автора' : 'График активности'))
+const activityDescription = computed(() =>
+  isTeacherProfile.value
+    ? 'Годовой heatmap созданных курсов, уроков, загруженных HLS-видео и обновлений Quiz.'
+    : 'Годовой heatmap завершенных уроков и успешных Quiz.'
+)
 
 // НОВОЕ: вычисляем общее количество активностей за выбранный год
 const totalActivityCount = computed(() =>
@@ -130,9 +138,11 @@ const fetchActivity = async () => {
   if (!userData.value || !selectedYear.value) return
   activityError.value = ''
   try {
-    const response = await api.get('/me/activity/', {
-      params: { year: selectedYear.value },
-    })
+    const response = isTeacherProfile.value
+      ? await getTeacherActivity(selectedYear.value)
+      : await api.get('/me/activity/', {
+        params: { year: selectedYear.value },
+      })
     activityData.value = response.data
   } catch (error) {
     console.error('Ошибка загрузки активности:', error)
@@ -346,14 +356,14 @@ onMounted(fetchProfile)
 
     <!-- НОВАЯ СЕКЦИЯ ГРАФИКА АКТИВНОСТИ (как в публичном профиле) -->
   <section
-  v-if="userData.role === 'student'"
+  v-if="showActivityHeatmap"
   class="rounded-[2rem] border border-slate-700/50 bg-slate-800/50 p-8 shadow-xl backdrop-blur-md"
 >
   <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
     <div>
-      <h2 class="text-2xl font-bold text-slate-100">График активности</h2>
+      <h2 class="text-2xl font-bold text-slate-100">{{ activityTitle }}</h2>
       <p class="mt-2 text-sm text-slate-400">
-        Годовой heatmap завершенных уроков и успешных Quiz.
+        {{ activityDescription }}
       </p>
     </div>
 

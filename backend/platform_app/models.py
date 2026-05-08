@@ -1,4 +1,4 @@
-from django.contrib.auth.models import AbstractUser
+﻿from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 
@@ -43,15 +43,47 @@ class Course(models.Model):
         return self.title
 
 
+class Module(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='modules')
+    title = models.CharField(max_length=255)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order', 'id']
+
+    def __str__(self):
+        return f'{self.course.title} - {self.title}'
+
+
 class Lesson(models.Model):
+    TYPE_VIDEO = 'video'
+    TYPE_TEXT = 'text'
+    TYPE_QUIZ = 'quiz'
+    TYPE_FINAL_EXAM = 'final_exam'
+
+    TYPE_CHOICES = [
+        (TYPE_VIDEO, 'Video'),
+        (TYPE_TEXT, 'Text'),
+        (TYPE_QUIZ, 'Quiz'),
+        (TYPE_FINAL_EXAM, 'Final exam'),
+    ]
+
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='lessons', verbose_name='Курс')
+    module = models.ForeignKey(Module, on_delete=models.SET_NULL, related_name='lessons', null=True, blank=True)
     title = models.CharField(max_length=200, verbose_name='Название урока')
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES, default=TYPE_VIDEO)
     video_url = models.URLField(blank=True, verbose_name='Ссылка на видео')
     content = models.TextField(verbose_name='Текст урока')
     order = models.PositiveIntegerField(default=0, verbose_name='Порядковый номер')
+    is_published = models.BooleanField(default=True)
 
     class Meta:
         ordering = ['order']
+
+    def save(self, *args, **kwargs):
+        if self.module and self.course_id != self.module.course_id:
+            self.course = self.module.course
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f'{self.course.title} - {self.title}'
@@ -143,7 +175,10 @@ class ActivityLog(models.Model):
 
 class Question(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='questions', verbose_name='Курс')
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='questions', null=True, blank=True)
     text = models.TextField(verbose_name='Текст вопроса')
+    is_multiple = models.BooleanField(default=False)
+    explanation = models.TextField(blank=True)
 
     def __str__(self):
         return f'{self.course.title} - {self.text[:50]}'
@@ -156,6 +191,35 @@ class Choice(models.Model):
 
     def __str__(self):
         return self.text
+
+
+class QuizConfig(models.Model):
+    lesson = models.OneToOneField(Lesson, on_delete=models.CASCADE, related_name='quiz_config')
+    passing_score_percentage = models.IntegerField(default=80)
+    max_attempts = models.IntegerField(default=3)
+    penalty_hours = models.IntegerField(default=24)
+    time_limit_minutes = models.IntegerField(default=0, help_text='0 = без ограничения')
+
+    def __str__(self):
+        return f'Quiz config for lesson {self.lesson_id}'
+
+
+class LessonAttachment(models.Model):
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='attachments')
+    file = models.FileField(upload_to='lesson_attachments/')
+    original_name = models.CharField(max_length=255, blank=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-uploaded_at']
+
+    def save(self, *args, **kwargs):
+        if self.file and not self.original_name:
+            self.original_name = self.file.name.split('/')[-1]
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.original_name or f'Attachment {self.id}'
 
 
 class JobOffer(models.Model):

@@ -5,7 +5,6 @@ import { showError } from '../utils/toast'
 import CommunityView from '../views/CommunityView.vue'
 import CourseDetailView from '../views/CourseDetailView.vue'
 import HomeView from '../views/HomeView.vue'
-import LessonEditorView from '../views/LessonEditorView.vue'
 import LessonView from '../views/LessonView.vue'
 import LoginView from '../views/LoginView.vue'
 import NotificationsView from '../views/NotificationsView.vue'
@@ -14,6 +13,7 @@ import PublicProfileView from '../views/PublicProfileView.vue'
 import QuizEditorView from '../views/QuizEditorView.vue'
 import QuizView from '../views/QuizView.vue'
 import SettingsView from '../views/SettingsView.vue'
+import TeacherCourseBuilder from '../views/TeacherCourseBuilder.vue'
 import TeacherDashboard from '../views/TeacherDashboard.vue'
 
 const routes = [
@@ -30,7 +30,7 @@ const routes = [
   {
     path: '/teacher/course/:id/lessons',
     name: 'teacher-lesson-editor',
-    component: LessonEditorView,
+    component: TeacherCourseBuilder,
     meta: { requiresTeacher: true },
   },
   {

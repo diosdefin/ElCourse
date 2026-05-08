@@ -3,10 +3,23 @@ from rest_framework.routers import DefaultRouter
 
 from .employer_views import EmployerJobOfferView, EmployerOffersListView, EmployerStudentSearchView
 from .teacher_views import (
+    GenerateFinalExamView,
+    ReorderLessonsView,
+    ReorderModulesView,
+    TeacherLessonAttachmentDetailView,
+    TeacherLessonAttachmentListCreateView,
+    TeacherLessonCreateView,
+    TeacherLessonDetailView,
     TeacherCourseDetailView,
     TeacherCourseListView,
     TeacherLessonListCreateView,
+    TeacherLessonQuestionListCreateView,
+    TeacherModuleDetailView,
+    TeacherModuleListCreateView,
+    TeacherQuestionDetailView,
+    TeacherQuizConfigView,
     TeacherQuizUpdateView,
+    TeacherUploadImageView,
 )
 from .views import (
     CheckQuizView,
@@ -67,7 +80,20 @@ urlpatterns = [
 
     path('teacher/courses/', TeacherCourseListView.as_view(), name='teacher-courses'),
     path('teacher/activity/', TeacherActivityView.as_view(), name='teacher-activity'),
+    path('teacher/modules/', TeacherModuleListCreateView.as_view(), name='teacher-modules'),
+    path('teacher/modules/<int:pk>/', TeacherModuleDetailView.as_view(), name='teacher-module-detail'),
+    path('teacher/courses/<int:course_id>/reorder-modules/', ReorderModulesView.as_view(), name='teacher-reorder-modules'),
     path('teacher/courses/<int:course_id>/lessons/', TeacherLessonListCreateView.as_view(), name='teacher-lessons'),
+    path('teacher/lessons/', TeacherLessonCreateView.as_view(), name='teacher-lesson-create'),
+    path('teacher/lessons/<int:pk>/', TeacherLessonDetailView.as_view(), name='teacher-lesson-detail'),
+    path('teacher/modules/<int:module_id>/reorder-lessons/', ReorderLessonsView.as_view(), name='teacher-reorder-lessons'),
+    path('teacher/lessons/<int:lesson_id>/quiz-config/', TeacherQuizConfigView.as_view(), name='teacher-quiz-config'),
+    path('teacher/courses/<int:course_id>/generate-final-exam/', GenerateFinalExamView.as_view(), name='teacher-generate-final-exam'),
+    path('teacher/lessons/<int:lesson_id>/attachments/', TeacherLessonAttachmentListCreateView.as_view(), name='teacher-lesson-attachments'),
+    path('teacher/attachments/<int:attachment_id>/', TeacherLessonAttachmentDetailView.as_view(), name='teacher-attachment-detail'),
+    path('teacher/upload-image/', TeacherUploadImageView.as_view(), name='teacher-upload-image'),
+    path('teacher/lessons/<int:lesson_id>/questions/', TeacherLessonQuestionListCreateView.as_view(), name='teacher-lesson-questions'),
+    path('teacher/questions/<int:pk>/', TeacherQuestionDetailView.as_view(), name='teacher-question-detail'),
     path('teacher/courses/<int:pk>/', TeacherCourseDetailView.as_view(), name='teacher-course-detail'),
     path('teacher/courses/<int:course_id>/quiz-editor/', TeacherQuizUpdateView.as_view(), name='teacher-quiz-editor'),
 

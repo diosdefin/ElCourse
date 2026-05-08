@@ -36,6 +36,7 @@ let progressSyncTimer = null
 let manifestPollTimer = null
 
 const isAuthenticated = computed(() => Boolean(localStorage.getItem('access_token')))
+const isPreviewMode = computed(() => route.query.preview === '1')
 const isManifestProcessing = computed(
   () => manifestState.value === 'pending' || manifestState.value === 'processing'
 )
@@ -100,7 +101,9 @@ const clearProgressSync = async () => {
     window.clearInterval(progressSyncTimer)
     progressSyncTimer = null
   }
-  await saveWatchProgress(true)
+  if (!isPreviewMode.value) {
+    await saveWatchProgress(true)
+  }
 }
 
 const teardownPlayer = () => {
@@ -141,7 +144,7 @@ const setupManifestPolling = () => {
 }
 
 const fetchWatchProgress = async () => {
-  if (!isAuthenticated.value) {
+  if (!isAuthenticated.value || isPreviewMode.value) {
     return
   }
 
@@ -159,7 +162,7 @@ const fetchWatchProgress = async () => {
 }
 
 const saveWatchProgress = async (force = false) => {
-  if (!isAuthenticated.value || !videoElement.value) {
+  if (!isAuthenticated.value || isPreviewMode.value || !videoElement.value) {
     return
   }
 
@@ -183,7 +186,7 @@ const saveWatchProgress = async (force = false) => {
 }
 
 const startProgressSync = () => {
-  if (!isAuthenticated.value) {
+  if (!isAuthenticated.value || isPreviewMode.value) {
     return
   }
 
@@ -349,6 +352,10 @@ const fetchManifest = async ({ keepLoading = false } = {}) => {
 }
 
 const completeLesson = async () => {
+  if (isPreviewMode.value) {
+    return
+  }
+
   if (isCompleted.value || actionLoading.value) {
     return
   }
@@ -520,7 +527,7 @@ onUnmounted(async () => {
         </div>
       </div>
 
-      <div class="border-t border-slate-700/50 bg-slate-900/20 p-8">
+      <div v-if="!isPreviewMode" class="border-t border-slate-700/50 bg-slate-900/20 p-8">
         <div class="mx-auto max-w-2xl text-center">
           <button
             class="inline-flex items-center justify-center gap-3 rounded-2xl px-10 py-4 font-bold text-white transition-all"
@@ -554,6 +561,10 @@ onUnmounted(async () => {
             {{ actionError }}
           </div>
         </div>
+      </div>
+
+      <div v-else class="border-t border-slate-700/50 bg-slate-900/20 p-6 text-center text-sm text-slate-400">
+        Preview mode: progress tracking and lesson completion are disabled.
       </div>
     </div>
   </div>
