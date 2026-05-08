@@ -1,60 +1,100 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
 
 import api from '../api'
 
 export const useAuthStore = defineStore('auth', () => {
-  // 1. Берем данные из localStorage сразу при создании стора
   const token = ref(localStorage.getItem('access_token') || null)
   const role = ref(localStorage.getItem('user_role') || null)
+  const user = ref(null)
 
-  // 2. Умная проверка авторизации
-  const isAuthenticated = computed(() => !!token.value)
-
-  // 3. Геттеры для ролей (теперь они точно видят правильную переменную)
+  const isAuthenticated = computed(() => Boolean(token.value))
   const isStudent = computed(() => role.value === 'student')
   const isTeacher = computed(() => role.value === 'teacher')
   const isEmployer = computed(() => role.value === 'employer')
 
-  // 4. Функция ВХОДА
-  // Переименовал параметр в userRole, чтобы не путать с ref-переменной role
-  function login(newToken, userRole) {
+  const displayAvatar = computed(() => {
+    if (!user.value?.avatar) {
+      return null
+    }
+    return user.value.avatar.startsWith('http')
+      ? user.value.avatar
+      : `http://127.0.0.1:8000${user.value.avatar}`
+  })
+
+  const displayInitial = computed(() => {
+    if (user.value?.username) {
+      return user.value.username.charAt(0).toUpperCase()
+    }
+    return 'U'
+  })
+
+  function setUser(payload) {
+    user.value = payload ? { ...payload } : null
+    if (payload?.role) {
+      role.value = payload.role
+      localStorage.setItem('user_role', payload.role)
+    }
+  }
+
+  function login(newToken, userRole, userPayload = null) {
     token.value = newToken
-    role.value = userRole // Обновляем нашу реактивную переменную
+    role.value = userRole
 
     localStorage.setItem('access_token', newToken)
     localStorage.setItem('user_role', userRole)
 
-    // api.js теперь сам добавляет Authorization
+    if (userPayload) {
+      setUser(userPayload)
+    }
   }
 
-  // 5. Функция ВЫХОДА
+  function updateUserSettings(patch) {
+    if (!user.value) {
+      user.value = {}
+    }
+    user.value = { ...user.value, ...patch }
+  }
+
   function logout() {
     token.value = null
     role.value = null
+    user.value = null
     localStorage.removeItem('access_token')
     localStorage.removeItem('refresh_token')
     localStorage.removeItem('user_role')
-    // api.js теперь сам убирает Authorization
     window.location.href = '/login'
   }
 
-  // 6. Функция ИНИЦИАЛИЗАЦИИ
-  function initialize() {
-    if (token.value) {
-      // api.js теперь сам добавляет Authorization
+  async function initialize() {
+    if (!token.value) {
+      return
+    }
+
+    try {
+      const response = await api.get('/users/me/', {
+        withCredentials: true,
+      })
+      setUser(response.data)
+    } catch {
+      logout()
     }
   }
 
   return {
     token,
     role,
+    user,
     isAuthenticated,
     isStudent,
     isTeacher,
     isEmployer,
+    displayAvatar,
+    displayInitial,
+    setUser,
     login,
+    updateUserSettings,
     logout,
-    initialize
+    initialize,
   }
 })

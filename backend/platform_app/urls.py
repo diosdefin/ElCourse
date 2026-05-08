@@ -12,6 +12,7 @@ from .views import (
     CheckQuizView,
     CommunityView,
     CompleteLessonView,
+    ChangePasswordView,
     CourseDetailAPIView,
     CourseViewSet,
     FriendToggleView,
@@ -29,6 +30,8 @@ from .views import (
     ResumeExportView,
     SkillViewSet,
     StudentJobOffersView,
+    TeacherActivityView,
+    UserSettingsView,
     UserActivityView,
     UserProfileView,
 )
@@ -42,6 +45,9 @@ urlpatterns = [
 
     path('register/', RegisterView.as_view(), name='register'),
     path('me/', UserProfileView.as_view(), name='user-profile'),
+    path('users/me/', UserProfileView.as_view(), name='users-me'),
+    path('users/settings/', UserSettingsView.as_view(), name='user-settings'),
+    path('users/change-password/', ChangePasswordView.as_view(), name='user-change-password'),
     path('me/activity/', UserActivityView.as_view(), name='user-activity'),
     path('users/<str:username>/', PublicProfileView.as_view(), name='public-profile'),
     path('users/<str:username>/activity/', PublicUserActivityView.as_view(), name='public-user-activity'),
@@ -60,6 +66,7 @@ urlpatterns = [
     path('resume/export/', ResumeExportView.as_view(), name='resume-export'),
 
     path('teacher/courses/', TeacherCourseListView.as_view(), name='teacher-courses'),
+    path('teacher/activity/', TeacherActivityView.as_view(), name='teacher-activity'),
     path('teacher/courses/<int:course_id>/lessons/', TeacherLessonListCreateView.as_view(), name='teacher-lessons'),
     path('teacher/courses/<int:pk>/', TeacherCourseDetailView.as_view(), name='teacher-course-detail'),
     path('teacher/courses/<int:course_id>/quiz-editor/', TeacherQuizUpdateView.as_view(), name='teacher-quiz-editor'),

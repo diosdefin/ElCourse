@@ -13,6 +13,7 @@ import ProfileView from '../views/ProfileView.vue'
 import PublicProfileView from '../views/PublicProfileView.vue'
 import QuizEditorView from '../views/QuizEditorView.vue'
 import QuizView from '../views/QuizView.vue'
+import SettingsView from '../views/SettingsView.vue'
 import TeacherDashboard from '../views/TeacherDashboard.vue'
 
 const routes = [
@@ -22,6 +23,7 @@ const routes = [
   { path: '/community', name: 'community', component: CommunityView },
   { path: '/user/:username', name: 'public-profile', component: PublicProfileView },
   { path: '/profile', name: 'profile', component: ProfileView, meta: { requiresAuth: true } },
+  { path: '/settings', name: 'settings', component: SettingsView, meta: { requiresAuth: true } },
   { path: '/course/:id', name: 'course-detail', component: CourseDetailView },
   { path: '/course/:courseId/lesson/:lessonId', name: 'lesson-detail', component: LessonView },
   { path: '/course/:id/quiz', name: 'course-quiz', component: QuizView },

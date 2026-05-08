@@ -13,6 +13,27 @@ export const setUnauthorizedHandler = (handler) => {
   unauthorizedRedirectHandler = typeof handler === 'function' ? handler : null
 }
 
+export const getTeacherActivity = (year) =>
+  api.get('/teacher/activity/', {
+    params: { year },
+  })
+
+export const getUserSettings = () =>
+  api.get('/users/settings/', {
+    withCredentials: true,
+  })
+
+export const updateUserSettings = (payload, isMultipart = false) =>
+  api.patch('/users/settings/', payload, {
+    withCredentials: true,
+    headers: isMultipart ? { 'Content-Type': 'multipart/form-data' } : undefined,
+  })
+
+export const changePassword = (payload) =>
+  api.post('/users/change-password/', payload, {
+    withCredentials: true,
+  })
+
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('access_token')

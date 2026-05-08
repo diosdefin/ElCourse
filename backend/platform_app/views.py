@@ -3,8 +3,9 @@ import os
 from datetime import date, timedelta
 from pathlib import Path
 
+from django.contrib.auth import update_session_auth_hash
 from django.conf import settings
-from django.db.models import Q, Sum
+from django.db.models import F, Q, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.template.loader import get_template
@@ -32,9 +33,13 @@ from .serializers import (
     PublicProfileSerializer,
     RegisterSerializer,
     SkillSerializer,
+    UserSettingsSerializer,
     UserProfileSerializer,
 )
 from .tasks import convert_to_hls
+
+
+MAX_DAILY_ACTIVITY_COUNT = 10
 
 
 def record_daily_activity(user, action_type):
@@ -46,21 +51,31 @@ def record_daily_activity(user, action_type):
         defaults={'count': 1},
     )
     if not created:
-        activity.count += 1
-        activity.save(update_fields=['count'])
+        ActivityLog.objects.filter(pk=activity.pk, count__lt=MAX_DAILY_ACTIVITY_COUNT).update(
+            count=F('count') + 1
+        )
+        activity.refresh_from_db(fields=['count'])
     return activity
 
 
-def get_yearly_activity_queryset(user, year):
+def get_yearly_activity_queryset(user, year, action_types=None):
     start_date = date(year, 1, 1)
     end_date = date(year, 12, 31)
-    return (
-        ActivityLog.objects
-        .filter(user=user, date__range=(start_date, end_date))
-        .values('date')
-        .annotate(count=Sum('count'))
-        .order_by('date')
-    )
+    queryset = ActivityLog.objects.filter(user=user, date__range=(start_date, end_date))
+    if action_types:
+        queryset = queryset.filter(action_type__in=action_types)
+    return queryset.values('date').annotate(count=Sum('count')).order_by('date')
+
+
+def get_activity_year(request, default_year=None):
+    requested_year = request.query_params.get('year')
+    if requested_year is None:
+        return default_year or timezone.localdate().year
+
+    try:
+        return int(requested_year)
+    except (TypeError, ValueError):
+        return None
 
 
 class ResumeExportView(APIView):
@@ -184,6 +199,8 @@ class LessonVideoUploadView(APIView):
         video_asset.m3u8_url = ''
         video_asset.error_message = ''
         video_asset.save(update_fields=['status', 'm3u8_url', 'error_message', 'updated_at'])
+        if request.user.role == User.IS_TEACHER:
+            record_daily_activity(request.user, ActivityLog.ACTION_VIDEO_UPLOADED)
 
         task = convert_to_hls.delay(lesson.id, str(source_path))
 
@@ -259,15 +276,49 @@ class UserActivityView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        requested_year = request.query_params.get('year')
+        if requested_year is not None:
+            year = get_activity_year(request)
+            if year is None:
+                return Response({'detail': 'Параметр year должен быть числом.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            serializer = ActivityDaySerializer(
+                get_yearly_activity_queryset(request.user, year, ActivityLog.STUDENT_ACTION_TYPES),
+                many=True,
+            )
+            return Response(serializer.data)
+
         since_date = timezone.localdate() - timedelta(days=364)
         activity = (
             ActivityLog.objects
-            .filter(user=request.user, date__gte=since_date)
+            .filter(
+                user=request.user,
+                date__gte=since_date,
+                action_type__in=ActivityLog.STUDENT_ACTION_TYPES,
+            )
             .values('date')
             .annotate(count=Sum('count'))
             .order_by('date')
         )
         serializer = ActivityDaySerializer(activity, many=True)
+        return Response(serializer.data)
+
+
+class TeacherActivityView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role != User.IS_TEACHER and not request.user.is_staff:
+            return Response({'detail': 'Только преподаватели могут просматривать активность автора.'}, status=status.HTTP_403_FORBIDDEN)
+
+        year = get_activity_year(request)
+        if year is None:
+            return Response({'detail': 'Параметр year должен быть числом.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = ActivityDaySerializer(
+            get_yearly_activity_queryset(request.user, year, ActivityLog.TEACHER_ACTION_TYPES),
+            many=True,
+        )
         return Response(serializer.data)
 
 
@@ -306,7 +357,10 @@ class PublicUserActivityView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        serializer = ActivityDaySerializer(get_yearly_activity_queryset(profile_user, year), many=True)
+        serializer = ActivityDaySerializer(
+            get_yearly_activity_queryset(profile_user, year, ActivityLog.STUDENT_ACTION_TYPES),
+            many=True,
+        )
         return Response(serializer.data)
 
 
@@ -502,6 +556,51 @@ class JobOfferUpdateView(generics.UpdateAPIView):
 class SkillViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Skill.objects.all()
     serializer_class = SkillSerializer
+
+
+class UserSettingsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        serializer = UserSettingsSerializer(request.user, context={'request': request})
+        return Response(serializer.data)
+
+    def patch(self, request):
+        serializer = UserSettingsSerializer(
+            request.user,
+            data=request.data,
+            partial=True,
+            context={'request': request},
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        old_password = request.data.get('old_password', '')
+        new_password = request.data.get('new_password', '')
+        confirm_password = request.data.get('confirm_password', '')
+
+        if not request.user.check_password(old_password):
+            return Response({'old_password': ['Старый пароль указан неверно.']}, status=status.HTTP_400_BAD_REQUEST)
+
+        if len(new_password) < 8:
+            return Response({'new_password': ['Новый пароль должен содержать минимум 8 символов.']}, status=status.HTTP_400_BAD_REQUEST)
+
+        if old_password == new_password:
+            return Response({'new_password': ['Новый пароль не должен совпадать со старым.']}, status=status.HTTP_400_BAD_REQUEST)
+
+        if new_password != confirm_password:
+            return Response({'confirm_password': ['Подтверждение пароля не совпадает.']}, status=status.HTTP_400_BAD_REQUEST)
+
+        request.user.set_password(new_password)
+        request.user.save(update_fields=['password'])
+        update_session_auth_hash(request, request.user)
+        return Response({'detail': 'Пароль успешно изменен.'})
 
 
 class ProfileUpdateView(APIView):

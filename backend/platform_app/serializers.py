@@ -213,6 +213,22 @@ class UserProfileSerializer(ViewerContextMixin, serializers.ModelSerializer):
         return LearningSkillSerializer(build_learning_skills(obj), many=True).data
 
 
+class UserSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            'username',
+            'email',
+            'avatar',
+            'bio',
+            'location',
+            'telegram',
+            'github',
+            'linkedin',
+        ]
+        read_only_fields = ['username', 'email']
+
+
 class PublicProfileSerializer(ViewerContextMixin, serializers.ModelSerializer):
     avatar = serializers.SerializerMethodField()
     skills = SkillSerializer(many=True, read_only=True)

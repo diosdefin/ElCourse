@@ -76,10 +76,12 @@ const handleLogin = async () => {
     localStorage.setItem('access_token', access)
     localStorage.setItem('refresh_token', refresh)
 
-    const userResponse = await api.get('/me/')
+    const userResponse = await api.get('/users/me/', {
+      withCredentials: true,
+    })
     const userRole = userResponse.data.role
 
-    authStore.login(access, userRole)
+    authStore.login(access, userRole, userResponse.data)
     showSuccess('Вы успешно вошли в аккаунт.')
 
     if (userRole === 'teacher') {

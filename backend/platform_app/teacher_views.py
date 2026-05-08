@@ -4,8 +4,9 @@ from .serializers import LessonSerializer
 from rest_framework.views import APIView
 from rest_framework import generics, status
 from rest_framework.response import Response
-from .models import Course, Question, Choice, Lesson
+from .models import ActivityLog, Course, Question, Choice, Lesson
 from .serializers import CourseSerializer, QuestionSerializer
+from .views import record_daily_activity
 
 
 class TeacherLessonListCreateView(generics.ListCreateAPIView):
@@ -23,6 +24,7 @@ class TeacherLessonListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         course = Course.objects.get(id=self.kwargs['course_id'], author=self.request.user)
         serializer.save(course=course)
+        record_daily_activity(self.request.user, ActivityLog.ACTION_LESSON_CREATED)
 
 
 class TeacherCourseListView(generics.ListCreateAPIView):
@@ -42,6 +44,7 @@ class TeacherCourseListView(generics.ListCreateAPIView):
         
         # 1. Сохраняем сам курс в базу
         course = serializer.save(author=self.request.user)
+        record_daily_activity(self.request.user, ActivityLog.ACTION_COURSE_CREATED)
         
         # 2. Вытаскиваем все галочки навыков из FormData (getlist собирает их в массив)
         skills = self.request.data.getlist('skills_covered')
@@ -88,5 +91,6 @@ class TeacherQuizUpdateView(APIView):
                 text=choice_data['text'],
                 is_correct=choice_data['is_correct']
             )
+        record_daily_activity(request.user, ActivityLog.ACTION_QUIZ_UPDATED)
         
         return Response({"message": "Вопрос добавлен"}, status=status.HTTP_201_CREATED)

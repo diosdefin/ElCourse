@@ -1,13 +1,15 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
 import api from '../api'
 import { showError, showSuccess } from '../utils/toast'
 
 const API_BASE_URL = 'http://127.0.0.1:8000'
+const WEEKDAY_LABELS = ['Вс', '', 'Вт', '', 'Чт', '', 'Сб']   // НОВОЕ
 
 const userData = ref(null)
 const activityData = ref([])
+const selectedYear = ref(new Date().getFullYear())            // НОВОЕ
 const loading = ref(true)
 const pageError = ref('')
 const activityError = ref('')
@@ -17,33 +19,9 @@ const editData = ref({
   bio: '',
   avatarFile: null,
 })
+const syncingYear = ref(false)                                 // НОВОЕ
 
-
-
-const getAvatarUrl = (avatar) => {
-  if (!avatar) {
-    return null
-  }
-
-  return avatar.startsWith('http') ? avatar : `${API_BASE_URL}${avatar}`
-}
-
-const getActivityLevelClass = (count) => {
-  if (count >= 5) {
-    return 'bg-emerald-400'
-  }
-
-  if (count >= 3) {
-    return 'bg-emerald-600'
-  }
-
-  if (count >= 1) {
-    return 'bg-emerald-900'
-  }
-
-  return 'bg-slate-800'
-}
-
+// ========== НОВЫЕ ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
 const formatDateToIso = (date) => {
   const year = date.getFullYear()
   const month = `${date.getMonth() + 1}`.padStart(2, '0')
@@ -51,67 +29,130 @@ const formatDateToIso = (date) => {
   return `${year}-${month}-${day}`
 }
 
+const getActivityLevelClass = (count, inYear = true) => {
+  if (!inYear) return 'bg-slate-950/20'
+  if (count >= 5) return 'bg-emerald-400'
+  if (count >= 3) return 'bg-emerald-600'
+  if (count >= 1) return 'bg-emerald-900'
+  return 'bg-slate-800'
+}
+
+const monthFormatter = new Intl.DateTimeFormat('ru-RU', { month: 'short' })
+// ====================================================
+
+const getAvatarUrl = (avatar) => {
+  if (!avatar) return null
+  return avatar.startsWith('http') ? avatar : `${API_BASE_URL}${avatar}`
+}
+
 const completedSkills = computed(() => userData.value?.completed_skills || [])
 const learningSkills = computed(() => userData.value?.learning_skills || [])
+
+// НОВОЕ: вычисляем общее количество активностей за выбранный год
 const totalActivityCount = computed(() =>
-  activityData.value.reduce((sum, item) => sum + (item.count || 0), 0)
+  activityData.value.reduce((sum, item) => {
+    if (!item.date?.startsWith(`${selectedYear.value}-`)) return sum
+    return sum + (item.count || 0)
+  }, 0)
 )
 
+// НОВОЕ: карта дата -> количество
 const activityMap = computed(() => {
-  const entries = new Map()
+  const map = new Map()
   for (const item of activityData.value) {
-    entries.set(item.date, item.count)
+    map.set(item.date, item.count)
   }
-  return entries
+  return map
 })
 
-const activityCells = computed(() => {
-  const today = new Date()
-  today.setHours(12, 0, 0, 0)
+// НОВОЕ: построение тепловой карты (недели, ячейки, подписи месяцев)
+const heatmap = computed(() => {
+  if (!selectedYear.value) return { weeks: [], monthLabels: {} }
 
-  const startDate = new Date(today)
-  startDate.setDate(startDate.getDate() - 364)
+  const startOfYear = new Date(selectedYear.value, 0, 1)
+  const endOfYear = new Date(selectedYear.value, 11, 31)
 
-  const cells = []
-  for (let i = 0; i < 365; i += 1) {
-    const currentDate = new Date(startDate)
-    currentDate.setDate(startDate.getDate() + i)
+  const gridStart = new Date(startOfYear)
+  gridStart.setDate(gridStart.getDate() - gridStart.getDay())
 
-    const isoDate = formatDateToIso(currentDate)
-    const count = activityMap.value.get(isoDate) || 0
+  const gridEnd = new Date(endOfYear)
+  gridEnd.setDate(gridEnd.getDate() + (6 - gridEnd.getDay()))
 
-    cells.push({
-      date: isoDate,
-      count,
-      levelClass: getActivityLevelClass(count),
-      title: `${isoDate}: ${count} активностей`,
+  const weeks = []
+  const monthLabels = {}
+  let cursor = new Date(gridStart)
+  let lastMonth = ''
+  let weekIndex = 0
+
+  while (cursor <= gridEnd) {
+    const week = []
+    for (let day = 0; day < 7; day++) {
+      const currentDate = new Date(cursor)
+      const isoDate = formatDateToIso(currentDate)
+      const inYear = currentDate.getFullYear() === selectedYear.value
+      const count = inYear ? activityMap.value.get(isoDate) || 0 : 0
+      week.push({
+        date: isoDate,
+        count,
+        inYear,
+        levelClass: getActivityLevelClass(count, inYear),
+        title: inYear ? `${isoDate}: ${count} активностей` : '',
+      })
+      cursor.setDate(cursor.getDate() + 1)
+    }
+    const labelSource = week.find(item => item.inYear && item.date.endsWith('-01')) || week.find(item => item.inYear)
+    if (labelSource) {
+      const label = monthFormatter.format(new Date(labelSource.date))
+      if (label !== lastMonth) {
+        monthLabels[weekIndex] = label
+        lastMonth = label
+      }
+    }
+    weeks.push(week)
+    weekIndex++
+  }
+  return { weeks, monthLabels }
+})
+
+// НОВОЕ: список доступных лет (от года регистрации до текущего)
+const availableYears = computed(() => {
+  if (!userData.value?.registration_year) return []
+  const currentYear = new Date().getFullYear()
+  const years = []
+  for (let y = currentYear; y >= userData.value.registration_year; y--) {
+    years.push(y)
+  }
+  return years
+})
+
+// ========== ЗАГРУЗКА ПРОФИЛЯ И АКТИВНОСТИ ==========
+const fetchActivity = async () => {
+  if (!userData.value || !selectedYear.value) return
+  activityError.value = ''
+  try {
+    const response = await api.get('/me/activity/', {
+      params: { year: selectedYear.value },
     })
+    activityData.value = response.data
+  } catch (error) {
+    console.error('Ошибка загрузки активности:', error)
+    activityData.value = []
+    activityError.value = error.response?.data?.detail || 'Не удалось загрузить активность за выбранный год.'
   }
-
-  return cells
-})
+}
 
 const fetchProfile = async () => {
   loading.value = true
   pageError.value = ''
   activityError.value = ''
   try {
-    const [profileResult, activityResult] = await Promise.allSettled([
-      api.get('/me/'),
-      api.get('/me/activity/'),
-    ])
-    if (profileResult.status !== 'fulfilled') {
-      throw profileResult.reason
-    }
-    userData.value = profileResult.value.data
-    editData.value.bio = profileResult.value.data.bio || ''
-    if (activityResult.status === 'fulfilled') {
-      activityData.value = activityResult.value.data
-    } else {
-      activityData.value = []
-      activityError.value = 'График активности временно недоступен.'
-      console.error('Ошибка загрузки активности:', activityResult.reason)
-    }
+    const profileResult = await api.get('/me/')
+    userData.value = profileResult.data
+    editData.value.bio = profileResult.data.bio || ''
+    // Загружаем активность за текущий год
+    syncingYear.value = true
+    await fetchActivity()
+    syncingYear.value = false
   } catch (error) {
     console.error('Ошибка загрузки профиля:', error)
     pageError.value = 'Не удалось загрузить профиль. Попробуйте обновить страницу.'
@@ -120,11 +161,9 @@ const fetchProfile = async () => {
   }
 }
 
+// ========== РЕДАКТИРОВАНИЕ ПРОФИЛЯ ==========
 const startEditing = () => {
-  if (!userData.value) {
-    return
-  }
-
+  if (!userData.value) return
   isEditing.value = true
   editData.value.bio = userData.value.bio || ''
   editData.value.avatarFile = null
@@ -143,15 +182,11 @@ const saveProfile = async () => {
       formData.append('avatar', editData.value.avatarFile)
     }
     const response = await api.patch('/profile/update/', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+      headers: { 'Content-Type': 'multipart/form-data' },
     })
     if (userData.value) {
       userData.value.bio = response.data.bio
-      if (response.data.avatar) {
-        userData.value.avatar = response.data.avatar
-      }
+      if (response.data.avatar) userData.value.avatar = response.data.avatar
     }
     isEditing.value = false
     showSuccess('Профиль успешно обновлен.')
@@ -171,9 +206,7 @@ const cancelEditing = () => {
 
 const downloadResume = async () => {
   try {
-    const response = await api.get('/resume/export/', {
-      responseType: 'blob',
-    })
+    const response = await api.get('/resume/export/', { responseType: 'blob' })
     const url = window.URL.createObjectURL(new Blob([response.data]))
     const link = document.createElement('a')
     link.href = url
@@ -187,6 +220,13 @@ const downloadResume = async () => {
     showError('Не удалось сгенерировать резюме.')
   }
 }
+
+// Следим за сменой года
+watch(selectedYear, () => {
+  if (userData.value && !syncingYear.value) {
+    fetchActivity()
+  }
+})
 
 onMounted(fetchProfile)
 </script>
@@ -204,6 +244,7 @@ onMounted(fetchProfile)
   </div>
 
   <div v-else-if="userData" class="mx-auto mt-8 max-w-6xl space-y-8">
+    <!-- Шапка профиля (без изменений) -->
     <section class="overflow-hidden rounded-[2rem] border border-slate-700/50 bg-slate-800/50 shadow-xl backdrop-blur-md">
       <div class="h-36 bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.38),_transparent_35%),linear-gradient(135deg,_rgba(15,23,42,1),_rgba(30,41,59,1))]"></div>
       <div class="px-8 pb-8">
@@ -224,7 +265,6 @@ onMounted(fetchProfile)
                   {{ userData.username.charAt(0).toUpperCase() }}
                 </div>
               </div>
-
               <div v-if="isEditing" class="absolute -bottom-2 -right-2">
                 <label class="cursor-pointer rounded-full bg-indigo-600 p-2 shadow-lg transition-colors hover:bg-indigo-500">
                   <svg class="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -234,7 +274,6 @@ onMounted(fetchProfile)
                 </label>
               </div>
             </div>
-
             <div class="pb-1">
               <div class="flex items-center gap-3">
                 <h1 class="text-3xl font-bold text-slate-100">{{ userData.username }}</h1>
@@ -248,7 +287,6 @@ onMounted(fetchProfile)
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path>
                 </svg>
               </div>
-
               <p class="mt-1 font-medium text-indigo-400">
                 <template v-if="userData.role === 'student'">Студент</template>
                 <template v-else-if="userData.role === 'teacher'">Преподаватель</template>
@@ -257,7 +295,6 @@ onMounted(fetchProfile)
               <p class="mt-2 text-slate-400">{{ userData.email }}</p>
             </div>
           </div>
-
           <div class="flex flex-wrap gap-3">
             <button
               v-if="userData.role === 'student' && !isEditing"
@@ -269,7 +306,6 @@ onMounted(fetchProfile)
               </svg>
               Скачать резюме (PDF)
             </button>
-
             <button
               v-if="!isEditing"
               class="flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 font-bold text-white shadow-lg shadow-emerald-500/25 transition-all hover:bg-emerald-500"
@@ -282,14 +318,12 @@ onMounted(fetchProfile)
             </button>
           </div>
         </div>
-
+        <!-- Блок "О себе" -->
         <div class="mt-6 rounded-2xl border border-slate-700/50 bg-slate-900/50 p-5">
           <h3 class="mb-3 text-sm font-semibold text-slate-400">О себе</h3>
-
           <div v-if="!isEditing">
             <p class="leading-relaxed text-slate-300">{{ userData.bio || 'Информация не заполнена' }}</p>
           </div>
-
           <div v-else>
             <textarea
               v-model="editData.bio"
@@ -299,71 +333,116 @@ onMounted(fetchProfile)
             ></textarea>
           </div>
         </div>
-
         <div v-if="isEditing" class="mt-4 flex gap-3">
-          <button
-            class="rounded-lg bg-green-600 px-6 py-2 font-semibold text-white transition-colors hover:bg-green-500 disabled:opacity-60"
-            :disabled="saving"
-            @click="saveProfile"
-          >
+          <button class="rounded-lg bg-green-600 px-6 py-2 font-semibold text-white transition-colors hover:bg-green-500 disabled:opacity-60" :disabled="saving" @click="saveProfile">
             {{ saving ? 'Сохраняем...' : 'Сохранить' }}
           </button>
-          <button
-            class="rounded-lg bg-gray-600 px-6 py-2 font-semibold text-white transition-colors hover:bg-gray-500"
-            @click="cancelEditing"
-          >
+          <button class="rounded-lg bg-gray-600 px-6 py-2 font-semibold text-white transition-colors hover:bg-gray-500" @click="cancelEditing">
             Отмена
           </button>
         </div>
       </div>
     </section>
 
-    <section
-      v-if="userData.role === 'student'"
-      class="rounded-[2rem] border border-slate-700/50 bg-slate-800/50 p-8 shadow-xl backdrop-blur-md"
-    >
-      <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <h2 class="text-2xl font-bold text-slate-100">График активности</h2>
-          <p class="mt-2 text-sm text-slate-400">
-            Последние 365 дней обучения: завершенные уроки и успешные Quiz.
-          </p>
-        </div>
+    <!-- НОВАЯ СЕКЦИЯ ГРАФИКА АКТИВНОСТИ (как в публичном профиле) -->
+  <section
+  v-if="userData.role === 'student'"
+  class="rounded-[2rem] border border-slate-700/50 bg-slate-800/50 p-8 shadow-xl backdrop-blur-md"
+>
+  <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+    <div>
+      <h2 class="text-2xl font-bold text-slate-100">График активности</h2>
+      <p class="mt-2 text-sm text-slate-400">
+        Годовой heatmap завершенных уроков и успешных Quiz.
+      </p>
+    </div>
 
-        <div class="rounded-2xl border border-slate-700 bg-slate-900/50 px-4 py-3 text-right">
-          <p class="text-xs uppercase tracking-[0.25em] text-slate-500">Всего активностей</p>
-          <p class="mt-2 text-2xl font-black text-white">{{ totalActivityCount }}</p>
-        </div>
-      </div>
+    <div class="rounded-2xl border border-slate-700 bg-slate-900/50 px-4 py-3 text-right">
+      <p class="text-xs uppercase tracking-[0.25em] text-slate-500">Активностей за год</p>
+      <p class="mt-2 text-2xl font-black text-white">{{ totalActivityCount }}</p>
+    </div>
+  </div>
 
-      <div class="mt-6 rounded-3xl border border-slate-700/50 bg-slate-900/50 p-4">
-        <div class="overflow-x-auto pb-2">
-          <div class="grid min-w-max grid-flow-col grid-rows-7 gap-1">
+  <div class="mt-6 grid gap-6 xl:grid-cols-[1fr,92px]">
+    <!-- Основная сетка -->
+    <div class="rounded-3xl border border-slate-700/50 bg-slate-900/50 p-4">
+      <div class="overflow-x-auto pb-2">
+        <div class="inline-flex min-w-max gap-3">
+          <div class="pt-7 text-[10px] text-slate-500">
             <div
-              v-for="cell in activityCells"
-              :key="cell.date"
-              class="h-3.5 w-3.5 rounded-[4px] transition-transform hover:scale-125"
-              :class="cell.levelClass"
-              :title="cell.title"
-            ></div>
+              v-for="(label, index) in WEEKDAY_LABELS"
+              :key="index"
+              class="flex h-4 items-center"
+            >
+              {{ label }}
+            </div>
+          </div>
+
+          <div>
+            <div class="mb-2 flex gap-1 text-[10px] uppercase tracking-[0.2em] text-slate-500">
+              <div
+                v-for="(week, index) in heatmap.weeks"
+                :key="`month-${index}`"
+                class="w-4"
+              >
+                {{ heatmap.monthLabels[index] || '' }}
+              </div>
+            </div>
+
+            <div class="flex gap-1">
+              <div
+                v-for="(week, weekIndex) in heatmap.weeks"
+                :key="`week-${weekIndex}`"
+                class="flex flex-col gap-1"
+              >
+                <div
+                  v-for="day in week"
+                  :key="day.date"
+                  class="h-4 w-4 rounded-[4px] transition-transform hover:scale-125"
+                  :class="day.levelClass"
+                  :title="day.title"
+                ></div>
+              </div>
+            </div>
           </div>
         </div>
-
-        <div class="mt-4 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-500">
-          <p>Меньше</p>
-          <div class="flex items-center gap-2">
-            <span class="h-3 w-3 rounded-[4px] bg-slate-800"></span>
-            <span class="h-3 w-3 rounded-[4px] bg-emerald-900"></span>
-            <span class="h-3 w-3 rounded-[4px] bg-emerald-600"></span>
-            <span class="h-3 w-3 rounded-[4px] bg-emerald-400"></span>
-          </div>
-          <p>Больше</p>
-        </div>
-
-        <p v-if="activityError" class="mt-4 text-sm text-amber-400">{{ activityError }}</p>
       </div>
-    </section>
 
+      <div class="mt-4 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-500">
+        <p>Меньше</p>
+        <div class="flex items-center gap-2">
+          <span class="h-3 w-3 rounded-[4px] bg-slate-800"></span>
+          <span class="h-3 w-3 rounded-[4px] bg-emerald-900"></span>
+          <span class="h-3 w-3 rounded-[4px] bg-emerald-600"></span>
+          <span class="h-3 w-3 rounded-[4px] bg-emerald-400"></span>
+        </div>
+        <p>Больше</p>
+      </div>
+
+      <p v-if="activityError" class="mt-4 text-sm text-amber-400">{{ activityError }}</p>
+    </div>
+
+    <!-- Блок выбора года (справа, как в публичном профиле) -->
+    <div class="rounded-3xl border border-slate-700/50 bg-slate-900/50 p-3">
+      <p class="px-2 text-xs font-bold uppercase tracking-[0.25em] text-slate-500">Год</p>
+      <div class="mt-3 space-y-2">
+        <button
+          v-for="year in availableYears"
+          :key="year"
+          class="w-full rounded-2xl px-3 py-2 text-sm font-bold transition"
+          :class="selectedYear === year
+            ? 'bg-white text-slate-950'
+            : 'bg-slate-950 text-slate-300 hover:bg-slate-800 hover:text-white'"
+          @click="selectedYear = year"
+        >
+          {{ year }}
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+    <!-- Секция навыков (без изменений) -->
     <section
       v-if="userData.role === 'student'"
       class="rounded-[2rem] border border-slate-700/50 bg-slate-800/50 p-8 shadow-xl backdrop-blur-md"
@@ -371,7 +450,6 @@ onMounted(fetchProfile)
       <h2 class="border-b border-slate-700 pb-4 text-2xl font-bold text-slate-100">
         Цифровой паспорт навыков
       </h2>
-
       <div class="mt-8 grid gap-6 xl:grid-cols-2">
         <div class="rounded-3xl border border-slate-700/50 bg-slate-900/50 p-6">
           <div class="flex items-center justify-between gap-3">
@@ -383,13 +461,8 @@ onMounted(fetchProfile)
               {{ learningSkills.length }}
             </span>
           </div>
-
           <div v-if="learningSkills.length" class="mt-6 space-y-4">
-            <div
-              v-for="skill in learningSkills"
-              :key="`${skill.course_name}-${skill.id}`"
-              class="rounded-2xl border border-slate-700 bg-slate-950/70 p-4"
-            >
+            <div v-for="skill in learningSkills" :key="`${skill.course_name}-${skill.id}`" class="rounded-2xl border border-slate-700 bg-slate-950/70 p-4">
               <div class="mb-3 flex items-start justify-between gap-3">
                 <div>
                   <p class="font-bold text-slate-100">{{ skill.name }}</p>
@@ -397,24 +470,15 @@ onMounted(fetchProfile)
                 </div>
                 <span class="text-sm font-bold text-emerald-300">{{ skill.progress_percentage }}%</span>
               </div>
-
               <div class="h-3 overflow-hidden rounded-full bg-slate-800">
-                <div
-                  class="h-full rounded-full bg-gradient-to-r from-indigo-600 to-emerald-500 transition-all duration-500"
-                  :style="{ width: `${skill.progress_percentage}%` }"
-                ></div>
+                <div class="h-full rounded-full bg-gradient-to-r from-indigo-600 to-emerald-500 transition-all duration-500" :style="{ width: `${skill.progress_percentage}%` }"></div>
               </div>
             </div>
           </div>
-
-          <div
-            v-else
-            class="mt-6 rounded-2xl border border-dashed border-slate-700 p-6 text-sm text-slate-500"
-          >
+          <div v-else class="mt-6 rounded-2xl border border-dashed border-slate-700 p-6 text-sm text-slate-500">
             Вы пока не начали курс, который открыл бы новые навыки в процессе изучения.
           </div>
         </div>
-
         <div class="rounded-3xl border border-slate-700/50 bg-slate-900/50 p-6">
           <div class="flex items-center justify-between gap-3">
             <div>
@@ -425,24 +489,15 @@ onMounted(fetchProfile)
               {{ completedSkills.length }}
             </span>
           </div>
-
           <div v-if="completedSkills.length" class="mt-6 flex flex-wrap gap-3">
-            <span
-              v-for="skill in completedSkills"
-              :key="skill.id"
-              class="flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-sm font-bold text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
-            >
+            <span v-for="skill in completedSkills" :key="skill.id" class="flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-sm font-bold text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.1)]">
               <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
               </svg>
               {{ skill.name }}
             </span>
           </div>
-
-          <div
-            v-else
-            class="mt-6 rounded-2xl border border-dashed border-slate-700 p-6 text-sm text-slate-500"
-          >
+          <div v-else class="mt-6 rounded-2xl border border-dashed border-slate-700 p-6 text-sm text-slate-500">
             Подтвержденных навыков пока нет. Завершайте уроки и проходите Quiz, чтобы заполнять цифровой паспорт.
           </div>
         </div>

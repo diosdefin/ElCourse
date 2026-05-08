@@ -17,6 +17,10 @@ class User(AbstractUser):
     skills = models.ManyToManyField('Skill', blank=True, related_name='users', verbose_name='Навыки пользователя')
     friends = models.ManyToManyField('self', blank=True, symmetrical=True)
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
+    telegram = models.CharField(max_length=255, blank=True, null=True)
+    github = models.CharField(max_length=255, blank=True, null=True)
+    linkedin = models.CharField(max_length=255, blank=True, null=True)
+    location = models.CharField(max_length=255, blank=True, null=True)
     bio = models.TextField(max_length=500, blank=True, verbose_name='О себе')
     is_verified = models.BooleanField(default=False, verbose_name='Верифицирован')
 
@@ -94,8 +98,28 @@ class LessonVideo(models.Model):
 class ActivityLog(models.Model):
     ACTION_LESSON_COMPLETED = 'lesson_completed'
     ACTION_QUIZ_PASSED = 'quiz_passed'
+    ACTION_COURSE_CREATED = 'course_created'
+    ACTION_LESSON_CREATED = 'lesson_created'
+    ACTION_VIDEO_UPLOADED = 'video_uploaded'
+    ACTION_QUIZ_UPDATED = 'quiz_updated'
+
+    STUDENT_ACTION_TYPES = (
+        ACTION_LESSON_COMPLETED,
+        ACTION_QUIZ_PASSED,
+    )
+
+    TEACHER_ACTION_TYPES = (
+        ACTION_COURSE_CREATED,
+        ACTION_LESSON_CREATED,
+        ACTION_VIDEO_UPLOADED,
+        ACTION_QUIZ_UPDATED,
+    )
 
     ACTION_CHOICES = [
+        (ACTION_COURSE_CREATED, 'Course created'),
+        (ACTION_LESSON_CREATED, 'Lesson created'),
+        (ACTION_VIDEO_UPLOADED, 'HLS video uploaded'),
+        (ACTION_QUIZ_UPDATED, 'Quiz updated'),
         (ACTION_LESSON_COMPLETED, 'Урок завершен'),
         (ACTION_QUIZ_PASSED, 'Квиз пройден'),
     ]
@@ -108,6 +132,10 @@ class ActivityLog(models.Model):
     class Meta:
         ordering = ['date', 'action_type']
         unique_together = ('user', 'date', 'action_type')
+        indexes = [
+            models.Index(fields=['user', 'date']),
+            models.Index(fields=['user', 'date', 'action_type']),
+        ]
 
     def __str__(self):
         return f'{self.user.username} - {self.date} - {self.action_type} ({self.count})'
