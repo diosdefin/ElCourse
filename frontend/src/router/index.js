@@ -4,9 +4,11 @@ import { showError } from '../utils/toast'
 
 import CommunityView from '../views/CommunityView.vue'
 import CourseDetailView from '../views/CourseDetailView.vue'
+import CoursePlayView from '../views/CoursePlayView.vue'
 import HomeView from '../views/HomeView.vue'
 import LessonView from '../views/LessonView.vue'
 import LoginView from '../views/LoginView.vue'
+import RegisterView from '../views/RegisterView.vue'
 import NotificationsView from '../views/NotificationsView.vue'
 import ProfileView from '../views/ProfileView.vue'
 import PublicProfileView from '../views/PublicProfileView.vue'
@@ -17,7 +19,7 @@ import TeacherCourseBuilder from '../views/TeacherCourseBuilder.vue'
 import TeacherDashboard from '../views/TeacherDashboard.vue'
 
 const routes = [
-  { path: '/register', name: 'register', component: LoginView },
+  { path: '/register', name: 'register', component: RegisterView },
   { path: '/', name: 'home', component: HomeView },
   { path: '/login', name: 'login', component: LoginView },
   { path: '/community', name: 'community', component: CommunityView },
@@ -25,6 +27,7 @@ const routes = [
   { path: '/profile', name: 'profile', component: ProfileView, meta: { requiresAuth: true } },
   { path: '/settings', name: 'settings', component: SettingsView, meta: { requiresAuth: true } },
   { path: '/course/:id', name: 'course-detail', component: CourseDetailView },
+  { path: '/course/:id/play', name: 'course-play', component: CoursePlayView, meta: { requiresAuth: true } },
   { path: '/course/:courseId/lesson/:lessonId', name: 'lesson-detail', component: LessonView },
   { path: '/course/:id/quiz', name: 'course-quiz', component: QuizView },
   {

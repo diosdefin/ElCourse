@@ -1,101 +1,212 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 import api from '../api'
+import { showError } from '../utils/toast'
 
 const route = useRoute()
+const router = useRouter()
 const course = ref(null)
 const loading = ref(true)
+const hasLessonFlow = ref(false)
 
-onMounted(async () => {
+const userRole = computed(() => localStorage.getItem('user_role') || '')
+const canEditCourse = computed(() => ['teacher', 'admin'].includes(userRole.value))
+const lessons = computed(() => course.value?.lessons || [])
+const lessonCount = computed(() => lessons.value.length)
+const completedCount = computed(() => lessons.value.filter((lesson) => lesson.is_completed).length)
+const progressPercentage = computed(() => Number(course.value?.progress_percentage || 0))
+
+const primaryActionLabel = computed(() => {
+  if (!hasLessonFlow.value) return 'Материалы пока недоступны'
+  if (progressPercentage.value >= 100) return 'Открыть курс'
+  if (progressPercentage.value > 0 || completedCount.value > 0) return 'Продолжить обучение'
+  return 'Начать обучение'
+})
+
+const loadCourse = async () => {
+  loading.value = true
   try {
-    const token = localStorage.getItem('access_token')
     const response = await api.get(`/courses/${route.params.id}/`)
     course.value = response.data
+    hasLessonFlow.value = Array.isArray(response.data?.lessons) && response.data.lessons.length > 0
   } catch (error) {
-    console.error('Ошибка загрузки курса:', error)
+    console.error('Не удалось загрузить курс', error)
+    showError('Не удалось загрузить страницу курса.')
   } finally {
     loading.value = false
   }
-})
+}
+
+onMounted(loadCourse)
 </script>
 
 <template>
-  <div v-if="loading" class="flex justify-center py-20"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div></div>
-
-  <div v-else-if="course" class="max-w-5xl mx-auto mt-8 px-4">
-    <div class="bg-slate-800/40 backdrop-blur-md rounded-3xl shadow-xl border border-slate-700/50 overflow-hidden mb-12">
-      <div class="h-40 bg-gradient-to-r from-indigo-900 to-slate-800 relative"></div>
-      <div class="p-8 relative">
-        <h1 class="text-4xl font-black text-slate-100 mb-2">{{ course.title }}</h1>
-        <p class="text-indigo-400 font-medium mb-6">Автор: {{ course.author_name }}</p>
-        <p class="text-slate-400 leading-relaxed max-w-3xl mb-8">{{ course.description }}</p>
-        <div class="flex flex-wrap gap-2">
-          <span v-for="skill in course.skills_covered" :key="skill.id" 
-                class="px-3 py-1 bg-indigo-500/10 text-indigo-300 rounded-lg text-xs font-bold border border-indigo-500/20">
-            {{ skill.name }}
-          </span>
-        </div>
-      </div>
+  <div v-if="loading" class="mx-auto flex h-[65vh] max-w-6xl items-center justify-center px-4">
+    <div class="rounded-3xl border border-slate-800 bg-slate-900/70 px-8 py-7 text-center shadow-2xl shadow-slate-950/20">
+      <div class="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-slate-700 border-t-indigo-400"></div>
+      <p class="mt-4 text-sm font-medium text-slate-400">Загружаем информацию о курсе...</p>
     </div>
+  </div>
 
-    <h2 class="text-2xl font-bold text-slate-100 mb-8 flex items-center gap-3">
-      Программа обучения
-      <span class="text-sm font-normal text-slate-500 bg-slate-800 px-3 py-1 rounded-full">{{ course.lessons.length }} уроков</span>
-    </h2>
-    
-    <div class="space-y-4">
-      <div v-for="(lesson, index) in course.lessons" :key="lesson.id" 
-           class="group bg-slate-800/30 backdrop-blur-sm p-6 rounded-2xl border transition-all duration-300 flex justify-between items-center"
-           :class="lesson.is_completed ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-slate-700/50 hover:border-indigo-500/50 shadow-lg'">
-        
-        <div class="flex items-center gap-5">
-          <div v-if="lesson.is_completed" class="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
-            ✓
+  <div v-else-if="course" class="mx-auto mt-8 max-w-6xl px-4 pb-12">
+    <button
+      class="mb-5 inline-flex items-center gap-2 rounded-xl border border-slate-700/80 bg-slate-900/70 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:border-indigo-400/60 hover:text-white"
+      @click="router.back()"
+    >
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      Назад
+    </button>
+
+    <section class="overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-900/70 shadow-2xl shadow-slate-950/20">
+      <div class="grid lg:grid-cols-[minmax(0,1fr),360px]">
+        <div class="p-6 sm:p-8 lg:p-10">
+          <div class="mb-5 flex flex-wrap items-center gap-2">
+            <span class="rounded-full border border-indigo-400/25 bg-indigo-500/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.22em] text-indigo-200">
+              Учебный курс
+            </span>
+            <span class="rounded-full border border-slate-700 bg-slate-950/45 px-3 py-1 text-xs font-bold text-slate-400">
+              {{ lessonCount }} урок.
+            </span>
           </div>
-          <div v-else class="w-10 h-10 rounded-full bg-slate-700 text-slate-400 flex items-center justify-center font-bold">
-            {{ index + 1 }}
+
+          <h1 class="max-w-4xl text-3xl font-black leading-tight text-slate-100 sm:text-5xl">
+            {{ course.title }}
+          </h1>
+
+          <p class="mt-4 text-sm font-semibold text-slate-400">
+            Автор курса: <span class="text-slate-200">{{ course.author_name || 'Не указан' }}</span>
+          </p>
+
+          <p class="mt-6 max-w-3xl whitespace-pre-line text-base leading-8 text-slate-300">
+            {{ course.description || 'Описание курса пока не добавлено.' }}
+          </p>
+
+          <div v-if="course.skills_covered?.length" class="mt-7">
+            <p class="mb-3 text-xs font-bold uppercase tracking-[0.22em] text-slate-500">Навыки после прохождения</p>
+            <div class="flex flex-wrap gap-2">
+              <span
+                v-for="skill in course.skills_covered"
+                :key="skill.id || skill.name"
+                class="rounded-xl border border-indigo-400/20 bg-indigo-500/10 px-3 py-2 text-sm font-bold text-indigo-100"
+              >
+                {{ skill.name || skill }}
+              </span>
+            </div>
           </div>
-          
-          <div>
-            <h4 class="text-lg font-bold" :class="lesson.is_completed ? 'text-emerald-400/80' : 'text-slate-100'">
-              {{ lesson.title }}
-            </h4>
-            <span v-if="lesson.is_completed" class="text-xs text-emerald-500/70 font-medium uppercase tracking-wider">Пройдено</span>
-            <span v-else class="text-xs text-slate-500 font-medium uppercase tracking-wider">Доступно</span>
+
+          <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <RouterLink
+              v-if="hasLessonFlow"
+              :to="{ name: 'course-play', params: { id: course.id } }"
+              class="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-7 py-3 text-sm font-black text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500"
+            >
+              {{ primaryActionLabel }}
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </RouterLink>
+
+            <div
+              v-else
+              class="inline-flex cursor-not-allowed items-center justify-center rounded-2xl border border-slate-700 bg-slate-950/50 px-7 py-3 text-sm font-bold text-slate-500"
+            >
+              {{ primaryActionLabel }}
+            </div>
+
+            <RouterLink
+              v-if="canEditCourse"
+              :to="{ name: 'teacher-lesson-editor', params: { id: course.id } }"
+              class="inline-flex items-center justify-center rounded-2xl border border-emerald-400/25 bg-emerald-500/10 px-7 py-3 text-sm font-black text-emerald-100 transition hover:bg-emerald-500/20"
+            >
+              Открыть конструктор
+            </RouterLink>
           </div>
         </div>
 
-        <RouterLink 
-          :to="{ name: 'lesson-detail', params: { courseId: course.id, lessonId: lesson.id }}" 
-          class="px-6 py-2 rounded-xl text-sm font-bold transition-all"
-          :class="lesson.is_completed 
-            ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white' 
-            : 'bg-indigo-600 text-white hover:bg-indigo-500 shadow-lg shadow-indigo-600/20'">
-          {{ lesson.is_completed ? 'Повторить' : 'Смотреть' }}
-        </RouterLink>
+        <aside class="border-t border-slate-800 bg-slate-950/35 p-6 sm:p-8 lg:border-l lg:border-t-0">
+          <div class="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900">
+            <img v-if="course.image" :src="course.image" :alt="course.title" class="h-52 w-full object-cover">
+            <div v-else class="flex h-52 w-full items-center justify-center bg-gradient-to-br from-indigo-950/80 via-slate-900 to-slate-950 text-slate-500">
+              <svg class="h-16 w-16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4 6.5A2.5 2.5 0 016.5 4h11A2.5 2.5 0 0120 6.5v11a2.5 2.5 0 01-2.5 2.5h-11A2.5 2.5 0 014 17.5v-11z" stroke="currentColor" stroke-width="1.5" />
+                <path d="M8 9h8M8 13h8M8 17h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+              </svg>
+            </div>
+          </div>
+
+          <div class="mt-5 space-y-3">
+            <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+              <div class="mb-3 flex items-center justify-between text-sm">
+                <span class="font-bold text-slate-200">Прогресс курса</span>
+                <span class="font-black text-indigo-300">{{ progressPercentage }}%</span>
+              </div>
+              <div class="h-2 overflow-hidden rounded-full bg-slate-950">
+                <div class="h-full rounded-full bg-indigo-500 transition-all duration-500" :style="{ width: `${progressPercentage}%` }"></div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Уроки</p>
+                <p class="mt-1 text-2xl font-black text-slate-100">{{ lessonCount }}</p>
+              </div>
+              <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Пройдено</p>
+                <p class="mt-1 text-2xl font-black text-emerald-300">{{ completedCount }}</p>
+              </div>
+            </div>
+          </div>
+        </aside>
       </div>
-    </div>
+    </section>
 
-    <!-- ДОБАВЛЕННЫЙ БЛОК: Финальная аттестация -->
-    <div class="mt-12 p-8 bg-indigo-500/5 rounded-3xl border border-indigo-500/20 text-center">
-      <h3 class="text-2xl font-bold text-slate-100 mb-4">Финальная аттестация</h3>
-      <p class="text-slate-400 mb-8 max-w-xl mx-auto">
-        После прохождения всех уроков вам станет доступен тест. Успешная сдача автоматически добавит навыки курса в ваш профиль.
-      </p>
+    <section class="mt-6 grid gap-4 md:grid-cols-3">
+      <div class="rounded-3xl border border-slate-800 bg-slate-900/60 p-6">
+        <div class="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl border border-indigo-400/20 bg-indigo-500/10 text-indigo-200">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M5 4h14v16H5V4z" stroke="currentColor" stroke-width="1.6" />
+            <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-black text-slate-100">Структурное обучение</h3>
+        <p class="mt-2 text-sm leading-6 text-slate-500">Курс проходит через модули, уроки, тесты и финальную проверку знаний.</p>
+      </div>
 
-      <RouterLink 
-        v-if="course.progress_percentage === 100"
-        :to="{ name: 'course-quiz', params: { id: course.id }}"
-        class="inline-block px-10 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-2xl transition-all shadow-xl shadow-indigo-600/30"
+      <div class="rounded-3xl border border-slate-800 bg-slate-900/60 p-6">
+        <div class="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl border border-emerald-400/20 bg-emerald-500/10 text-emerald-200">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 3l7 4v5c0 4.2-2.9 7.2-7 9-4.1-1.8-7-4.8-7-9V7l7-4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+            <path d="M9 12l2 2 4-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-black text-slate-100">Подтверждение навыков</h3>
+        <p class="mt-2 text-sm leading-6 text-slate-500">Результаты тестов и прогресс используются как часть цифрового профиля студента.</p>
+      </div>
+
+      <div class="rounded-3xl border border-slate-800 bg-slate-900/60 p-6">
+        <div class="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-600/40 bg-slate-800/60 text-slate-300">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M4 7h16M7 7V5h10v2M6 7l1 13h10l1-13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-black text-slate-100">Единый маршрут</h3>
+        <p class="mt-2 text-sm leading-6 text-slate-500">Описание курса остаётся отдельной страницей, а обучение открывается одной понятной кнопкой.</p>
+      </div>
+    </section>
+
+    <section v-if="!hasLessonFlow && course.progress_percentage === 100" class="mt-6 rounded-3xl border border-indigo-400/20 bg-indigo-500/10 p-6 text-center">
+      <h3 class="text-xl font-black text-slate-100">Доступен старый формат тестирования</h3>
+      <p class="mx-auto mt-2 max-w-2xl text-sm text-slate-400">Этот курс создан до новой модульной структуры. Итоговый тест можно открыть отдельно.</p>
+      <RouterLink
+        :to="{ name: 'course-quiz', params: { id: course.id } }"
+        class="mt-5 inline-flex rounded-2xl bg-indigo-600 px-7 py-3 text-sm font-black text-white transition hover:bg-indigo-500"
       >
-        Начать тестирование
+        Открыть итоговый тест
       </RouterLink>
-      
-      <div v-else class="inline-block px-10 py-4 bg-slate-800 text-slate-500 rounded-2xl font-bold cursor-not-allowed border border-slate-700">
-        Завершите все уроки ({{ course.progress_percentage || 0 }}%)
-      </div>
-    </div>
+    </section>
   </div>
 </template>

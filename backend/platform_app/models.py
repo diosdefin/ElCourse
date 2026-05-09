@@ -94,6 +94,9 @@ class LessonProgress(models.Model):
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='user_progress')
     is_completed = models.BooleanField(default=False)
     watched_seconds = models.IntegerField(default=0)
+    score = models.IntegerField(default=0)
+    attempts_used = models.PositiveIntegerField(default=0)
+    blocked_until = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

@@ -280,6 +280,10 @@ class LessonSerializer(serializers.ModelSerializer):
     module = serializers.PrimaryKeyRelatedField(queryset=Module.objects.all(), required=False, allow_null=True, write_only=True)
     module_id = serializers.IntegerField(source='module.id', read_only=True)
     lesson_type = serializers.CharField(source='type', read_only=True)
+    # For quiz/final_exam lessons, content can be empty. DRF's default behavior trims
+    # whitespace and treats " " as blank, so we explicitly allow blank here and
+    # validate conditionally by lesson type below.
+    content = serializers.CharField(required=False, allow_blank=True, trim_whitespace=False)
 
     class Meta:
         model = Lesson
@@ -296,6 +300,23 @@ class LessonSerializer(serializers.ModelSerializer):
             'is_published',
             'is_completed',
         ]
+
+    def validate(self, attrs):
+        lesson_type = attrs.get('type') or getattr(self.instance, 'type', None)
+        content = attrs.get('content', None)
+
+        if lesson_type in {Lesson.TYPE_QUIZ, Lesson.TYPE_FINAL_EXAM}:
+            # Allow empty content; normalize None/whitespace-only to empty string.
+            if content is None or (isinstance(content, str) and content.strip() == ''):
+                attrs['content'] = ''
+            return attrs
+
+        # For video/text lessons, keep content required and non-blank.
+        if lesson_type in {Lesson.TYPE_VIDEO, Lesson.TYPE_TEXT}:
+            if content is None or (isinstance(content, str) and content.strip() == ''):
+                raise serializers.ValidationError({'content': ['This field may not be blank.']})
+
+        return attrs
 
     def get_is_completed(self, obj):
         request = self.context.get('request')
@@ -501,3 +522,137 @@ class TeacherQuestionSerializer(serializers.ModelSerializer):
             instance.choices.exclude(id__in=keep_ids).delete()
 
         return instance
+
+
+class StudentAttachmentSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source='original_name')
+    file_url = serializers.SerializerMethodField()
+    file_size = serializers.SerializerMethodField()
+
+    class Meta:
+        model = LessonAttachment
+        fields = ['id', 'name', 'file_url', 'file_size']
+
+    def get_file_url(self, obj):
+        request = self.context.get('request')
+        if not obj.file:
+            return ''
+        url = obj.file.url
+        if request:
+            return request.build_absolute_uri(url)
+        return url
+
+    def get_file_size(self, obj):
+        try:
+            return obj.file.size
+        except Exception:
+            return 0
+
+
+class StudentOutlineLessonSerializer(serializers.ModelSerializer):
+    is_completed = serializers.SerializerMethodField()
+    is_locked = serializers.SerializerMethodField()
+    watched_seconds = serializers.SerializerMethodField()
+    attachments = serializers.SerializerMethodField()
+    blocked_until = serializers.SerializerMethodField()
+    attempts_used = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Lesson
+        fields = [
+            'id',
+            'title',
+            'type',
+            'order',
+            'is_published',
+            'is_completed',
+            'is_locked',
+            'content',
+            'video_url',
+            'watched_seconds',
+            'attachments',
+            'blocked_until',
+            'attempts_used',
+        ]
+
+    def _get_progress(self, obj):
+        progress_map = self.context.get('progress_map', {})
+        return progress_map.get(obj.id)
+
+    def get_is_completed(self, obj):
+        progress = self._get_progress(obj)
+        return bool(progress and progress.is_completed)
+
+    def get_is_locked(self, obj):
+        locked_ids = self.context.get('locked_lesson_ids', set())
+        return obj.id in locked_ids
+
+    def get_watched_seconds(self, obj):
+        progress = self._get_progress(obj)
+        return progress.watched_seconds if progress else 0
+
+    def get_attachments(self, obj):
+        serializer = StudentAttachmentSerializer(
+            obj.attachments.all(),
+            many=True,
+            context=self.context,
+        )
+        return serializer.data
+
+    def get_blocked_until(self, obj):
+        progress = self._get_progress(obj)
+        if not progress or not progress.blocked_until:
+            return None
+        return progress.blocked_until
+
+    def get_attempts_used(self, obj):
+        progress = self._get_progress(obj)
+        return progress.attempts_used if progress else 0
+
+
+class StudentOutlineModuleSerializer(serializers.ModelSerializer):
+    lessons = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Module
+        fields = ['id', 'title', 'order', 'lessons']
+
+    def get_lessons(self, obj):
+        lessons = getattr(obj, '_visible_lessons', list(obj.lessons.all()))
+        serializer = StudentOutlineLessonSerializer(
+            lessons,
+            many=True,
+            context=self.context,
+        )
+        return serializer.data
+
+
+class CourseOutlineSerializer(serializers.ModelSerializer):
+    modules = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Course
+        fields = ['id', 'title', 'modules']
+
+    def get_modules(self, obj):
+        modules = getattr(obj, '_visible_modules', list(obj.modules.all()))
+        serializer = StudentOutlineModuleSerializer(
+            modules,
+            many=True,
+            context=self.context,
+        )
+        return serializer.data
+
+
+class StudentQuizChoiceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Choice
+        fields = ['id', 'text']
+
+
+class StudentQuizQuestionSerializer(serializers.ModelSerializer):
+    choices = StudentQuizChoiceSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Question
+        fields = ['id', 'text', 'is_multiple', 'choices']

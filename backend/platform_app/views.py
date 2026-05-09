@@ -6,6 +6,7 @@ from pathlib import Path
 from django.contrib.auth import update_session_auth_hash
 from django.conf import settings
 from django.db.models import F, Q, Sum
+from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.template.loader import get_template
@@ -21,13 +22,31 @@ try:
 except ImportError:  # pragma: no cover - depends on local optional dependency
     pisa = None
 
-from .models import ActivityLog, Choice, Course, JobOffer, Lesson, LessonProgress, LessonVideo, Question, Skill, User
+from .models import (
+    ActivityLog,
+    Choice,
+    Course,
+    JobOffer,
+    Lesson,
+    LessonAttachment,
+    LessonProgress,
+    LessonVideo,
+    Module,
+    Question,
+    QuizConfig,
+    Skill,
+    User,
+)
 from .serializers import (
     ActivityDaySerializer,
+    CourseOutlineSerializer,
     CommunityUserSerializer,
     CourseSerializer,
     JobOfferSerializer,
     LessonProgressSecondsSerializer,
+    StudentAttachmentSerializer,
+    StudentOutlineLessonSerializer,
+    StudentQuizQuestionSerializer,
     LessonSerializer,
     LessonVideoSerializer,
     PublicProfileSerializer,
@@ -76,6 +95,48 @@ def get_activity_year(request, default_year=None):
         return int(requested_year)
     except (TypeError, ValueError):
         return None
+
+
+def _student_visible_lessons(course):
+    return (
+        Lesson.objects
+        .filter(course=course, is_published=True)
+        .select_related('module')
+        .prefetch_related('attachments')
+        .order_by('module__order', 'module_id', 'order', 'id')
+    )
+
+
+def _student_locked_lesson_ids(visible_lessons, progress_map):
+    locked_ids = set()
+    previous_completed = True
+
+    for lesson in visible_lessons:
+        is_completed = bool(progress_map.get(lesson.id) and progress_map[lesson.id].is_completed)
+        if not previous_completed:
+            locked_ids.add(lesson.id)
+        if not is_completed:
+            previous_completed = False
+
+    return locked_ids
+
+
+def _student_can_access_lesson(student, lesson):
+    if not lesson.is_published:
+        return False
+
+    visible_lessons = list(
+        Lesson.objects
+        .filter(course=lesson.course, is_published=True)
+        .order_by('module__order', 'module_id', 'order', 'id')
+        .only('id')
+    )
+    progress_map = {
+        row.lesson_id: row
+        for row in LessonProgress.objects.filter(user=student, lesson__in=visible_lessons)
+    }
+    locked_ids = _student_locked_lesson_ids(visible_lessons, progress_map)
+    return lesson.id not in locked_ids
 
 
 class ResumeExportView(APIView):
@@ -135,6 +196,8 @@ class CompleteLessonView(APIView):
             return Response({'error': 'Только студенты могут завершать уроки'}, status=status.HTTP_403_FORBIDDEN)
 
         lesson = get_object_or_404(Lesson.objects.select_related('course'), id=lesson_id)
+        if not _student_can_access_lesson(user, lesson):
+            return Response({'error': 'Урок пока недоступен.'}, status=status.HTTP_403_FORBIDDEN)
         progress, created = LessonProgress.objects.get_or_create(
             user=user,
             lesson=lesson,
@@ -262,6 +325,257 @@ class LessonWatchProgressView(APIView):
             progress.save(update_fields=['watched_seconds'])
 
         return Response(LessonProgressSecondsSerializer(progress).data)
+
+
+class CourseOutlineView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, course_id):
+        course = get_object_or_404(Course, id=course_id)
+
+        if request.user.role == User.IS_STUDENT:
+            visible_lessons = list(_student_visible_lessons(course))
+            progress_rows = LessonProgress.objects.filter(user=request.user, lesson__in=visible_lessons)
+            progress_map = {row.lesson_id: row for row in progress_rows}
+            locked_ids = _student_locked_lesson_ids(visible_lessons, progress_map)
+        elif request.user.is_staff or (request.user.role == User.IS_TEACHER and course.author_id == request.user.id):
+            visible_lessons = list(
+                Lesson.objects
+                .filter(course=course)
+                .select_related('module')
+                .prefetch_related('attachments')
+                .order_by('module__order', 'module_id', 'order', 'id')
+            )
+            progress_map = {}
+            locked_ids = set()
+        else:
+            return Response({'detail': 'Недостаточно прав для просмотра курса.'}, status=status.HTTP_403_FORBIDDEN)
+
+        modules = list(Module.objects.filter(course=course).order_by('order', 'id'))
+        lessons_by_module = {module.id: [] for module in modules}
+        orphan_lessons = []
+
+        for lesson in visible_lessons:
+            if lesson.module_id and lesson.module_id in lessons_by_module:
+                lessons_by_module[lesson.module_id].append(lesson)
+            else:
+                orphan_lessons.append(lesson)
+
+        visible_modules = []
+        for module in modules:
+            module_lessons = lessons_by_module[module.id]
+            if module_lessons:
+                module._visible_lessons = module_lessons
+                visible_modules.append(module)
+
+        course._visible_modules = visible_modules
+        serializer = CourseOutlineSerializer(
+            course,
+            context={
+                'request': request,
+                'progress_map': progress_map,
+                'locked_lesson_ids': locked_ids,
+            },
+        )
+        payload = serializer.data
+
+        if orphan_lessons:
+            orphan_serializer = StudentOutlineLessonSerializer(
+                orphan_lessons,
+                many=True,
+                context={
+                    'request': request,
+                    'progress_map': progress_map,
+                    'locked_lesson_ids': locked_ids,
+                },
+            )
+            payload['modules'].append({
+                'id': 0,
+                'title': 'Без модуля',
+                'order': 9999,
+                'lessons': orphan_serializer.data,
+            })
+
+        return Response(payload)
+
+
+class StudentLessonAttachmentListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, lesson_id):
+        lesson = get_object_or_404(Lesson.objects.select_related('course'), id=lesson_id)
+
+        if request.user.role == User.IS_STUDENT:
+            if not _student_can_access_lesson(request.user, lesson):
+                return Response({'detail': 'Урок пока недоступен.'}, status=status.HTTP_403_FORBIDDEN)
+        elif not (request.user.is_staff or (request.user.role == User.IS_TEACHER and lesson.course.author_id == request.user.id)):
+            return Response({'detail': 'Недостаточно прав.'}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = StudentAttachmentSerializer(lesson.attachments.all(), many=True, context={'request': request})
+        return Response(serializer.data)
+
+
+class LessonQuizView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, lesson_id):
+        lesson = get_object_or_404(Lesson.objects.select_related('course'), id=lesson_id)
+        if lesson.type not in {Lesson.TYPE_QUIZ, Lesson.TYPE_FINAL_EXAM}:
+            return Response({'detail': 'Этот урок не является тестом.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if request.user.role == User.IS_STUDENT:
+            if not _student_can_access_lesson(request.user, lesson):
+                return Response({'detail': 'Урок пока недоступен.'}, status=status.HTTP_403_FORBIDDEN)
+            progress, _ = LessonProgress.objects.get_or_create(user=request.user, lesson=lesson)
+        elif request.user.is_staff or (request.user.role == User.IS_TEACHER and lesson.course.author_id == request.user.id):
+            progress = None
+        else:
+            return Response({'detail': 'Недостаточно прав.'}, status=status.HTTP_403_FORBIDDEN)
+
+        config, _ = QuizConfig.objects.get_or_create(lesson=lesson)
+        questions = Question.objects.filter(lesson=lesson).prefetch_related('choices').order_by('id')
+        blocked_until = progress.blocked_until if progress else None
+
+        return Response({
+            'lesson_id': lesson.id,
+            'lesson_type': lesson.type,
+            'quiz_config': {
+                'passing_score_percentage': config.passing_score_percentage,
+                'max_attempts': config.max_attempts,
+                'penalty_hours': config.penalty_hours,
+                'time_limit_minutes': config.time_limit_minutes,
+            },
+            'attempts_used': progress.attempts_used if progress else 0,
+            'blocked_until': blocked_until,
+            'questions': StudentQuizQuestionSerializer(questions, many=True).data,
+        })
+
+
+class LessonQuizSubmitView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, lesson_id):
+        if request.user.role != User.IS_STUDENT:
+            return Response({'detail': 'Только студенты могут сдавать тест.'}, status=status.HTTP_403_FORBIDDEN)
+
+        lesson = get_object_or_404(Lesson.objects.select_related('course'), id=lesson_id)
+        if lesson.type not in {Lesson.TYPE_QUIZ, Lesson.TYPE_FINAL_EXAM}:
+            return Response({'detail': 'Этот урок не является тестом.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not _student_can_access_lesson(request.user, lesson):
+            return Response({'detail': 'Урок пока недоступен.'}, status=status.HTTP_403_FORBIDDEN)
+
+        submitted_answers = request.data.get('answers', {})
+        if not isinstance(submitted_answers, dict):
+            return Response({'detail': 'Поле answers должно быть объектом.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        questions = list(Question.objects.filter(lesson=lesson).prefetch_related('choices').order_by('id'))
+        if not questions:
+            return Response({'detail': 'Для этого урока нет вопросов.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        config, _ = QuizConfig.objects.get_or_create(lesson=lesson)
+        now = timezone.now()
+
+        with transaction.atomic():
+            progress, _ = LessonProgress.objects.select_for_update().get_or_create(
+                user=request.user,
+                lesson=lesson,
+            )
+
+            if progress.blocked_until and progress.blocked_until > now:
+                return Response({
+                    'detail': 'Попытки временно заблокированы.',
+                    'blocked_until': progress.blocked_until,
+                    'attempts_used': progress.attempts_used,
+                    'max_attempts': config.max_attempts,
+                }, status=status.HTTP_423_LOCKED)
+
+            if config.max_attempts > 0 and progress.attempts_used >= config.max_attempts:
+                if config.penalty_hours > 0:
+                    progress.blocked_until = now + timedelta(hours=config.penalty_hours)
+                    progress.save(update_fields=['blocked_until'])
+                return Response({
+                    'detail': 'Попытки исчерпаны.',
+                    'blocked_until': progress.blocked_until,
+                    'attempts_used': progress.attempts_used,
+                    'max_attempts': config.max_attempts,
+                }, status=status.HTTP_429_TOO_MANY_REQUESTS)
+
+            correct_count = 0
+            total_count = len(questions)
+            incorrect_feedback = []
+
+            for question in questions:
+                raw_answer = submitted_answers.get(str(question.id), submitted_answers.get(question.id))
+                correct_ids = {choice.id for choice in question.choices.all() if choice.is_correct}
+
+                try:
+                    if question.is_multiple:
+                        if isinstance(raw_answer, list):
+                            selected_ids = {int(value) for value in raw_answer}
+                        elif raw_answer is None:
+                            selected_ids = set()
+                        else:
+                            selected_ids = {int(raw_answer)}
+                    else:
+                        if raw_answer in (None, ''):
+                            selected_ids = set()
+                        else:
+                            selected_ids = {int(raw_answer)}
+                except (TypeError, ValueError):
+                    selected_ids = set()
+
+                is_correct = bool(selected_ids) and selected_ids == correct_ids
+                if is_correct:
+                    correct_count += 1
+                elif question.explanation:
+                    incorrect_feedback.append({
+                        'question_id': question.id,
+                        'explanation': question.explanation,
+                    })
+
+            score_percentage = int((correct_count * 100) / total_count) if total_count else 0
+            is_passed = score_percentage >= config.passing_score_percentage
+
+            progress.attempts_used += 1
+            progress.score = score_percentage
+
+            if is_passed:
+                if not progress.is_completed:
+                    progress.is_completed = True
+                    progress.completed_at = now
+                    record_daily_activity(request.user, ActivityLog.ACTION_LESSON_COMPLETED)
+                progress.blocked_until = None
+            elif config.max_attempts > 0 and progress.attempts_used >= config.max_attempts and config.penalty_hours > 0:
+                progress.blocked_until = now + timedelta(hours=config.penalty_hours)
+
+            progress.save(update_fields=['attempts_used', 'score', 'is_completed', 'completed_at', 'blocked_until'])
+
+            total_lessons = lesson.course.lessons.filter(is_published=True).count()
+            completed_lessons = LessonProgress.objects.filter(
+                user=request.user,
+                lesson__course=lesson.course,
+                lesson__is_published=True,
+                is_completed=True,
+            ).count()
+            course_progress_percentage = int((completed_lessons / total_lessons) * 100) if total_lessons else 0
+
+        if is_passed:
+            record_daily_activity(request.user, ActivityLog.ACTION_QUIZ_PASSED)
+
+        return Response({
+            'is_passed': is_passed,
+            'score_percentage': score_percentage,
+            'passing_score_percentage': config.passing_score_percentage,
+            'correct_count': correct_count,
+            'total_count': total_count,
+            'attempts_used': progress.attempts_used,
+            'max_attempts': config.max_attempts,
+            'blocked_until': progress.blocked_until,
+            'is_completed': progress.is_completed,
+            'course_progress_percentage': course_progress_percentage,
+            'incorrect_feedback': incorrect_feedback,
+        })
 
 
 class UserProfileView(APIView):
@@ -436,14 +750,40 @@ class CourseDetailAPIView(RetrieveAPIView):
 
 
 class LessonDetailAPIView(RetrieveAPIView):
-    queryset = Lesson.objects.all()
     serializer_class = LessonSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_authenticated and (user.is_staff or user.role == User.IS_TEACHER):
+            return Lesson.objects.all()
+        return Lesson.objects.filter(is_published=True)
+
+    def get(self, request, *args, **kwargs):
+        lesson = self.get_object()
+        user = request.user
+
+        if user.is_authenticated and user.role == User.IS_STUDENT:
+            if not _student_can_access_lesson(user, lesson):
+                return Response({'detail': 'Урок пока недоступен.'}, status=status.HTTP_403_FORBIDDEN)
+
+        if user.is_authenticated and user.role == User.IS_TEACHER and not user.is_staff:
+            if lesson.course.author_id != user.id and request.query_params.get('preview') == '1':
+                return Response({'detail': 'Нельзя просматривать чужой урок в режиме preview.'}, status=status.HTTP_403_FORBIDDEN)
+
+        return super().get(request, *args, **kwargs)
 
 
 class GetQuizView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, course_id):
+        course = get_object_or_404(Course, id=course_id)
+        if Lesson.objects.filter(course=course).exists():
+            return Response(
+                {'detail': 'Курс использует новую систему тестов по урокам.'},
+                status=status.HTTP_410_GONE,
+            )
         questions = Question.objects.filter(course_id=course_id)
         if not questions.exists():
             return Response({'error': 'Вопросы для этого курса не найдены'}, status=status.HTTP_404_NOT_FOUND)
@@ -468,6 +808,11 @@ class CheckQuizView(APIView):
             return Response({'error': 'Только студенты могут проходить тесты'}, status=status.HTTP_403_FORBIDDEN)
 
         course = get_object_or_404(Course.objects.prefetch_related('skills_covered'), id=course_id)
+        if Lesson.objects.filter(course=course).exists():
+            return Response(
+                {'detail': 'Курс использует новую систему тестов по урокам.'},
+                status=status.HTTP_410_GONE,
+            )
         questions = Question.objects.filter(course=course)
         answers = request.data.get('answers', {})
 

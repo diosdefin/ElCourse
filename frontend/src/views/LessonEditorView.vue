@@ -138,16 +138,17 @@ onMounted(fetchLessons)
             <div>
               <label class="block text-xs font-bold text-slate-500 uppercase mb-3 ml-1">Источник видео</label>
               <div class="flex flex-wrap gap-4 mb-4 bg-slate-900/30 p-2 rounded-2xl border border-slate-800/60 w-fit">
+                 <label class="flex items-center gap-2 cursor-pointer px-4 py-2 rounded-xl transition-all"
+                  :class="videoSource === 'file' ? 'bg-emerald-500/20 text-emerald-300' : 'text-slate-400 hover:text-slate-200'">
+                  <input type="radio" v-model="videoSource" value="file" class="hidden">
+                  <span class="text-sm font-bold">Загрузить файл (HLS)</span>
+                </label>
                 <label class="flex items-center gap-2 cursor-pointer px-4 py-2 rounded-xl transition-all"
                   :class="videoSource === 'youtube' ? 'bg-indigo-500/20 text-indigo-300' : 'text-slate-400 hover:text-slate-200'">
                   <input type="radio" v-model="videoSource" value="youtube" class="hidden">
                   <span class="text-sm font-bold">YouTube Ссылка</span>
                 </label>
-                <label class="flex items-center gap-2 cursor-pointer px-4 py-2 rounded-xl transition-all"
-                  :class="videoSource === 'file' ? 'bg-emerald-500/20 text-emerald-300' : 'text-slate-400 hover:text-slate-200'">
-                  <input type="radio" v-model="videoSource" value="file" class="hidden">
-                  <span class="text-sm font-bold">Загрузить файл (HLS)</span>
-                </label>
+              
               </div>
 
               <div v-if="videoSource === 'youtube'">
