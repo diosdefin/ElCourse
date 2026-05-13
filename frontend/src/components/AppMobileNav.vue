@@ -27,9 +27,9 @@ const navItems = computed(() => {
   if (authStore.isTeacher) {
     return [
       { key: 'home', label: 'Главная', to: '/' },
-      { key: 'teacher', label: 'Кабинет', to: '/teacher' },
-      { key: 'analytics', label: 'Аналитика', to: '/teacher/analytics' },
       { key: 'community', label: 'Комьюнити', to: '/community' },
+      { key: 'teacher', label: 'Кабинет', to: '/teacher', featured: true },
+      { key: 'analytics', label: 'Аналитика', to: '/teacher/analytics' },
       { key: 'profile', label: 'Профиль', to: '/profile' },
     ]
   }
@@ -38,7 +38,7 @@ const navItems = computed(() => {
     return [
       { key: 'home', label: 'Главная', to: '/' },
       { key: 'employer', label: 'Кандидаты', to: '/employer' },
-      { key: 'vacancies', label: 'Вакансии', to: '/vacancies' },
+      { key: 'vacancies', label: 'Вакансии', to: '/vacancies', featured: true },
       { key: 'notifications', label: 'Уведомления', to: '/notifications', badge: props.unreadCount },
       { key: 'profile', label: 'Профиль', to: '/profile' },
     ]
@@ -46,9 +46,9 @@ const navItems = computed(() => {
 
   return [
     { key: 'home', label: 'Главная', to: '/' },
-    { key: 'courses', label: 'Курсы', to: '/courses' },
+    { key: 'community', label: 'Комьюнити', to: '/community' },
+    { key: 'courses', label: 'Курсы', to: '/courses', featured: true },
     { key: 'vacancies', label: 'Вакансии', to: '/vacancies' },
-    { key: 'notifications', label: 'Уведомления', to: '/notifications', badge: props.unreadCount },
     { key: 'profile', label: 'Профиль', to: '/profile' },
   ]
 })
@@ -72,12 +72,21 @@ const isItemActive = (key) => {
   return path === '/'
 }
 
-const itemClass = (key) => [
-  'relative flex min-h-[56px] min-w-0 flex-col items-center justify-center gap-1 rounded-[1.15rem] border px-2 py-2 text-[11px] font-semibold transition-all duration-200',
-  isItemActive(key)
-    ? 'border-white/12 bg-white/12 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),inset_0_-10px_18px_rgba(15,23,42,0.18),0_12px_28px_rgba(2,6,23,0.28)]'
-    : 'border-transparent bg-white/[0.02] text-slate-400 hover:bg-white/[0.06] hover:text-slate-100',
-]
+const itemClass = (item) => {
+  const active = isItemActive(item.key)
+
+  return [
+    'relative flex min-h-[56px] min-w-0 flex-col items-center justify-center gap-1 rounded-[1.15rem] border px-2 py-2 text-[11px] font-semibold transition-all duration-200',
+    active
+      ? 'border-white/12 bg-white/12 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),inset_0_-10px_18px_rgba(15,23,42,0.18),0_12px_28px_rgba(2,6,23,0.28)]'
+      : 'border-transparent bg-white/[0.02] text-slate-400 hover:bg-white/[0.06] hover:text-slate-100',
+    item.featured
+      ? active
+        ? 'border-sky-200/20 bg-[linear-gradient(180deg,rgba(125,211,252,0.16),rgba(99,102,241,0.12))] shadow-[inset_0_1px_0_rgba(255,255,255,0.22),inset_0_-12px_18px_rgba(30,41,59,0.18),0_16px_32px_rgba(15,23,42,0.34)]'
+        : 'border-sky-300/10 bg-[linear-gradient(180deg,rgba(125,211,252,0.08),rgba(99,102,241,0.05))] text-slate-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_12px_28px_rgba(2,6,23,0.22)] hover:border-sky-300/20 hover:bg-[linear-gradient(180deg,rgba(125,211,252,0.12),rgba(99,102,241,0.08))] hover:text-white'
+      : '',
+  ]
+}
 </script>
 
 <template>
@@ -97,12 +106,17 @@ const itemClass = (key) => [
           :key="item.key"
           :to="item.to"
           :aria-label="item.label"
+          :title="item.label"
           :aria-current="isItemActive(item.key) ? 'page' : undefined"
-          :class="itemClass(item.key)"
+          :class="itemClass(item)"
         >
           <span
             class="pointer-events-none absolute inset-x-4 top-0 h-0.5 rounded-full transition-opacity"
-            :class="isItemActive(item.key) ? 'bg-sky-200 opacity-100 shadow-[0_0_12px_rgba(186,230,253,0.55)]' : 'bg-transparent opacity-0'"
+            :class="isItemActive(item.key)
+              ? 'bg-sky-200 opacity-100 shadow-[0_0_12px_rgba(186,230,253,0.55)]'
+              : item.featured
+                ? 'bg-sky-200/50 opacity-60 shadow-[0_0_10px_rgba(186,230,253,0.18)]'
+                : 'bg-transparent opacity-0'"
           ></span>
 
           <span class="relative flex h-6 w-6 items-center justify-center">

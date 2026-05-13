@@ -199,7 +199,7 @@ onBeforeUnmount(() => {
             Вход
           </RouterLink>
 
-          <div v-else ref="userMenuRef" class="relative">
+          <div v-else ref="userMenuRef" class="relative flex items-center gap-2 lg:block">
             <div class="hidden items-center gap-3 rounded-full border border-slate-700/70 bg-slate-800/55 px-3 py-2 shadow-inner shadow-black/10 lg:flex">
               <div class="hidden items-center gap-2 pl-1 xl:flex">
                 <span class="relative flex h-3 w-3">
@@ -246,6 +246,23 @@ onBeforeUnmount(() => {
                 </svg>
               </button>
             </div>
+
+            <RouterLink
+              v-if="routeExists('/notifications')"
+              to="/notifications"
+              class="relative inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-white/10 bg-slate-900/65 p-2 text-slate-200 shadow-lg shadow-slate-950/20 backdrop-blur-xl transition hover:border-indigo-300/40 hover:bg-slate-900/80 lg:hidden"
+              aria-label="Уведомления"
+            >
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+              <span
+                v-if="unreadCount > 0"
+                class="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[11px] font-bold text-white shadow-lg"
+              >
+                {{ unreadCount > 99 ? '99+' : unreadCount }}
+              </span>
+            </RouterLink>
 
             <button
               class="flex min-h-[44px] items-center justify-center rounded-full border border-white/10 bg-slate-900/65 p-1 text-left shadow-lg shadow-slate-950/20 backdrop-blur-xl transition hover:border-indigo-300/40 hover:bg-slate-900/80 lg:hidden"
