@@ -296,7 +296,7 @@ onMounted(fetchNotifications)
 
 <template>
   <div class="mx-auto mt-8 max-w-6xl max-w-full min-w-0 space-y-6 px-0 pb-12 sm:px-4">
-    <section class="max-w-full rounded-[28px] border border-slate-700/60 bg-slate-900/55 p-4 shadow-xl shadow-slate-950/20 backdrop-blur sm:p-6">
+    <section class="card-glass max-w-full rounded-[28px] p-4 sm:p-6">
       <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p class="text-xs font-bold uppercase tracking-[0.28em] text-sky-300">Карьерный контур</p>
@@ -308,7 +308,7 @@ onMounted(fetchNotifications)
 
         <button
           type="button"
-          class="inline-flex w-full items-center justify-center rounded-2xl border border-slate-700 px-4 py-3 text-sm font-bold text-slate-300 transition hover:border-sky-400 hover:text-white sm:w-auto"
+          class="btn-secondary inline-flex w-full px-4 py-3 sm:w-auto"
           @click="fetchNotifications"
         >
           Обновить
@@ -335,7 +335,7 @@ onMounted(fetchNotifications)
       </div>
     </section>
 
-    <section class="overflow-hidden rounded-[28px] border border-slate-700/60 bg-slate-900/55 shadow-xl shadow-slate-950/20 backdrop-blur">
+    <section class="card-glass overflow-hidden rounded-[28px]">
       <div class="flex flex-wrap gap-2 border-b border-slate-700/60 p-4">
         <button
           v-for="filter in filters"
@@ -438,7 +438,7 @@ onMounted(fetchNotifications)
       class="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/80 p-3 backdrop-blur-md sm:p-4"
       @click.self="closeModal"
     >
-      <div class="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-[28px] border border-slate-700 bg-slate-900 shadow-2xl shadow-slate-950/50">
+      <div class="modal-panel flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-[28px]">
         <div class="flex flex-col gap-4 border-b border-slate-700/70 p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5">
           <div class="min-w-0">
             <p class="text-xs font-bold uppercase tracking-[0.22em] text-sky-300">{{ selectedItem.sourceLabel }}</p>
@@ -446,7 +446,7 @@ onMounted(fetchNotifications)
           </div>
           <button
             type="button"
-            class="self-start rounded-2xl border border-slate-700 px-3 py-2 text-sm font-bold text-slate-400 transition hover:border-slate-500 hover:text-white"
+            class="btn-secondary self-start px-3 py-2 text-sm"
             @click="closeModal"
           >
             Закрыть
@@ -601,7 +601,7 @@ onMounted(fetchNotifications)
       class="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/90 p-3 backdrop-blur-sm sm:p-4"
       @click.self="showConfirmModal = false"
     >
-      <div class="max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-[28px] border border-slate-700 bg-slate-900 p-5 text-center shadow-2xl shadow-slate-950/50 sm:p-6">
+      <div class="modal-panel max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-[28px] p-5 text-center sm:p-6">
         <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-300/30 bg-amber-300/10 text-amber-200">
           <svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.8">
             <path d="M12 8v5" />

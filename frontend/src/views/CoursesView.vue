@@ -203,7 +203,7 @@ onMounted(loadCourses)
 
 <template>
   <div class="pb-14">
-    <section class="relative overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-900/70 shadow-2xl shadow-slate-950/25">
+    <section class="card-glass relative overflow-hidden rounded-[2rem]">
       <div class="absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(99,102,241,0.2),transparent_32%),radial-gradient(circle_at_86%_18%,rgba(20,184,166,0.14),transparent_28%)]"></div>
       <div class="relative grid gap-8 px-4 py-8 sm:px-8 lg:grid-cols-[minmax(0,1fr),360px] lg:px-10 lg:py-10">
         <div class="min-w-0">
@@ -221,7 +221,7 @@ onMounted(loadCourses)
               :key="tab.key"
               type="button"
               class="rounded-2xl px-5 py-3 text-sm font-bold transition"
-              :class="activeTab === tab.key ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'border border-slate-700 bg-slate-950/35 text-slate-300 hover:border-slate-500 hover:text-white'"
+              :class="activeTab === tab.key ? 'btn-primary text-white shadow-lg shadow-indigo-600/20' : 'btn-secondary'"
               @click="setTab(tab.key)"
             >
               {{ tab.label }}
@@ -230,15 +230,15 @@ onMounted(loadCourses)
         </div>
 
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-          <div class="rounded-3xl border border-slate-800 bg-slate-950/40 p-5">
+          <div class="card-glass rounded-3xl p-5">
             <p class="text-xs font-bold uppercase tracking-[0.22em] text-slate-500">Всего курсов</p>
             <p class="mt-2 text-3xl font-black text-white">{{ totalCourses }}</p>
           </div>
-          <div class="rounded-3xl border border-slate-800 bg-slate-950/40 p-5">
+          <div class="card-glass rounded-3xl p-5">
             <p class="text-xs font-bold uppercase tracking-[0.22em] text-slate-500">Навыки</p>
             <p class="mt-2 text-3xl font-black text-emerald-300">{{ availableSkillCount }}</p>
           </div>
-          <div v-if="authStore.isAuthenticated && authStore.isStudent" class="rounded-3xl border border-slate-800 bg-slate-950/40 p-5 sm:col-span-2 lg:col-span-1">
+          <div v-if="authStore.isAuthenticated && authStore.isStudent" class="card-glass rounded-3xl p-5 sm:col-span-2 lg:col-span-1">
             <p class="text-xs font-bold uppercase tracking-[0.22em] text-slate-500">Моё обучение</p>
             <p class="mt-2 text-sm font-semibold text-slate-300">
               Активных: <span class="text-white">{{ activeCoursesCount }}</span>
@@ -250,7 +250,7 @@ onMounted(loadCourses)
       </div>
     </section>
 
-    <section class="mt-6 rounded-[2rem] border border-slate-800 bg-slate-900/55 p-5 sm:p-6">
+    <section class="card-glass mt-6 rounded-[2rem] p-5 sm:p-6">
       <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div>
           <p class="text-xs font-bold uppercase tracking-[0.24em] text-slate-500">Раздел</p>
@@ -264,7 +264,7 @@ onMounted(loadCourses)
             <input
               v-model.trim="search"
               type="search"
-              class="w-full rounded-2xl border border-slate-700 bg-slate-950/60 px-4 py-3 text-sm font-semibold text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-indigo-400/70"
+              class="input-control bg-slate-950/60 px-4 py-3 font-semibold"
               placeholder="Название, автор, навык..."
             >
           </label>
@@ -273,7 +273,7 @@ onMounted(loadCourses)
             <span class="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Навык</span>
             <select
               v-model="selectedSkill"
-              class="w-full rounded-2xl border border-slate-700 bg-slate-950/60 px-4 py-3 text-sm font-semibold text-slate-100 outline-none transition focus:border-indigo-400/70"
+              class="input-control bg-slate-950/60 px-4 py-3 font-semibold"
             >
               <option value="all">Все навыки</option>
               <option v-for="skill in allSkills" :key="skill.id" :value="skill.name">{{ skill.name }}</option>
@@ -284,7 +284,7 @@ onMounted(loadCourses)
             <span class="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Сортировка</span>
             <select
               v-model="sortMode"
-              class="w-full rounded-2xl border border-slate-700 bg-slate-950/60 px-4 py-3 text-sm font-semibold text-slate-100 outline-none transition focus:border-indigo-400/70"
+              class="input-control bg-slate-950/60 px-4 py-3 font-semibold"
             >
               <option value="recommended">Рекомендуемые</option>
               <option value="progress">По прогрессу</option>
@@ -305,7 +305,7 @@ onMounted(loadCourses)
       <p class="mt-2 text-sm text-rose-200/80">{{ loadError }}</p>
       <button
         type="button"
-        class="mt-5 rounded-2xl bg-rose-500 px-6 py-3 text-sm font-bold text-white transition hover:bg-rose-400"
+        class="btn-danger mt-5 px-6"
         @click="loadCourses"
       >
         Повторить загрузку
@@ -324,7 +324,7 @@ onMounted(loadCourses)
       <button
         v-if="search || selectedSkill !== 'all'"
         type="button"
-        class="mt-5 rounded-2xl border border-slate-700 px-5 py-3 text-sm font-bold text-slate-200 transition hover:border-slate-500 hover:text-white"
+        class="btn-secondary mt-5"
         @click="search = ''; selectedSkill = 'all'"
       >
         Сбросить фильтры

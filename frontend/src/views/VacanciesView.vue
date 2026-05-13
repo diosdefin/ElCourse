@@ -521,7 +521,7 @@ onMounted(async () => {
 
 <template>
   <div class="w-full pb-14">
-    <header class="mb-6 overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-900/70 shadow-xl shadow-slate-950/20">
+    <header class="card-glass mb-6 overflow-hidden rounded-[2rem]">
       <div class="relative p-4 sm:p-8">
         <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-400/60 to-transparent"></div>
         <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
@@ -538,14 +538,14 @@ onMounted(async () => {
           <div class="grid gap-3 sm:flex sm:flex-wrap">
             <button
               v-if="authStore.isEmployer"
-              class="inline-flex items-center justify-center rounded-2xl bg-sky-600 px-5 py-3 text-center text-sm font-black text-white shadow-lg shadow-sky-600/20 transition hover:bg-sky-500 active:scale-[0.98]"
+              class="btn-primary inline-flex items-center justify-center px-5 text-center text-sm font-black"
               type="button"
               @click="openCreateVacancy"
             >
               Создать вакансию
             </button>
             <button
-              class="inline-flex items-center justify-center rounded-2xl border border-slate-700 bg-slate-800/80 px-4 py-3 text-center text-sm font-bold text-slate-200 transition hover:border-sky-400/60 hover:text-white"
+              class="btn-secondary inline-flex items-center justify-center px-4 text-center text-sm font-bold"
               type="button"
               @click="refreshCurrentTab"
             >
@@ -578,7 +578,7 @@ onMounted(async () => {
     </nav>
 
     <section v-if="activeTab === 'vacancies'" class="grid gap-6 lg:grid-cols-[290px_minmax(0,1fr)]">
-      <aside class="h-fit rounded-[1.5rem] border border-slate-800 bg-slate-900/60 p-5">
+      <aside class="card-glass h-fit rounded-[1.5rem] p-5">
         <div class="mb-4">
           <h2 class="text-lg font-black text-slate-50">Фильтры</h2>
           <p class="mt-1 text-sm text-slate-500">Поиск по названию, навыкам и формату.</p>
@@ -587,17 +587,17 @@ onMounted(async () => {
         <div class="grid gap-4">
           <label class="grid gap-2 text-sm font-bold text-slate-300">
             Поиск
-            <input v-model="searchQuery" class="rounded-2xl border border-slate-700 bg-slate-950/60 px-4 py-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-sky-400" type="search" placeholder="Frontend, Python, стажировка">
+            <input v-model="searchQuery" class="input-control" type="search" placeholder="Frontend, Python, стажировка">
           </label>
 
           <label class="grid gap-2 text-sm font-bold text-slate-300">
             Навыки
-            <input v-model="skillQuery" class="rounded-2xl border border-slate-700 bg-slate-950/60 px-4 py-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-sky-400" type="search" placeholder="Python, Vue, SQL">
+            <input v-model="skillQuery" class="input-control" type="search" placeholder="Python, Vue, SQL">
           </label>
 
           <label class="grid gap-2 text-sm font-bold text-slate-300">
             Формат
-            <select v-model="workFormat" class="rounded-2xl border border-slate-700 bg-slate-950/60 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-sky-400">
+            <select v-model="workFormat" class="input-control">
               <option value="">Любой</option>
               <option value="remote">Удалённо</option>
               <option value="office">В офисе</option>
@@ -608,7 +608,7 @@ onMounted(async () => {
 
           <label class="grid gap-2 text-sm font-bold text-slate-300">
             Занятость
-            <select v-model="employmentType" class="rounded-2xl border border-slate-700 bg-slate-950/60 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-sky-400">
+            <select v-model="employmentType" class="input-control">
               <option value="">Любая</option>
               <option value="full_time">Полная занятость</option>
               <option value="part_time">Частичная занятость</option>
@@ -627,14 +627,14 @@ onMounted(async () => {
 
           <label class="grid gap-2 text-sm font-bold text-slate-300">
             На странице
-            <select v-model.number="pageSize" class="rounded-2xl border border-slate-700 bg-slate-950/60 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-sky-400">
+            <select v-model.number="pageSize" class="input-control">
               <option :value="6">6</option>
               <option :value="9">9</option>
               <option :value="12">12</option>
             </select>
           </label>
 
-          <button v-if="hasFilters" class="rounded-2xl border border-slate-700 px-4 py-3 text-sm font-bold text-slate-300 transition hover:border-sky-400 hover:text-white" type="button" @click="clearFilters">
+          <button v-if="hasFilters" class="btn-secondary px-4" type="button" @click="clearFilters">
             Сбросить фильтры
           </button>
         </div>
@@ -648,7 +648,7 @@ onMounted(async () => {
         <div v-else-if="pageError" class="rounded-[2rem] border border-rose-500/30 bg-rose-500/10 p-8 text-center">
           <h2 class="text-xl font-black text-rose-100">Не удалось загрузить вакансии</h2>
           <p class="mx-auto mt-2 max-w-xl text-sm leading-6 text-rose-100/80">{{ pageError }}</p>
-          <button class="mt-6 rounded-2xl bg-rose-500 px-5 py-3 text-sm font-bold text-white transition hover:bg-rose-400" type="button" @click="loadVacancies">Повторить</button>
+          <button class="btn-danger mt-6" type="button" @click="loadVacancies">Повторить</button>
         </div>
 
         <div v-else-if="vacancies.length" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -695,7 +695,7 @@ onMounted(async () => {
               <button v-if="vacancy.application_status" class="w-full rounded-2xl border border-slate-700 bg-slate-800/70 px-4 py-3 text-sm font-black text-slate-300" type="button" disabled>
                 Отклик: {{ statusLabel(vacancy.application_status) }}
               </button>
-              <button v-else class="w-full rounded-2xl bg-sky-600 px-4 py-3 text-sm font-black text-white shadow-lg shadow-sky-600/20 transition hover:bg-sky-500" type="button" @click="openApplyModal(vacancy)">
+              <button v-else class="btn-primary w-full px-4 text-sm font-black" type="button" @click="openApplyModal(vacancy)">
                 {{ authStore.isAuthenticated ? 'Откликнуться' : 'Войти, чтобы откликнуться' }}
               </button>
             </div>
@@ -705,7 +705,7 @@ onMounted(async () => {
         <div v-else class="rounded-[2rem] border border-dashed border-slate-700 p-10 text-center">
           <h2 class="text-xl font-black text-slate-100">Вакансии не найдены</h2>
           <p class="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-500">Измените фильтры или отключите режим подходящих вакансий.</p>
-          <button v-if="hasFilters" class="mt-6 rounded-2xl border border-slate-700 px-5 py-3 text-sm font-bold text-slate-300 transition hover:border-sky-400 hover:text-white" type="button" @click="clearFilters">Показать все вакансии</button>
+          <button v-if="hasFilters" class="btn-secondary mt-6" type="button" @click="clearFilters">Показать все вакансии</button>
         </div>
 
         <div v-if="pageCount > 1" class="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-slate-800 bg-slate-900/50 p-3">
@@ -773,7 +773,7 @@ onMounted(async () => {
           <h2 class="text-xl font-black text-slate-50">Мои вакансии</h2>
           <p class="mt-1 text-sm text-slate-500">Создавайте публикации и отслеживайте отклики студентов.</p>
         </div>
-        <button class="rounded-2xl bg-sky-600 px-5 py-3 text-sm font-black text-white transition hover:bg-sky-500" type="button" @click="openCreateVacancy">Создать вакансию</button>
+        <button class="btn-primary text-sm font-black" type="button" @click="openCreateVacancy">Создать вакансию</button>
       </div>
 
       <div v-if="loading" class="grid gap-4 md:grid-cols-2">
@@ -797,8 +797,8 @@ onMounted(async () => {
           </div>
 
           <div class="mt-5 flex flex-wrap gap-2">
-            <button class="rounded-2xl bg-indigo-600 px-4 py-2 text-sm font-black text-white transition hover:bg-indigo-500" type="button" @click="openEditVacancy(vacancy)">Редактировать</button>
-            <button class="rounded-2xl border border-slate-700 px-4 py-2 text-sm font-bold text-slate-300 transition hover:border-rose-400 hover:text-rose-200" type="button" @click="closeVacancy(vacancy)">Закрыть</button>
+            <button class="btn-primary px-4 py-2 text-sm font-black" type="button" @click="openEditVacancy(vacancy)">Редактировать</button>
+            <button class="btn-secondary px-4 py-2 text-sm font-bold hover:border-rose-400 hover:text-rose-200" type="button" @click="closeVacancy(vacancy)">Закрыть</button>
           </div>
         </article>
       </div>
@@ -885,24 +885,24 @@ onMounted(async () => {
     </section>
 
     <div v-if="applyModalOpen" class="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/80 p-3 backdrop-blur sm:p-4">
-      <div class="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-[2rem] border border-slate-700 bg-slate-900 p-5 shadow-2xl shadow-slate-950/50 sm:p-6">
+      <div class="modal-panel max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-[2rem] p-5 sm:p-6">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h2 class="text-2xl font-black text-slate-50">Отклик на вакансию</h2>
             <p class="mt-1 text-sm text-slate-500">{{ selectedVacancy?.title }}</p>
           </div>
-          <button class="rounded-2xl border border-slate-700 px-3 py-2 text-sm font-bold text-slate-300 transition hover:text-white" type="button" @click="applyModalOpen = false">Закрыть</button>
+          <button class="btn-secondary px-3 py-2 text-sm" type="button" @click="applyModalOpen = false">Закрыть</button>
         </div>
 
         <label class="mt-5 grid gap-2 text-sm font-bold text-slate-300">
           Сообщение работодателю
-          <textarea v-model="applyMessage" class="min-h-32 resize-y rounded-2xl border border-slate-700 bg-slate-950/60 px-4 py-3 text-sm leading-6 text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-sky-400" maxlength="1200" placeholder="Коротко напишите, почему вам интересна вакансия..."></textarea>
+          <textarea v-model="applyMessage" class="input-control min-h-32 resize-y leading-6" maxlength="1200" placeholder="Коротко напишите, почему вам интересна вакансия..."></textarea>
           <span class="text-right text-xs text-slate-500">{{ applyMessage.length }}/1200</span>
         </label>
 
         <div class="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <button class="rounded-2xl border border-slate-700 px-5 py-3 text-sm font-bold text-slate-300 transition hover:text-white" type="button" @click="applyModalOpen = false">Отмена</button>
-          <button class="rounded-2xl bg-sky-600 px-5 py-3 text-sm font-black text-white transition hover:bg-sky-500 disabled:opacity-60" type="button" :disabled="submittingApply" @click="submitApply">
+          <button class="btn-secondary" type="button" @click="applyModalOpen = false">Отмена</button>
+          <button class="btn-primary text-sm font-black" type="button" :disabled="submittingApply" @click="submitApply">
             {{ submittingApply ? 'Отправка...' : 'Отправить отклик' }}
           </button>
         </div>
@@ -910,29 +910,29 @@ onMounted(async () => {
     </div>
 
     <div v-if="vacancyModalOpen" class="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/80 p-3 backdrop-blur sm:p-4">
-      <form class="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-[2rem] border border-slate-700 bg-slate-900 p-4 shadow-2xl shadow-slate-950/50 sm:p-6" @submit.prevent="submitVacancy">
+      <form class="modal-panel max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-[2rem] p-4 sm:p-6" @submit.prevent="submitVacancy">
         <div class="sticky top-0 z-10 -mx-4 -mt-4 mb-5 flex flex-col gap-3 border-b border-slate-800 bg-slate-900/95 px-4 py-4 backdrop-blur sm:-mx-6 sm:-mt-6 sm:flex-row sm:items-start sm:justify-between sm:px-6 sm:py-5">
           <div>
             <h2 class="text-2xl font-black text-slate-50">{{ editingVacancy ? 'Редактирование вакансии' : 'Новая вакансия' }}</h2>
             <p class="mt-1 text-sm text-slate-500">Заполните данные, которые увидят студенты.</p>
           </div>
-          <button class="rounded-2xl border border-slate-700 px-3 py-2 text-sm font-bold text-slate-300 transition hover:text-white" type="button" @click="vacancyModalOpen = false">Закрыть</button>
+          <button class="btn-secondary px-3 py-2 text-sm" type="button" @click="vacancyModalOpen = false">Закрыть</button>
         </div>
 
         <div class="grid gap-4 lg:grid-cols-2">
           <label class="grid gap-2 text-sm font-bold text-slate-300 lg:col-span-2">
             Название вакансии
-            <input v-model="vacancyForm.title" class="rounded-2xl border border-slate-700 bg-slate-950/60 px-4 py-3 text-sm text-slate-100 outline-none focus:border-sky-400" maxlength="160" placeholder="Например: Junior Python Developer">
+            <input v-model="vacancyForm.title" class="input-control" maxlength="160" placeholder="Например: Junior Python Developer">
           </label>
 
           <label class="grid gap-2 text-sm font-bold text-slate-300">
             Компания
-            <input v-model="vacancyForm.company_name" class="rounded-2xl border border-slate-700 bg-slate-950/60 px-4 py-3 text-sm text-slate-100 outline-none focus:border-sky-400" maxlength="160" placeholder="Название компании">
+            <input v-model="vacancyForm.company_name" class="input-control" maxlength="160" placeholder="Название компании">
           </label>
 
           <label class="grid gap-2 text-sm font-bold text-slate-300">
             Статус
-            <select v-model="vacancyForm.status" class="rounded-2xl border border-slate-700 bg-slate-950/60 px-4 py-3 text-sm text-slate-100 outline-none focus:border-sky-400">
+            <select v-model="vacancyForm.status" class="input-control">
               <option value="published">Опубликована</option>
               <option value="draft">Черновик</option>
               <option value="closed">Закрыта</option>
@@ -941,23 +941,23 @@ onMounted(async () => {
 
           <label class="grid gap-2 text-sm font-bold text-slate-300 lg:col-span-2">
             Описание
-            <textarea v-model="vacancyForm.description" class="min-h-32 resize-y rounded-2xl border border-slate-700 bg-slate-950/60 px-4 py-3 text-sm leading-6 text-slate-100 outline-none focus:border-sky-400" maxlength="4000" placeholder="Опишите задачи, стек и кого ищете..."></textarea>
+            <textarea v-model="vacancyForm.description" class="input-control min-h-32 resize-y leading-6" maxlength="4000" placeholder="Опишите задачи, стек и кого ищете..."></textarea>
             <span class="text-right text-xs text-slate-500">{{ vacancyForm.description.length }}/4000</span>
           </label>
 
           <label class="grid gap-2 text-sm font-bold text-slate-300 lg:col-span-2">
             Требования
-            <textarea v-model="vacancyForm.requirements" class="min-h-28 resize-y rounded-2xl border border-slate-700 bg-slate-950/60 px-4 py-3 text-sm leading-6 text-slate-100 outline-none focus:border-sky-400" maxlength="3000" placeholder="Например: базовые знания Django, REST API, SQL..."></textarea>
+            <textarea v-model="vacancyForm.requirements" class="input-control min-h-28 resize-y leading-6" maxlength="3000" placeholder="Например: базовые знания Django, REST API, SQL..."></textarea>
           </label>
 
           <label class="grid gap-2 text-sm font-bold text-slate-300 lg:col-span-2">
             Навыки через запятую
-            <input v-model="vacancyForm.skill_names_text" class="rounded-2xl border border-slate-700 bg-slate-950/60 px-4 py-3 text-sm text-slate-100 outline-none focus:border-sky-400" placeholder="Python, Django, PostgreSQL">
+            <input v-model="vacancyForm.skill_names_text" class="input-control" placeholder="Python, Django, PostgreSQL">
           </label>
 
           <label class="grid gap-2 text-sm font-bold text-slate-300">
             Формат работы
-            <select v-model="vacancyForm.work_format" class="rounded-2xl border border-slate-700 bg-slate-950/60 px-4 py-3 text-sm text-slate-100 outline-none focus:border-sky-400">
+            <select v-model="vacancyForm.work_format" class="input-control">
               <option value="any">Любой формат</option>
               <option value="remote">Удалённо</option>
               <option value="office">В офисе</option>
@@ -967,7 +967,7 @@ onMounted(async () => {
 
           <label class="grid gap-2 text-sm font-bold text-slate-300">
             Тип занятости
-            <select v-model="vacancyForm.employment_type" class="rounded-2xl border border-slate-700 bg-slate-950/60 px-4 py-3 text-sm text-slate-100 outline-none focus:border-sky-400">
+            <select v-model="vacancyForm.employment_type" class="input-control">
               <option value="full_time">Полная занятость</option>
               <option value="part_time">Частичная занятость</option>
               <option value="internship">Стажировка</option>
@@ -977,28 +977,28 @@ onMounted(async () => {
 
           <label class="grid gap-2 text-sm font-bold text-slate-300">
             Локация
-            <input v-model="vacancyForm.location" class="rounded-2xl border border-slate-700 bg-slate-950/60 px-4 py-3 text-sm text-slate-100 outline-none focus:border-sky-400" maxlength="160" placeholder="Бишкек / удалённо">
+            <input v-model="vacancyForm.location" class="input-control" maxlength="160" placeholder="Бишкек / удалённо">
           </label>
 
           <label class="grid gap-2 text-sm font-bold text-slate-300">
             Контактная ссылка
-            <input v-model="vacancyForm.contact_link" class="rounded-2xl border border-slate-700 bg-slate-950/60 px-4 py-3 text-sm text-slate-100 outline-none focus:border-sky-400" maxlength="255" placeholder="https://t.me/hr">
+            <input v-model="vacancyForm.contact_link" class="input-control" maxlength="255" placeholder="https://t.me/hr">
           </label>
 
           <label class="grid gap-2 text-sm font-bold text-slate-300">
             Зарплата от
-            <input v-model="vacancyForm.salary_from" class="rounded-2xl border border-slate-700 bg-slate-950/60 px-4 py-3 text-sm text-slate-100 outline-none focus:border-sky-400" min="0" type="number" placeholder="50000">
+            <input v-model="vacancyForm.salary_from" class="input-control" min="0" type="number" placeholder="50000">
           </label>
 
           <label class="grid gap-2 text-sm font-bold text-slate-300">
             Зарплата до
-            <input v-model="vacancyForm.salary_to" class="rounded-2xl border border-slate-700 bg-slate-950/60 px-4 py-3 text-sm text-slate-100 outline-none focus:border-sky-400" min="0" type="number" placeholder="120000">
+            <input v-model="vacancyForm.salary_to" class="input-control" min="0" type="number" placeholder="120000">
           </label>
         </div>
 
         <div class="sticky bottom-0 -mx-4 -mb-4 mt-6 flex flex-col-reverse gap-3 border-t border-slate-800 bg-slate-900/95 px-4 py-4 backdrop-blur sm:-mx-6 sm:-mb-6 sm:flex-row sm:justify-end sm:px-6 sm:py-5">
-          <button class="rounded-2xl border border-slate-700 px-5 py-3 text-sm font-bold text-slate-300 transition hover:text-white" type="button" @click="vacancyModalOpen = false">Отмена</button>
-          <button class="rounded-2xl bg-sky-600 px-5 py-3 text-sm font-black text-white transition hover:bg-sky-500 disabled:opacity-60" type="submit" :disabled="savingVacancy">
+          <button class="btn-secondary" type="button" @click="vacancyModalOpen = false">Отмена</button>
+          <button class="btn-primary text-sm font-black" type="submit" :disabled="savingVacancy">
             {{ savingVacancy ? 'Сохранение...' : 'Сохранить вакансию' }}
           </button>
         </div>

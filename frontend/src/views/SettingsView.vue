@@ -315,7 +315,7 @@ onMounted(fetchSettings)
 
 <template>
   <div class="mx-auto mt-8 max-w-6xl max-w-full min-w-0 space-y-6 px-0 pb-12 sm:px-4">
-    <section class="max-w-full rounded-[28px] border border-slate-700/60 bg-slate-900/55 p-4 shadow-xl shadow-slate-950/20 backdrop-blur sm:p-6">
+    <section class="card-glass max-w-full rounded-[28px] p-4 sm:p-6">
       <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <p class="text-xs font-bold uppercase tracking-[0.28em] text-indigo-300">Аккаунт</p>
@@ -341,7 +341,7 @@ onMounted(fetchSettings)
       </div>
     </section>
 
-    <section class="rounded-[28px] border border-slate-700/60 bg-slate-900/55 shadow-xl shadow-slate-950/20 backdrop-blur">
+    <section class="card-glass rounded-[28px]">
       <div class="grid border-b border-slate-700/60 p-2 sm:grid-cols-3">
         <button
           v-for="tab in tabs"
@@ -375,7 +375,7 @@ onMounted(fetchSettings)
               </div>
 
               <div class="mt-5 space-y-2">
-                <label class="flex cursor-pointer items-center justify-center rounded-2xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-indigo-500">
+                <label class="btn-primary flex cursor-pointer items-center justify-center px-4 py-3 text-sm">
                   Выбрать аватар
                   <input
                     :key="avatarInputKey"
@@ -423,7 +423,7 @@ onMounted(fetchSettings)
                   v-model="form.bio"
                   rows="5"
                   :maxlength="limits.bio + 50"
-                  class="w-full resize-y rounded-2xl border border-slate-700 bg-slate-950/45 px-4 py-3 text-sm leading-6 text-slate-200 outline-none transition placeholder:text-slate-600 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/15"
+                  class="input-control w-full resize-y px-4 py-3 leading-6 text-slate-200"
                   placeholder="Кратко расскажите о себе, опыте, направлении обучения или преподавания."
                 ></textarea>
               </div>
@@ -439,7 +439,7 @@ onMounted(fetchSettings)
                   v-model="form.location"
                   type="text"
                   :maxlength="limits.location + 20"
-                  class="w-full rounded-2xl border border-slate-700 bg-slate-950/45 px-4 py-3 text-sm text-slate-200 outline-none transition placeholder:text-slate-600 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/15"
+                  class="input-control px-4 py-3 text-slate-200"
                   placeholder="Например: Бишкек, Кыргызстан"
                 >
               </div>
@@ -461,7 +461,7 @@ onMounted(fetchSettings)
                   v-model="form.telegram"
                   type="text"
                   :maxlength="limits.telegram + 20"
-                  class="w-full rounded-2xl border border-slate-700 bg-slate-950/45 px-4 py-3 text-sm text-slate-200 outline-none transition placeholder:text-slate-600 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/15"
+                  class="input-control px-4 py-3 text-slate-200"
                   placeholder="@username или https://t.me/username"
                 >
               </div>
@@ -477,7 +477,7 @@ onMounted(fetchSettings)
                   v-model="form.github"
                   type="text"
                   :maxlength="limits.github + 20"
-                  class="w-full rounded-2xl border border-slate-700 bg-slate-950/45 px-4 py-3 text-sm text-slate-200 outline-none transition placeholder:text-slate-600 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/15"
+                  class="input-control px-4 py-3 text-slate-200"
                   placeholder="username или https://github.com/username"
                 >
               </div>
@@ -493,7 +493,7 @@ onMounted(fetchSettings)
                   v-model="form.linkedin"
                   type="text"
                   :maxlength="limits.linkedin + 20"
-                  class="w-full rounded-2xl border border-slate-700 bg-slate-950/45 px-4 py-3 text-sm text-slate-200 outline-none transition placeholder:text-slate-600 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/15"
+                  class="input-control px-4 py-3 text-slate-200"
                   placeholder="username или ссылка на профиль LinkedIn"
                 >
               </div>
@@ -524,7 +524,7 @@ onMounted(fetchSettings)
                   v-model="passwordForm.old_password"
                   type="password"
                   autocomplete="current-password"
-                  class="w-full rounded-2xl border border-slate-700 bg-slate-950/45 px-4 py-3 text-sm text-slate-200 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/15"
+                  class="input-control px-4 py-3 text-slate-200"
                 >
               </div>
 
@@ -534,7 +534,7 @@ onMounted(fetchSettings)
                   v-model="passwordForm.new_password"
                   type="password"
                   autocomplete="new-password"
-                  class="w-full rounded-2xl border border-slate-700 bg-slate-950/45 px-4 py-3 text-sm text-slate-200 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/15"
+                  class="input-control px-4 py-3 text-slate-200"
                 >
                 <div class="mt-3 flex items-center gap-3">
                   <div class="h-2 flex-1 rounded-full bg-slate-800">
@@ -550,13 +550,13 @@ onMounted(fetchSettings)
                   v-model="passwordForm.confirm_password"
                   type="password"
                   autocomplete="new-password"
-                  class="w-full rounded-2xl border border-slate-700 bg-slate-950/45 px-4 py-3 text-sm text-slate-200 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/15"
+                  class="input-control px-4 py-3 text-slate-200"
                 >
               </div>
 
               <button
                 type="button"
-                class="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                class="btn-primary inline-flex w-full items-center justify-center gap-2 sm:w-auto"
                 :disabled="changingPassword"
                 @click="changeUserPassword"
               >
@@ -583,7 +583,7 @@ onMounted(fetchSettings)
         </p>
         <button
           type="button"
-          class="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+          class="btn-primary inline-flex w-full items-center justify-center gap-2 px-6 sm:w-auto"
           :disabled="saving || !hasProfileChanges"
           @click="saveProfile"
         >

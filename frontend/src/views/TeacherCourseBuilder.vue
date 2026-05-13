@@ -694,7 +694,7 @@ onUnmounted(() => {
       <div class="min-w-0">
         <button
           type="button"
-          class="mb-4 inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900/60 px-3 py-2 text-sm font-semibold text-slate-300 transition hover:border-indigo-400/60 hover:text-white"
+          class="btn-secondary mb-4 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold"
           @click="goBack"
         >
           <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -718,7 +718,7 @@ onUnmounted(() => {
     </div>
 
     <div class="grid gap-6 xl:grid-cols-[360px,minmax(0,1fr)]">
-      <aside class="min-w-0 rounded-3xl border border-slate-700/70 bg-slate-900/70 p-4 shadow-xl shadow-slate-950/30">
+      <aside class="card-glass min-w-0 rounded-3xl p-4">
         <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 class="text-lg font-bold text-white">Модули курса</h2>
@@ -726,7 +726,7 @@ onUnmounted(() => {
           </div>
           <button
             type="button"
-            class="inline-flex shrink-0 items-center gap-2 rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-500"
+            class="btn-primary inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold"
             @click="openCreateModule"
           >
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -819,7 +819,7 @@ onUnmounted(() => {
         </div>
       </aside>
 
-      <section class="min-w-0 rounded-3xl border border-slate-700/70 bg-slate-900/70 p-4 shadow-xl shadow-slate-950/30">
+      <section class="card-glass min-w-0 rounded-3xl p-4">
         <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
           <div class="min-w-0">
             <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Рабочая область</p>
@@ -832,7 +832,7 @@ onUnmounted(() => {
           </div>
           <button
             type="button"
-            class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+            class="btn-primary inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold sm:w-auto"
             :disabled="!selectedModule"
             @click="openCreateLesson"
           >
@@ -881,7 +881,7 @@ onUnmounted(() => {
                 :id="`lesson-title-${lesson.id}`"
                 :value="lesson.title"
                 :maxlength="TITLE_LIMIT"
-                class="w-full min-w-0 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2.5 text-sm font-semibold text-slate-100 outline-none transition focus:border-indigo-400"
+                class="input-control w-full min-w-0 rounded-xl bg-slate-900 px-3 py-2.5 font-semibold"
                 @focus="activeLessonId = lesson.id"
                 @change="markLessonDirty(lesson, { title: $event.target.value.slice(0, TITLE_LIMIT) })"
               >
@@ -950,7 +950,7 @@ onUnmounted(() => {
     />
 
     <div v-if="lessonCreateOpen" class="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 p-3 backdrop-blur-sm sm:p-4">
-      <div class="mx-auto my-4 flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-slate-700 bg-slate-900 shadow-2xl shadow-slate-950/50 sm:my-8">
+      <div class="modal-panel mx-auto my-4 flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl sm:my-8">
         <div class="sticky top-0 z-10 flex flex-col gap-3 rounded-t-3xl border-b border-slate-800 bg-slate-900/95 px-4 py-4 backdrop-blur sm:flex-row sm:items-start sm:justify-between sm:px-6 sm:py-5">
           <div>
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-300/80">{{ selectedModule?.title }}</p>
@@ -972,7 +972,7 @@ onUnmounted(() => {
               v-model.trim="lessonDraft.title"
               type="text"
               :maxlength="TITLE_LIMIT"
-              class="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-indigo-400"
+              class="input-control bg-slate-950 px-4 py-3"
               placeholder="Например: Введение в REST API"
             >
           </div>
@@ -1022,7 +1022,7 @@ onUnmounted(() => {
             </div>
 
             <div v-if="lessonVideoSource === 'file'" class="mt-4 rounded-2xl border border-dashed border-slate-700 bg-slate-900/60 p-4">
-              <label class="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500 sm:w-auto">
+                <label class="btn-primary inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold sm:w-auto">
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                   <path d="M12 16V4M7 9l5-5 5 5" /><path d="M20 16v4H4v-4" />
                 </svg>
@@ -1043,7 +1043,7 @@ onUnmounted(() => {
                 v-model.trim="lessonDraft.video_url"
                 type="url"
                 maxlength="500"
-                class="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-indigo-400"
+                class="input-control bg-slate-950 px-4 py-3"
                 placeholder="https://www.youtube.com/watch?v=..."
               >
             </div>
@@ -1061,7 +1061,7 @@ onUnmounted(() => {
               v-model="lessonDraft.content"
               rows="3"
               :maxlength="CONTENT_LIMIT"
-              class="max-h-80 min-h-[96px] w-full resize-none overflow-y-auto rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-indigo-400"
+              class="input-control max-h-80 min-h-[96px] w-full resize-none overflow-y-auto bg-slate-950 px-4 py-3"
               placeholder="Краткий конспект, инструкции, ссылки или описание практической части..."
               @input="autoGrowTextarea"
             ></textarea>
@@ -1077,7 +1077,7 @@ onUnmounted(() => {
           <button type="button" class="rounded-xl bg-slate-800 px-4 py-2.5 text-sm font-semibold text-slate-200 transition hover:bg-slate-700" :disabled="isCreatingLesson" @click="closeCreateLesson">
             Отмена
           </button>
-          <button type="button" class="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-indigo-500 disabled:cursor-wait disabled:opacity-70" :disabled="isCreatingLesson" @click="submitCreateLesson">
+          <button type="button" class="btn-primary rounded-xl px-5 py-2.5 text-sm font-bold" :disabled="isCreatingLesson" @click="submitCreateLesson">
             {{ isCreatingLesson ? 'Создание...' : 'Создать урок' }}
           </button>
         </div>
@@ -1085,7 +1085,7 @@ onUnmounted(() => {
     </div>
 
     <div v-if="confirmDialog.open" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/80 p-3 backdrop-blur-sm sm:p-4">
-      <div class="w-full max-w-md rounded-3xl border border-slate-700 bg-slate-900 p-6 shadow-2xl shadow-slate-950/50">
+      <div class="modal-panel w-full max-w-md rounded-3xl p-6">
         <div class="flex items-start gap-4">
           <div class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-rose-500/15 text-rose-200">
             <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">

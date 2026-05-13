@@ -353,7 +353,7 @@ onMounted(() => {
     </section>
 
     <section class="grid gap-4 xl:grid-cols-[1.15fr,0.95fr]">
-      <div class="rounded-[1.75rem] border border-slate-700/60 bg-slate-900/70 p-5 shadow-xl shadow-slate-950/20 backdrop-blur">
+      <div class="card-glass rounded-[1.75rem] p-5">
         <label class="mb-3 block text-xs font-bold uppercase tracking-[0.25em] text-slate-500">
           Быстрый поиск
         </label>
@@ -365,12 +365,12 @@ onMounted(() => {
             v-model="searchTerm"
             type="text"
             placeholder="Имя, email или фраза из блока «О себе»"
-            class="w-full rounded-2xl border border-slate-700 bg-slate-950/70 py-4 pl-12 pr-4 text-slate-100 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/30"
+            class="input-control w-full bg-slate-950/70 py-4 pl-12 pr-4"
           >
         </div>
       </div>
 
-      <div class="rounded-[1.75rem] border border-slate-700/60 bg-slate-900/70 p-5 shadow-xl shadow-slate-950/20 backdrop-blur">
+      <div class="card-glass rounded-[1.75rem] p-5">
         <label class="mb-3 block text-xs font-bold uppercase tracking-[0.25em] text-slate-500">
           Мульти-поиск по навыкам
         </label>
@@ -379,12 +379,12 @@ onMounted(() => {
             v-model="skillInput"
             type="text"
             placeholder="Python, Vue.js, Django"
-            class="flex-1 rounded-2xl border border-slate-700 bg-slate-950/70 px-4 py-4 text-slate-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/30"
+            class="input-control flex-1 bg-slate-950/70 px-4 py-4"
             @keydown="handleSkillInputKeydown"
             @blur="addSkillTagsFromInput"
           >
           <button
-            class="rounded-2xl bg-indigo-600 px-5 py-4 text-sm font-bold text-white transition hover:bg-indigo-500"
+            class="btn-primary px-5 py-4 text-sm font-bold"
             @click="addSkillTagsFromInput"
           >
             Добавить
@@ -393,7 +393,7 @@ onMounted(() => {
       </div>
     </section>
 
-    <section class="rounded-[1.75rem] border border-slate-700/60 bg-slate-900/60 p-5 shadow-xl shadow-slate-950/20 backdrop-blur">
+    <section class="card-glass rounded-[1.75rem] p-5">
       <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p class="text-xs font-bold uppercase tracking-[0.25em] text-slate-500">Популярные навыки</p>
@@ -402,7 +402,7 @@ onMounted(() => {
 
         <button
           v-if="searchTerm || skillInput || selectedSkills.length"
-          class="rounded-full border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:border-slate-500 hover:text-white"
+          class="btn-secondary rounded-full px-4 py-2 text-sm font-semibold"
           @click="clearFilters"
         >
           Сбросить фильтры
@@ -527,7 +527,7 @@ onMounted(() => {
 
         <div class="mt-6 grid gap-3 sm:grid-cols-2">
           <button
-            class="rounded-2xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-sm font-bold text-slate-200 transition hover:border-slate-500 hover:text-white"
+            class="btn-secondary px-4 py-3 text-sm font-bold"
             @click.stop="openProfile(student)"
           >
             Быстрый просмотр
@@ -548,7 +548,7 @@ onMounted(() => {
 
           <button
             v-else
-            class="rounded-2xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-indigo-500"
+            class="btn-primary px-4 py-3 text-sm font-bold"
             @click.stop="openOfferModal(student)"
           >
             Пригласить
@@ -562,7 +562,7 @@ onMounted(() => {
       class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 p-3 backdrop-blur-md sm:p-4"
       @click.self="closeProfile"
     >
-      <div class="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-[2rem] border border-slate-700 bg-slate-900 shadow-2xl shadow-black/60">
+      <div class="modal-panel max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-[2rem]">
         <div class="relative overflow-hidden border-b border-slate-800 p-8">
           <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.14),_transparent_35%),radial-gradient(circle_at_top_right,_rgba(99,102,241,0.18),_transparent_30%)]"></div>
 
@@ -681,7 +681,7 @@ onMounted(() => {
       class="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/85 p-3 backdrop-blur-md sm:p-4"
       @click.self="closeOfferModal"
     >
-      <div class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[2rem] border border-slate-700 bg-slate-900 p-5 shadow-2xl shadow-black/60 sm:p-8">
+      <div class="modal-panel max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[2rem] p-5 sm:p-8">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div class="min-w-0">
             <p class="text-xs font-bold uppercase tracking-[0.25em] text-indigo-300">Новый оффер</p>
@@ -704,7 +704,7 @@ onMounted(() => {
             <textarea
               v-model="offerModal.message"
               rows="5"
-              class="w-full rounded-2xl border border-slate-700 bg-slate-950/70 px-5 py-4 text-slate-100 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/30"
+              class="input-control w-full bg-slate-950/70 px-5 py-4"
               placeholder="Здравствуйте! Нам понравился ваш профиль и мы хотели бы обсудить сотрудничество..."
             ></textarea>
           </div>
@@ -714,7 +714,7 @@ onMounted(() => {
             <input
               v-model="offerModal.contact"
               type="text"
-              class="w-full rounded-2xl border border-slate-700 bg-slate-950/70 px-5 py-4 text-slate-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/30"
+              class="input-control w-full bg-slate-950/70 px-5 py-4"
               placeholder="t.me/hr_manager или email@company.com"
             >
           </div>
@@ -729,13 +729,13 @@ onMounted(() => {
 
         <div class="mt-8 grid gap-3 sm:grid-cols-2">
           <button
-            class="rounded-2xl border border-slate-700 px-4 py-3 text-sm font-bold text-slate-300 transition hover:border-slate-500 hover:text-white"
+            class="btn-secondary px-4 py-3 text-sm font-bold"
             @click="closeOfferModal"
           >
             Отмена
           </button>
           <button
-            class="rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
+            class="btn-primary px-4 py-3 text-sm font-bold"
             :disabled="offerModal.submitting || !offerModal.message.trim()"
             @click="submitOffer"
           >

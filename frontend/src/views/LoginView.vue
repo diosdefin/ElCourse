@@ -79,7 +79,7 @@ onMounted(() => {
 <template>
   <div class="mx-auto flex min-h-[calc(100vh-140px)] w-full max-w-6xl items-center justify-center py-6 sm:px-4 sm:py-10">
     <section class="w-full max-w-md">
-      <div class="rounded-[2rem] border border-slate-800 bg-slate-900/72 p-5 shadow-2xl shadow-slate-950/30 backdrop-blur sm:p-9">
+      <div class="card-glass rounded-[2rem] p-5 sm:p-9">
         <div class="text-center">
           <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-base font-black text-white shadow-lg shadow-indigo-600/20 sm:h-14 sm:w-14 sm:text-lg">
             EL
@@ -101,7 +101,7 @@ onMounted(() => {
               required
               autocomplete="username"
               maxlength="150"
-              class="w-full rounded-2xl border border-slate-700 bg-slate-950/45 px-5 py-3.5 text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+              class="input-control px-5 py-3.5"
               placeholder="Введите логин"
             >
           </div>
@@ -116,7 +116,7 @@ onMounted(() => {
                 required
                 autocomplete="current-password"
                 maxlength="128"
-                class="w-full rounded-2xl border border-slate-700 bg-slate-950/45 py-3.5 pl-5 pr-14 text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+                class="input-control py-3.5 pl-5 pr-14"
                 placeholder="Введите пароль"
               >
               <button
@@ -147,13 +147,13 @@ onMounted(() => {
           <button
             type="submit"
             :disabled="!canSubmit"
-            class="w-full rounded-2xl bg-indigo-600 px-5 py-4 text-base font-black text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+            class="btn-primary w-full py-4 text-base font-black"
           >
             {{ submitting ? 'Вход...' : 'Войти в аккаунт' }}
           </button>
         </form>
 
-        <div class="mt-7 rounded-2xl border border-slate-800 bg-slate-950/35 p-4 text-center text-sm text-slate-400">
+        <div class="card-glass mt-7 rounded-2xl p-4 text-center text-sm text-slate-400">
           Нет аккаунта?
           <RouterLink to="/register" class="font-bold text-indigo-300 transition hover:text-indigo-200">
             Создать аккаунт

@@ -344,7 +344,7 @@ onMounted(async () => {
 
 <template>
   <div class="mx-auto max-w-7xl px-0 py-6 sm:px-6 sm:py-8 lg:px-8">
-    <header class="mb-8 overflow-hidden rounded-[2rem] border border-slate-700/60 bg-slate-900/70 shadow-2xl shadow-slate-950/20 backdrop-blur">
+    <header class="card-glass mb-8 overflow-hidden rounded-[2rem]">
       <div class="relative p-4 sm:p-8">
         <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-400/70 to-transparent"></div>
         <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
@@ -370,7 +370,7 @@ onMounted(async () => {
             </RouterLink>
 
             <button
-              class="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-5 py-3 text-center text-sm font-black text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 active:scale-[0.98]"
+              class="btn-primary inline-flex items-center justify-center gap-2 px-5 text-center text-sm font-black"
               type="button"
               @click="openCreateModal"
             >
@@ -385,7 +385,7 @@ onMounted(async () => {
     </header>
 
     <section class="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-      <article class="rounded-3xl border border-slate-700/60 bg-slate-900/55 p-5 shadow-lg shadow-slate-950/10">
+      <article class="card-glass rounded-3xl p-5">
         <p class="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Курсы</p>
         <div class="mt-3 flex items-end justify-between gap-3">
           <strong class="text-3xl font-black text-slate-50">{{ dashboardStats.total }}</strong>
@@ -398,7 +398,7 @@ onMounted(async () => {
         </div>
       </article>
 
-      <article class="rounded-3xl border border-slate-700/60 bg-slate-900/55 p-5 shadow-lg shadow-slate-950/10">
+      <article class="card-glass rounded-3xl p-5">
         <p class="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Опубликовано</p>
         <div class="mt-3 flex items-end justify-between gap-3">
           <strong class="text-3xl font-black text-emerald-300">{{ dashboardStats.published }}</strong>
@@ -410,7 +410,7 @@ onMounted(async () => {
         </div>
       </article>
 
-      <article class="rounded-3xl border border-slate-700/60 bg-slate-900/55 p-5 shadow-lg shadow-slate-950/10">
+      <article class="card-glass rounded-3xl p-5">
         <p class="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Модули</p>
         <div class="mt-3 flex items-end justify-between gap-3">
           <strong class="text-3xl font-black text-slate-50">{{ dashboardStats.modules }}</strong>
@@ -422,7 +422,7 @@ onMounted(async () => {
         </div>
       </article>
 
-      <article class="rounded-3xl border border-slate-700/60 bg-slate-900/55 p-5 shadow-lg shadow-slate-950/10">
+      <article class="card-glass rounded-3xl p-5">
         <p class="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Уроки</p>
         <div class="mt-3 flex items-end justify-between gap-3">
           <strong class="text-3xl font-black text-slate-50">{{ dashboardStats.lessons }}</strong>
@@ -434,7 +434,7 @@ onMounted(async () => {
         </div>
       </article>
 
-      <article class="rounded-3xl border border-slate-700/60 bg-slate-900/55 p-5 shadow-lg shadow-slate-950/10">
+      <article class="card-glass rounded-3xl p-5">
         <p class="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Навыки</p>
         <div class="mt-3 flex items-end justify-between gap-3">
           <strong class="text-3xl font-black text-slate-50">{{ dashboardStats.skills }}</strong>
@@ -448,14 +448,14 @@ onMounted(async () => {
       </article>
     </section>
 
-    <section class="rounded-[2rem] border border-slate-700/60 bg-slate-900/50 p-4 shadow-2xl shadow-slate-950/10 sm:p-6">
+    <section class="card-glass rounded-[2rem] p-4 sm:p-6">
       <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 class="text-xl font-black text-slate-50">Мои курсы</h2>
           <p class="mt-1 text-sm text-slate-500">Рабочий список курсов преподавателя.</p>
         </div>
         <button
-          class="inline-flex items-center justify-center rounded-2xl border border-slate-700 bg-slate-800/80 px-4 py-2.5 text-sm font-bold text-slate-200 transition hover:border-indigo-400/60 hover:text-white"
+          class="btn-secondary inline-flex items-center justify-center px-4 py-2.5 text-sm font-bold"
           type="button"
           @click="fetchMyCourses"
         >
@@ -495,7 +495,7 @@ onMounted(async () => {
         <p class="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-500">
           Создайте первый курс, затем добавьте модули, уроки, HLS-видео, материалы и тестовые задания.
         </p>
-        <button class="mt-6 rounded-2xl bg-indigo-600 px-6 py-3 text-sm font-black text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500" type="button" @click="openCreateModal">
+        <button class="btn-primary mt-6 px-6 text-sm font-black" type="button" @click="openCreateModal">
           Создать первый курс
         </button>
       </div>
@@ -504,7 +504,7 @@ onMounted(async () => {
         <article
           v-for="course in sortedCourses"
           :key="course.id"
-          class="group overflow-hidden rounded-3xl border border-slate-700/60 bg-slate-950/30 shadow-lg shadow-slate-950/10 transition hover:border-indigo-400/40 hover:bg-slate-900/70"
+          class="card-glass group overflow-hidden rounded-3xl transition hover:border-indigo-400/40 hover:bg-slate-900/70"
         >
           <div class="grid gap-5 p-4 md:grid-cols-[180px_minmax(0,1fr)] md:p-5">
             <div class="relative h-44 overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 md:h-full">
@@ -635,14 +635,14 @@ onMounted(async () => {
     </section>
 
     <div v-if="isModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/85 p-3 backdrop-blur-sm sm:p-4" @click.self="closeCourseModal">
-      <div class="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-slate-700 bg-slate-900 shadow-2xl shadow-slate-950/50">
+      <div class="modal-panel flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem]">
         <div class="sticky top-0 z-10 border-b border-slate-800 bg-slate-900/95 px-4 py-4 backdrop-blur sm:px-6 sm:py-5">
           <div class="flex items-start justify-between gap-4">
             <div>
               <p class="text-xs font-bold uppercase tracking-[0.22em] text-indigo-300">{{ isEditMode ? 'Редактирование' : 'Создание' }}</p>
               <h2 class="mt-1 text-2xl font-black text-slate-50">{{ isEditMode ? 'Настройки курса' : 'Новый курс' }}</h2>
             </div>
-            <button class="rounded-2xl border border-slate-700 bg-slate-800/70 p-2 text-slate-300 transition hover:text-white" type="button" @click="closeCourseModal">
+            <button class="btn-secondary p-2" type="button" @click="closeCourseModal">
               <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
               </svg>
@@ -667,7 +667,7 @@ onMounted(async () => {
                 type="text"
                 required
                 placeholder="Например: Backend-разработка на Django"
-                class="w-full rounded-2xl border border-slate-700 bg-slate-950/60 px-4 py-3 text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20"
+                class="input-control px-4 py-3"
               >
             </label>
 
@@ -683,7 +683,7 @@ onMounted(async () => {
                 required
                 rows="3"
                 placeholder="Кратко опишите цель курса, аудиторию и результат обучения."
-                class="min-h-[96px] w-full resize-none rounded-2xl border border-slate-700 bg-slate-950/60 px-4 py-3 text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20"
+                class="input-control min-h-[96px] w-full resize-none px-4 py-3"
                 @input="autoGrowTextarea"
               ></textarea>
             </label>
@@ -694,7 +694,7 @@ onMounted(async () => {
                   <p class="text-sm font-bold text-slate-300">Обложка курса</p>
                   <p class="mt-1 text-xs leading-5 text-slate-500">JPG, PNG или WebP до {{ IMAGE_LIMIT_MB }} МБ. Рекомендуется горизонтальное изображение.</p>
                 </div>
-                <label class="inline-flex w-full cursor-pointer items-center justify-center rounded-2xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm font-bold text-slate-200 transition hover:border-indigo-400/60 hover:text-white sm:w-auto">
+                <label class="btn-secondary inline-flex w-full cursor-pointer items-center justify-center px-4 py-2.5 text-sm font-bold sm:w-auto">
                   Выбрать файл
                   <input ref="imageInputRef" type="file" accept="image/*" class="sr-only" @change="handleFileUpload">
                 </label>
@@ -727,7 +727,7 @@ onMounted(async () => {
                   v-model="skillSearch"
                   type="search"
                   placeholder="Поиск навыка"
-                  class="w-full rounded-2xl border border-slate-700 bg-slate-950/60 px-4 py-2.5 text-sm text-slate-100 outline-none placeholder:text-slate-600 focus:border-indigo-400 sm:w-56"
+                  class="input-control w-full px-4 py-2.5 sm:w-56"
                 >
               </div>
 
@@ -767,7 +767,7 @@ onMounted(async () => {
 
         <div class="sticky bottom-0 z-10 flex flex-col-reverse gap-3 border-t border-slate-800 bg-slate-900/95 px-4 py-4 backdrop-blur sm:flex-row sm:justify-end sm:px-6 sm:py-5">
           <button
-            class="rounded-2xl border border-slate-700 bg-slate-800 px-5 py-3 text-sm font-bold text-slate-300 transition hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+            class="btn-secondary px-5 text-sm font-bold"
             type="button"
             :disabled="isSaving"
             @click="closeCourseModal"
@@ -775,7 +775,7 @@ onMounted(async () => {
             Отмена
           </button>
           <button
-            class="rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-black text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+            class="btn-primary px-5 text-sm font-black"
             type="button"
             :disabled="isSaving"
             @click="saveCourse"
@@ -787,7 +787,7 @@ onMounted(async () => {
     </div>
 
     <div v-if="confirmDialog.open" class="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/85 p-4 backdrop-blur-sm" @click.self="closeConfirmDialog">
-      <div class="w-full max-w-md rounded-[2rem] border border-slate-700 bg-slate-900 p-6 shadow-2xl shadow-slate-950/50">
+      <div class="modal-panel w-full max-w-md rounded-[2rem] p-6">
         <div class="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl border border-rose-500/20 bg-rose-500/10 text-rose-200">
           <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M12 8v5M12 16.5h.01M10.2 4.7 2.8 17.5A2 2 0 0 0 4.5 20h15a2 2 0 0 0 1.7-2.5L13.8 4.7a2 2 0 0 0-3.6 0Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
@@ -797,7 +797,7 @@ onMounted(async () => {
         <p class="mt-3 text-sm leading-6 text-slate-400">{{ confirmDialog.message }}</p>
         <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <button
-            class="rounded-2xl border border-slate-700 bg-slate-800 px-5 py-3 text-sm font-bold text-slate-300 transition hover:bg-slate-700 disabled:opacity-60"
+            class="btn-secondary px-5 text-sm font-bold"
             type="button"
             :disabled="confirmDialog.pending"
             @click="closeConfirmDialog"

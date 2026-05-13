@@ -207,7 +207,7 @@ onMounted(fetchAnalytics)
 
 <template>
   <div class="mx-auto max-w-7xl px-0 py-6 sm:px-6 sm:py-7 lg:px-8">
-    <header class="mb-6 overflow-hidden rounded-3xl border border-slate-700/60 bg-slate-900/65 shadow-xl shadow-slate-950/10 backdrop-blur">
+    <header class="card-glass mb-6 overflow-hidden rounded-3xl">
       <div class="relative p-4 sm:p-7">
         <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-400/60 to-transparent"></div>
         <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
@@ -224,12 +224,12 @@ onMounted(fetchAnalytics)
           <div class="grid gap-2 sm:flex sm:flex-wrap">
             <RouterLink
               :to="{ name: 'teacher-dashboard' }"
-              class="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-800/80 px-4 py-2.5 text-center text-sm font-bold text-slate-200 transition hover:border-sky-400/60 hover:text-white"
+              class="btn-secondary inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-center text-sm font-bold"
             >
               К курсам
             </RouterLink>
             <button
-              class="inline-flex items-center justify-center rounded-xl bg-sky-600 px-4 py-2.5 text-center text-sm font-black text-white shadow-lg shadow-sky-600/20 transition hover:bg-sky-500 active:scale-[0.98]"
+              class="btn-primary inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-center text-sm font-black"
               type="button"
               @click="fetchAnalytics"
             >
@@ -247,39 +247,39 @@ onMounted(fetchAnalytics)
     <section v-else-if="pageError" class="rounded-3xl border border-rose-500/30 bg-rose-500/10 p-8 text-center">
       <h2 class="text-xl font-black text-rose-100">Не удалось открыть аналитику</h2>
       <p class="mx-auto mt-2 max-w-xl text-sm leading-6 text-rose-100/80">{{ pageError }}</p>
-      <button class="mt-6 rounded-xl bg-rose-500 px-5 py-3 text-sm font-bold text-white transition hover:bg-rose-400" type="button" @click="fetchAnalytics">
+      <button class="btn-danger mt-6 rounded-xl px-5 py-3 text-sm font-bold" type="button" @click="fetchAnalytics">
         Повторить
       </button>
     </section>
 
     <div v-else>
       <section class="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <article class="rounded-2xl border border-slate-700/60 bg-slate-900/50 p-4">
+        <article class="card-glass rounded-2xl p-4">
           <p class="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Курсы</p>
           <strong class="mt-2 block text-2xl font-black text-slate-50">{{ formatNumber(summary.total_courses) }}</strong>
           <p class="mt-1 text-xs text-slate-500">Всего программ автора</p>
         </article>
 
-        <article class="rounded-2xl border border-slate-700/60 bg-slate-900/50 p-4">
+        <article class="card-glass rounded-2xl p-4">
           <p class="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Студенты</p>
           <strong class="mt-2 block text-2xl font-black text-emerald-300">{{ formatNumber(summary.students_count) }}</strong>
           <p class="mt-1 text-xs text-slate-500">Есть активность в курсах</p>
         </article>
 
-        <article class="rounded-2xl border border-slate-700/60 bg-slate-900/50 p-4">
+        <article class="card-glass rounded-2xl p-4">
           <p class="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Уроки</p>
           <strong class="mt-2 block text-2xl font-black text-slate-50">{{ formatNumber(summary.total_lessons) }}</strong>
           <p class="mt-1 text-xs text-slate-500">Опубликовано: {{ formatNumber(summary.published_lessons) }}</p>
         </article>
 
-        <article class="rounded-2xl border border-slate-700/60 bg-slate-900/50 p-4">
+        <article class="card-glass rounded-2xl p-4">
           <p class="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Средний балл</p>
           <strong class="mt-2 block text-2xl font-black text-sky-300">{{ formatPercent(summary.average_score) }}</strong>
           <p class="mt-1 text-xs text-slate-500">По тестам с результатом</p>
         </article>
       </section>
 
-      <nav class="mb-5 flex flex-wrap gap-1.5 rounded-2xl border border-slate-700/60 bg-slate-900/45 p-1.5">
+      <nav class="card-glass mb-5 flex flex-wrap gap-1.5 rounded-2xl p-1.5">
         <button
           v-for="tab in tabs"
           :key="tab.id"
@@ -294,7 +294,7 @@ onMounted(fetchAnalytics)
 
       <section v-if="activeTab === 'overview'" class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div class="grid gap-5">
-          <article class="rounded-3xl border border-slate-700/60 bg-slate-900/50 p-5">
+          <article class="card-glass rounded-3xl p-5">
             <div class="mb-4">
               <h2 class="text-lg font-black text-slate-50">Структура учебного контента</h2>
               <p class="mt-1 text-sm text-slate-500">Распределение уроков по типам.</p>
@@ -320,7 +320,7 @@ onMounted(fetchAnalytics)
             </div>
           </article>
 
-          <article class="rounded-3xl border border-slate-700/60 bg-slate-900/50 p-5">
+          <article class="card-glass rounded-3xl p-5">
             <h2 class="text-lg font-black text-slate-50">Самые активные курсы</h2>
             <p class="mt-1 text-sm text-slate-500">Курсы отсортированы по количеству студентов с прогрессом.</p>
 
@@ -346,7 +346,7 @@ onMounted(fetchAnalytics)
         </div>
 
         <aside class="grid gap-5">
-          <article class="rounded-3xl border border-slate-700/60 bg-slate-900/50 p-5">
+          <article class="card-glass rounded-3xl p-5">
             <h2 class="text-lg font-black text-slate-50">Активность автора</h2>
             <p class="mt-1 text-sm text-slate-500">Создание курсов, уроков, загрузка видео и обновление тестов.</p>
 
@@ -364,7 +364,7 @@ onMounted(fetchAnalytics)
             </div>
           </article>
 
-          <article class="rounded-3xl border border-slate-700/60 bg-slate-900/50 p-5">
+          <article class="card-glass rounded-3xl p-5">
             <h2 class="text-lg font-black text-slate-50">Последняя активность студентов</h2>
             <div v-if="recentStudents.length" class="mt-4 grid gap-2.5">
               <div v-for="row in recentStudents" :key="`${row.course_id}-${row.student_id}`" class="rounded-2xl border border-slate-800 bg-slate-950/20 p-3">
@@ -395,7 +395,7 @@ onMounted(fetchAnalytics)
         </aside>
       </section>
 
-      <section v-else-if="activeTab === 'courses'" class="rounded-3xl border border-slate-700/60 bg-slate-900/50 p-5">
+      <section v-else-if="activeTab === 'courses'" class="card-glass rounded-3xl p-5">
         <div class="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h2 class="text-lg font-black text-slate-50">Аналитика по курсам</h2>
@@ -404,11 +404,11 @@ onMounted(fetchAnalytics)
           <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
             <input
               v-model="searchQuery"
-              class="w-full rounded-xl border border-slate-700 bg-slate-950/45 px-4 py-2.5 text-sm text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-sky-400 lg:w-80"
+              class="input-control w-full rounded-xl bg-slate-950/45 px-4 py-2.5 lg:w-80"
               type="search"
               placeholder="Поиск по курсам и навыкам"
             >
-            <select v-model.number="coursesPerPage" class="rounded-xl border border-slate-700 bg-slate-950/45 px-3 py-2.5 text-sm font-bold text-slate-200 outline-none focus:border-sky-400">
+            <select v-model.number="coursesPerPage" class="input-control rounded-xl bg-slate-950/45 px-3 py-2.5 font-bold text-slate-200">
               <option v-for="size in coursePageSizes" :key="size" :value="size">{{ size }} на странице</option>
             </select>
           </div>
@@ -436,7 +436,7 @@ onMounted(fetchAnalytics)
                 <RouterLink :to="{ name: 'quiz-editor', params: { id: course.id } }" class="rounded-xl border border-violet-500/30 bg-violet-500/10 px-3 py-2 text-center text-xs font-bold text-violet-200 transition hover:bg-violet-500 hover:text-white">
                   Тесты
                 </RouterLink>
-                <RouterLink :to="{ name: 'course-detail', params: { id: course.id } }" class="rounded-xl border border-slate-700 bg-slate-800/70 px-3 py-2 text-center text-xs font-bold text-slate-200 transition hover:border-sky-400/60 hover:text-white">
+                <RouterLink :to="{ name: 'course-detail', params: { id: course.id } }" class="btn-secondary rounded-xl px-3 py-2 text-center text-xs font-bold">
                   Просмотр
                 </RouterLink>
               </div>
@@ -478,18 +478,18 @@ onMounted(fetchAnalytics)
         <footer v-if="filteredCourses.length" class="mt-4 flex flex-col gap-3 border-t border-slate-800/80 pt-4 sm:flex-row sm:items-center sm:justify-between">
           <span class="text-sm font-bold text-slate-500">Показано: {{ courseRangeLabel }}</span>
           <div class="flex flex-wrap items-center gap-2">
-            <button class="rounded-xl border border-slate-700 px-3 py-2 text-sm font-bold text-slate-300 transition hover:border-sky-400 disabled:cursor-not-allowed disabled:opacity-40" type="button" :disabled="coursePage <= 1" @click="goToCoursePage(coursePage - 1)">
+            <button class="btn-secondary rounded-xl px-3 py-2 text-sm font-bold" type="button" :disabled="coursePage <= 1" @click="goToCoursePage(coursePage - 1)">
               Назад
             </button>
             <span class="rounded-xl bg-slate-950/50 px-3 py-2 text-sm font-black text-slate-200">{{ coursePage }} / {{ totalCoursePages }}</span>
-            <button class="rounded-xl border border-slate-700 px-3 py-2 text-sm font-bold text-slate-300 transition hover:border-sky-400 disabled:cursor-not-allowed disabled:opacity-40" type="button" :disabled="coursePage >= totalCoursePages" @click="goToCoursePage(coursePage + 1)">
+            <button class="btn-secondary rounded-xl px-3 py-2 text-sm font-bold" type="button" :disabled="coursePage >= totalCoursePages" @click="goToCoursePage(coursePage + 1)">
               Далее
             </button>
           </div>
         </footer>
       </section>
 
-      <section v-else class="rounded-3xl border border-slate-700/60 bg-slate-900/50 p-5">
+      <section v-else class="card-glass rounded-3xl p-5">
         <div class="mb-4 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div>
             <h2 class="text-lg font-black text-slate-50">Мониторинг студентов</h2>
@@ -498,17 +498,17 @@ onMounted(fetchAnalytics)
           <div class="flex flex-col gap-2 sm:flex-row">
             <input
               v-model="searchQuery"
-              class="w-full rounded-xl border border-slate-700 bg-slate-950/45 px-4 py-2.5 text-sm text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-sky-400 sm:w-72"
+              class="input-control w-full rounded-xl bg-slate-950/45 px-4 py-2.5 sm:w-72"
               type="search"
               placeholder="Студент или курс"
             >
-            <select v-model="progressFilter" class="rounded-xl border border-slate-700 bg-slate-950/45 px-3 py-2.5 text-sm font-bold text-slate-200 outline-none transition focus:border-sky-400">
+            <select v-model="progressFilter" class="input-control rounded-xl bg-slate-950/45 px-3 py-2.5 font-bold text-slate-200">
               <option value="all">Все</option>
               <option value="active">В процессе</option>
               <option value="risk">Низкий прогресс</option>
               <option value="completed">Завершили</option>
             </select>
-            <select v-model.number="studentsPerPage" class="rounded-xl border border-slate-700 bg-slate-950/45 px-3 py-2.5 text-sm font-bold text-slate-200 outline-none focus:border-sky-400">
+            <select v-model.number="studentsPerPage" class="input-control rounded-xl bg-slate-950/45 px-3 py-2.5 font-bold text-slate-200">
               <option v-for="size in studentPageSizes" :key="size" :value="size">{{ size }} на странице</option>
             </select>
           </div>
@@ -568,11 +568,11 @@ onMounted(fetchAnalytics)
         <footer v-if="filteredStudents.length" class="mt-4 flex flex-col gap-3 border-t border-slate-800/80 pt-4 sm:flex-row sm:items-center sm:justify-between">
           <span class="text-sm font-bold text-slate-500">Показано: {{ studentRangeLabel }}</span>
           <div class="flex flex-wrap items-center gap-2">
-            <button class="rounded-xl border border-slate-700 px-3 py-2 text-sm font-bold text-slate-300 transition hover:border-sky-400 disabled:cursor-not-allowed disabled:opacity-40" type="button" :disabled="studentPage <= 1" @click="goToStudentPage(studentPage - 1)">
+            <button class="btn-secondary rounded-xl px-3 py-2 text-sm font-bold" type="button" :disabled="studentPage <= 1" @click="goToStudentPage(studentPage - 1)">
               Назад
             </button>
             <span class="rounded-xl bg-slate-950/50 px-3 py-2 text-sm font-black text-slate-200">{{ studentPage }} / {{ totalStudentPages }}</span>
-            <button class="rounded-xl border border-slate-700 px-3 py-2 text-sm font-bold text-slate-300 transition hover:border-sky-400 disabled:cursor-not-allowed disabled:opacity-40" type="button" :disabled="studentPage >= totalStudentPages" @click="goToStudentPage(studentPage + 1)">
+            <button class="btn-secondary rounded-xl px-3 py-2 text-sm font-bold" type="button" :disabled="studentPage >= totalStudentPages" @click="goToStudentPage(studentPage + 1)">
               Далее
             </button>
           </div>

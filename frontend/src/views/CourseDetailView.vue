@@ -52,7 +52,7 @@ onMounted(loadCourse)
 
   <div v-else-if="course" class="mx-auto mt-4 max-w-6xl px-0 pb-12 sm:mt-8 sm:px-4">
     <button
-      class="mb-5 inline-flex items-center gap-2 rounded-xl border border-slate-700/80 bg-slate-900/70 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:border-indigo-400/60 hover:text-white"
+      class="btn-secondary mb-5 inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold"
       @click="router.back()"
     >
       <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -61,7 +61,7 @@ onMounted(loadCourse)
       Назад
     </button>
 
-    <section class="overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-900/70 shadow-2xl shadow-slate-950/20">
+    <section class="card-glass overflow-hidden rounded-[2rem]">
       <div class="grid lg:grid-cols-[minmax(0,1fr),360px]">
         <div class="min-w-0 p-5 sm:p-8 lg:p-10">
           <div class="mb-5 flex flex-wrap items-center gap-2">
@@ -102,7 +102,7 @@ onMounted(loadCourse)
             <RouterLink
               v-if="hasLessonFlow"
               :to="{ name: 'course-play', params: { id: course.id } }"
-              class="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-7 py-3 text-center text-sm font-black text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500"
+              class="btn-primary inline-flex items-center justify-center gap-2 px-7 text-center text-sm font-black"
             >
               {{ primaryActionLabel }}
               <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -120,7 +120,7 @@ onMounted(loadCourse)
             <RouterLink
               v-if="canEditCourse"
               :to="{ name: 'teacher-lesson-editor', params: { id: course.id } }"
-              class="inline-flex items-center justify-center rounded-2xl border border-emerald-400/25 bg-emerald-500/10 px-7 py-3 text-center text-sm font-black text-emerald-100 transition hover:bg-emerald-500/20"
+              class="btn-glass inline-flex items-center justify-center px-7 text-center text-sm font-black text-emerald-100"
             >
               Открыть конструктор
             </RouterLink>

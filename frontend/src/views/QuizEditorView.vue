@@ -409,11 +409,11 @@ onMounted(fetchQuiz)
 <template>
   <main class="min-h-screen bg-slate-950 px-0 py-6 text-slate-100 sm:px-6 sm:py-8 lg:px-8">
     <div class="mx-auto max-w-7xl">
-      <header class="overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-900/80 shadow-2xl shadow-slate-950/30">
+      <header class="card-glass overflow-hidden rounded-[2rem]">
         <div class="border-b border-slate-800 px-4 py-5 sm:px-8">
           <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div class="min-w-0">
-              <button type="button" class="mb-4 inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs font-bold text-slate-300 transition hover:border-slate-500 hover:text-white" @click="goBack">
+              <button type="button" class="btn-secondary mb-4 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold" @click="goBack">
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                   <path d="m15 18-6-6 6-6" />
                 </svg>
@@ -426,7 +426,7 @@ onMounted(fetchQuiz)
               </p>
             </div>
 
-            <button type="button" class="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto" :disabled="isLoading" @click="fetchQuiz">
+            <button type="button" class="btn-primary inline-flex w-full items-center justify-center gap-2 px-5 text-sm font-bold sm:w-auto" :disabled="isLoading" @click="fetchQuiz">
               <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <path d="M21 12a9 9 0 0 1-15 6.7L3 16" /><path d="M3 21v-5h5" /><path d="M3 12a9 9 0 0 1 15-6.7L21 8" /><path d="M21 3v5h-5" />
               </svg>
@@ -463,13 +463,13 @@ onMounted(fetchQuiz)
       </div>
 
       <div class="mt-8 grid gap-6 xl:grid-cols-[440px_minmax(0,1fr)]">
-        <section id="question-draft" class="h-max min-w-0 rounded-[2rem] border border-slate-800 bg-slate-900/80 p-4 shadow-xl shadow-slate-950/20 sm:p-6">
+        <section id="question-draft" class="card-glass h-max min-w-0 rounded-[2rem] p-4 sm:p-6">
           <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p class="text-xs font-bold uppercase tracking-[0.24em] text-emerald-300">Новый элемент</p>
               <h2 class="mt-1 text-2xl font-black text-white">Добавить вопрос</h2>
             </div>
-            <button type="button" class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs font-bold text-slate-300 transition hover:border-slate-500 hover:text-white sm:w-auto" @click="resetDraft">
+            <button type="button" class="btn-secondary w-full rounded-xl px-3 py-2 text-xs font-bold sm:w-auto" @click="resetDraft">
               Очистить
             </button>
           </div>
@@ -485,7 +485,7 @@ onMounted(fetchQuiz)
                 data-autogrow
                 rows="3"
                 :maxlength="QUESTION_LIMIT"
-                class="max-h-64 min-h-[92px] w-full resize-none overflow-y-auto rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-indigo-400"
+                class="input-control max-h-64 min-h-[92px] w-full resize-none overflow-y-auto bg-slate-950 px-4 py-3"
                 placeholder="Например: Какой HTTP-метод используется для частичного обновления ресурса?"
                 @input="autoGrowTextarea"
               ></textarea>
@@ -524,7 +524,7 @@ onMounted(fetchQuiz)
                     <svg v-if="draft.is_multiple" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 5h16v16H4z" /><path v-if="choice.is_correct" d="m8 13 3 3 5-7" /></svg>
                     <svg v-else class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="8" /><circle v-if="choice.is_correct" cx="12" cy="12" r="3" fill="currentColor" stroke="none" /></svg>
                   </button>
-                  <input v-model="choice.text" :maxlength="CHOICE_LIMIT" type="text" class="min-w-0 flex-1 rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-indigo-400" :placeholder="`Вариант ответа ${index + 1}`">
+                  <input v-model="choice.text" :maxlength="CHOICE_LIMIT" type="text" class="input-control min-w-0 flex-1 rounded-xl bg-slate-900 px-3 py-2" :placeholder="`Вариант ответа ${index + 1}`">
                   <button type="button" class="group relative grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-rose-500/10 text-rose-200 transition hover:bg-rose-500/20 hover:text-white" @click="removeChoice(draft, index)">
                     <span class="sr-only">Удалить вариант</span>
                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
@@ -544,7 +544,7 @@ onMounted(fetchQuiz)
                 data-autogrow
                 rows="2"
                 :maxlength="EXPLANATION_LIMIT"
-                class="max-h-56 min-h-[72px] w-full resize-none overflow-y-auto rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-indigo-400"
+                class="input-control max-h-56 min-h-[72px] w-full resize-none overflow-y-auto bg-slate-950 px-4 py-3"
                 placeholder="Кратко объясните правильный ответ. Это поможет студенту разобрать ошибку."
                 @input="autoGrowTextarea"
               ></textarea>
@@ -560,7 +560,7 @@ onMounted(fetchQuiz)
           </div>
         </section>
 
-        <section class="min-w-0 rounded-[2rem] border border-slate-800 bg-slate-900/80 p-4 shadow-xl shadow-slate-950/20 sm:p-6">
+        <section class="card-glass min-w-0 rounded-[2rem] p-4 sm:p-6">
           <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p class="text-xs font-bold uppercase tracking-[0.24em] text-sky-300">База курса</p>
@@ -569,8 +569,8 @@ onMounted(fetchQuiz)
             </div>
 
             <div class="grid gap-3 sm:flex sm:flex-row">
-              <input v-model.trim="searchQuery" type="search" class="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-indigo-400 sm:w-72" placeholder="Поиск по вопросу или ответу">
-              <select v-model="filterMode" class="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm font-semibold text-slate-200 outline-none transition focus:border-indigo-400 sm:w-auto">
+              <input v-model.trim="searchQuery" type="search" class="input-control w-full bg-slate-950 px-4 py-3 sm:w-72" placeholder="Поиск по вопросу или ответу">
+              <select v-model="filterMode" class="input-control w-full bg-slate-950 px-4 py-3 font-semibold text-slate-200 sm:w-auto">
                 <option value="all">Все типы</option>
                 <option value="single">Один ответ</option>
                 <option value="multiple">Несколько ответов</option>
@@ -600,14 +600,14 @@ onMounted(fetchQuiz)
                 <div class="flex flex-wrap items-center justify-between gap-3">
                   <span class="rounded-full border border-indigo-400/30 bg-indigo-400/10 px-3 py-1 text-xs font-bold text-indigo-200">Редактирование</span>
                   <div class="flex flex-wrap gap-2">
-                    <button type="button" class="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-bold text-slate-300 transition hover:text-white" @click="cancelEdit">Отмена</button>
-                    <button type="button" class="rounded-xl bg-indigo-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60" :disabled="isSaving || editErrors.length" @click="saveEdit(question)">
+                    <button type="button" class="btn-secondary rounded-xl px-3 py-2 text-xs font-bold" @click="cancelEdit">Отмена</button>
+                    <button type="button" class="btn-primary rounded-xl px-3 py-2 text-xs font-bold" :disabled="isSaving || editErrors.length" @click="saveEdit(question)">
                       Сохранить
                     </button>
                   </div>
                 </div>
 
-                <textarea v-model="editDraft.text" data-autogrow rows="3" :maxlength="QUESTION_LIMIT" class="mt-4 max-h-64 min-h-[92px] w-full resize-none overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-indigo-400" @input="autoGrowTextarea"></textarea>
+                <textarea v-model="editDraft.text" data-autogrow rows="3" :maxlength="QUESTION_LIMIT" class="input-control mt-4 max-h-64 min-h-[92px] w-full resize-none overflow-y-auto bg-slate-900 px-4 py-3" @input="autoGrowTextarea"></textarea>
 
                 <div class="mt-4 grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
                   <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-3">
@@ -625,17 +625,17 @@ onMounted(fetchQuiz)
                         <svg v-if="editDraft.is_multiple" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 5h16v16H4z" /><path v-if="choice.is_correct" d="m8 13 3 3 5-7" /></svg>
                         <svg v-else class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="8" /><circle v-if="choice.is_correct" cx="12" cy="12" r="3" fill="currentColor" stroke="none" /></svg>
                       </button>
-                      <input v-model="choice.text" :maxlength="CHOICE_LIMIT" type="text" class="min-w-0 flex-1 rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none transition focus:border-indigo-400">
+                      <input v-model="choice.text" :maxlength="CHOICE_LIMIT" type="text" class="input-control min-w-0 flex-1 rounded-xl bg-slate-950 px-3 py-2">
                       <button type="button" class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-rose-500/10 text-rose-200 transition hover:bg-rose-500/20 hover:text-white" @click="removeChoice(editDraft, choiceIndex)">
                         <span class="sr-only">Удалить вариант</span>
                         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
                       </button>
                     </div>
-                    <button type="button" class="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-bold text-slate-300 transition hover:border-slate-500 hover:text-white" @click="addChoice(editDraft)">Добавить вариант</button>
+                    <button type="button" class="btn-secondary rounded-xl px-3 py-2 text-xs font-bold" @click="addChoice(editDraft)">Добавить вариант</button>
                   </div>
                 </div>
 
-                <textarea v-model="editDraft.explanation" data-autogrow rows="2" :maxlength="EXPLANATION_LIMIT" class="mt-4 max-h-56 min-h-[72px] w-full resize-none overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-indigo-400" placeholder="Объяснение" @input="autoGrowTextarea"></textarea>
+                <textarea v-model="editDraft.explanation" data-autogrow rows="2" :maxlength="EXPLANATION_LIMIT" class="input-control mt-4 max-h-56 min-h-[72px] w-full resize-none overflow-y-auto bg-slate-900 px-4 py-3" placeholder="Объяснение" @input="autoGrowTextarea"></textarea>
                 <div v-if="editErrors.length" class="mt-3 rounded-2xl border border-amber-400/25 bg-amber-400/10 px-4 py-3 text-xs text-amber-100">{{ editErrors[0] }}</div>
               </template>
 
@@ -686,7 +686,7 @@ onMounted(fetchQuiz)
     </div>
 
     <div v-if="confirmDialog.open" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm" @mousedown.self="closeConfirmDialog">
-      <section class="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-slate-700 bg-slate-900 p-5 shadow-2xl sm:p-6">
+      <section class="modal-panel max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl p-5 sm:p-6">
         <div class="flex items-start gap-4">
           <div class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-rose-400/30 bg-rose-400/10 text-rose-200">
             <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 9v4M12 17h.01" /><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" /></svg>
@@ -697,10 +697,10 @@ onMounted(fetchQuiz)
           </div>
         </div>
         <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <button type="button" class="rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm font-bold text-slate-200 transition hover:border-slate-500 hover:text-white disabled:opacity-60" :disabled="confirmDialog.pending" @click="closeConfirmDialog">
+          <button type="button" class="btn-secondary px-4 py-3 text-sm font-bold" :disabled="confirmDialog.pending" @click="closeConfirmDialog">
             Отмена
           </button>
-          <button type="button" class="rounded-xl bg-rose-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-rose-500 disabled:opacity-60" :disabled="confirmDialog.pending || isDeleting" @click="submitConfirmDialog">
+          <button type="button" class="btn-danger px-4 py-3 text-sm font-bold" :disabled="confirmDialog.pending || isDeleting" @click="submitConfirmDialog">
             {{ confirmDialog.pending ? 'Удаление...' : confirmDialog.confirmText }}
           </button>
         </div>
