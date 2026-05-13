@@ -2,12 +2,12 @@
 import { ref, onMounted } from 'vue'
 
 import api from '../api'
+import { resolveMediaUrl } from '../utils/media'
 import { showError, showSuccess } from '../utils/toast'
 
 const students = ref([])
 const searchSkills = ref('')
 const loading = ref(false)
-const API_BASE_URL = 'http://127.0.0.1:8000'
 
 const sendOffer = async (studentId, studentName) => {
   try {
@@ -41,7 +41,7 @@ const searchTalents = async () => {
 
 const getAvatarUrl = (student) => {
   if (student.avatar) {
-    return `${API_BASE_URL}${student.avatar}`
+    return resolveMediaUrl(student.avatar)
   }
   return null
 }

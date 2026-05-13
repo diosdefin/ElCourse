@@ -6,6 +6,7 @@ import CommunityView from '../views/CommunityView.vue'
 import CoursesView from '../views/CoursesView.vue'
 import CourseDetailView from '../views/CourseDetailView.vue'
 import CoursePlayView from '../views/CoursePlayView.vue'
+import EmployerView from '../views/EmployerView.vue'
 import HomeView from '../views/HomeView.vue'
 import LessonView from '../views/LessonView.vue'
 import LoginView from '../views/LoginView.vue'
@@ -61,8 +62,8 @@ const routes = [
   },
   {
     path: '/employer',
-    name: 'employer-dashboard',
-    component: CommunityView,
+    name: 'employer-candidates',
+    component: EmployerView,
     meta: { requiresEmployer: true },
   },
   {

@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
 import api from '../api'
+import { resolveMediaUrl } from '../utils/media'
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref(localStorage.getItem('access_token') || null)
@@ -17,9 +18,7 @@ export const useAuthStore = defineStore('auth', () => {
     if (!user.value?.avatar) {
       return null
     }
-    return user.value.avatar.startsWith('http')
-      ? user.value.avatar
-      : `http://127.0.0.1:8000${user.value.avatar}`
+    return resolveMediaUrl(user.value.avatar)
   })
 
   const displayInitial = computed(() => {

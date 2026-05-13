@@ -4,9 +4,9 @@ import { useRoute } from 'vue-router'
 
 import api from '../api'
 import { useAuthStore } from '../stores/auth'
+import { resolveMediaUrl } from '../utils/media'
 import { showError, showSuccess } from '../utils/toast'
 
-const API_BASE_URL = 'http://127.0.0.1:8000'
 const WEEKDAY_LABELS = ['Вс', '', 'Вт', '', 'Чт', '', 'Сб']
 
 const route = useRoute()
@@ -38,7 +38,7 @@ const getAvatarUrl = (avatar) => {
     return null
   }
 
-  return avatar.startsWith('http') ? avatar : `${API_BASE_URL}${avatar}`
+  return resolveMediaUrl(avatar)
 }
 
 const roleLabel = computed(() => {

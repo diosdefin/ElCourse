@@ -110,7 +110,6 @@ const legacyEmbedUrl = computed(() => {
       if (parsed.pathname.includes('/embed/')) return url
     }
   } catch (error) {
-    console.debug('Не удалось распознать ссылку на видео', error)
   }
 
   return ''

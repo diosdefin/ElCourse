@@ -2,9 +2,8 @@
 import { computed, onMounted, ref } from 'vue'
 
 import api from '../api'
+import { resolveMediaUrl } from '../utils/media'
 import { showError, showSuccess } from '../utils/toast'
-
-const API_BASE_URL = 'http://127.0.0.1:8000'
 
 const students = ref([])
 const myOffers = ref([])
@@ -40,7 +39,7 @@ const getStudentSkillNames = (student) => {
     .filter(Boolean)
 }
 
-const getAvatarUrl = (student) => (student?.avatar ? `${API_BASE_URL}${student.avatar}` : null)
+const getAvatarUrl = (student) => (student?.avatar ? resolveMediaUrl(student.avatar) : null)
 
 const availableSkills = computed(() => {
   const counters = new Map()

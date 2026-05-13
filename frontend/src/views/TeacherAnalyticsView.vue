@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 
 import api from '../api'
+import { resolveMediaUrl } from '../utils/media'
 import { showError } from '../utils/toast'
 
 const analytics = ref(null)
@@ -15,10 +16,6 @@ const studentPage = ref(1)
 const coursesPerPage = ref(4)
 const studentsPerPage = ref(8)
 const brokenAvatars = ref(new Set())
-
-const mediaHost = (api.defaults?.baseURL || 'http://127.0.0.1:8000/api')
-  .replace(/\/api\/?$/, '')
-  .replace(/\/$/, '')
 
 const tabs = [
   { id: 'overview', label: 'Обзор' },
@@ -177,9 +174,7 @@ const progressTone = (value) => {
 const avatarKey = (row) => `${row.student_id || row.id || row.username || 'student'}-${row.course_id || 'global'}`
 
 const getMediaUrl = (url) => {
-  if (!url) return ''
-  if (/^(https?:|data:|blob:)/i.test(url)) return url
-  return `${mediaHost}${url.startsWith('/') ? url : `/${url}`}`
+  return resolveMediaUrl(url)
 }
 
 const shouldShowAvatar = (row) => Boolean(row?.avatar && !brokenAvatars.value.has(avatarKey(row)))

@@ -1,9 +1,10 @@
 import axios from 'axios'
 
+import { API_BASE_URL } from './utils/media'
 import { showInfo } from './utils/toast'
 
 const api = axios.create({
-  baseURL: 'http://127.0.0.1:8000/api',
+  baseURL: API_BASE_URL,
 })
 
 let handlingUnauthorized = false

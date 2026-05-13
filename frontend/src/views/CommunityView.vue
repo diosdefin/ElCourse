@@ -4,9 +4,8 @@ import { useRouter } from 'vue-router'
 
 import api from '../api'
 import { useAuthStore } from '../stores/auth'
+import { resolveMediaUrl } from '../utils/media'
 import { showError, showSuccess } from '../utils/toast'
-
-const API_BASE_URL = 'http://127.0.0.1:8000'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -39,7 +38,7 @@ const getAvatarUrl = (user) => {
   if (!user?.avatar) {
     return null
   }
-  return user.avatar.startsWith('http') ? user.avatar : `${API_BASE_URL}${user.avatar}`
+  return resolveMediaUrl(user.avatar)
 }
 
 const parseListPayload = (payload) => {

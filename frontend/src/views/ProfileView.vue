@@ -2,9 +2,9 @@
 import { computed, onMounted, ref, watch } from 'vue'
 
 import api, { getTeacherActivity } from '../api'
+import { resolveMediaUrl } from '../utils/media'
 import { showError, showSuccess } from '../utils/toast'
 
-const API_BASE_URL = 'http://127.0.0.1:8000'
 const WEEKDAY_LABELS = ['Вс', '', 'Вт', '', 'Чт', '', 'Сб']   // НОВОЕ
 
 const userData = ref(null)
@@ -42,7 +42,7 @@ const monthFormatter = new Intl.DateTimeFormat('ru-RU', { month: 'short' })
 
 const getAvatarUrl = (avatar) => {
   if (!avatar) return null
-  return avatar.startsWith('http') ? avatar : `${API_BASE_URL}${avatar}`
+  return resolveMediaUrl(avatar)
 }
 
 const completedSkills = computed(() => userData.value?.completed_skills || [])

@@ -4,6 +4,7 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 
 import api from '../api'
 import { useAuthStore } from '../stores/auth'
+import { resolveMediaUrl } from '../utils/media'
 import { showError } from '../utils/toast'
 
 const authStore = useAuthStore()
@@ -32,11 +33,7 @@ const availableTabs = computed(() => {
 
 const activeTab = ref('catalog')
 
-const mediaUrl = (value) => {
-  if (!value) return ''
-  if (value.startsWith('http')) return value
-  return `http://127.0.0.1:8000${value}`
-}
+const mediaUrl = (value) => resolveMediaUrl(value)
 
 const normalizeText = (value) => String(value || '').trim().toLowerCase()
 
