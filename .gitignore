@@ -1,5 +1,5 @@
 # ===================
-# Python (Django)
+# Python / Django
 # ===================
 
 # Виртуальное окружение
@@ -8,6 +8,7 @@ env/
 ENV/
 env.bak/
 venv.bak/
+.venv/
 
 # Кэш и скомпилированные файлы
 __pycache__/
@@ -16,7 +17,7 @@ __pycache__/
 *.so
 *.pyc
 
-# Локальные настройки
+# Локальные настройки и база
 *.log
 *.pot
 *.pid
@@ -24,13 +25,14 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
-# Миграции БД (обычно их хранят в репе, но можно игнорировать)
+# Важно:
+# Миграции Django НЕ игнорируем.
+# Они должны храниться в Git, особенно после добавления вакансий.
 # */migrations/*.py
 # !*/migrations/__init__.py
 
-# Статика и медиа
+# Статика и медиа, которые создаются на сервере/локально
 staticfiles/
-static/
 media/
 mediafiles/
 uploads/
@@ -49,35 +51,42 @@ celerybeat-schedule
 celerybeat.pid
 
 # ===================
-# Node.js / Vue (Frontend)
+# Node.js / Vue
 # ===================
 
 # Зависимости
 node_modules/
-package-lock.json
+
+# Важно:
+# package-lock.json НЕ игнорируем, если используешь npm.
+# Он нужен для одинаковой установки зависимостей на другом ПК и сервере.
+
+# Lock-файлы других пакетных менеджеров, если проект использует npm
 yarn.lock
 pnpm-lock.yaml
 
-# Сборка
+# Сборка frontend
 dist/
 dist-ssr/
+
+# Env-файлы frontend
 *.local
 .env.local
 .env.*.local
 
-# Логи
+# Логи npm/yarn/pnpm
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Кэш
+# Кэш frontend-инструментов
 .cache/
 .parcel-cache/
 .next/
 .nuxt/
 
-# Рендер функция
+# Рендер-файлы
 *.render.js
 
 # ===================
@@ -89,7 +98,7 @@ pnpm-debug.log*
 *.code-workspace
 .history/
 
-# IntelliJ IDEA / PyCharm / WebStorm
+# JetBrains: PyCharm / WebStorm / IntelliJ IDEA
 .idea/
 *.iml
 *.iws
@@ -115,8 +124,6 @@ out/
 ._*
 .Spotlight-V100
 .Trashes
-ehthumbs.db
-Thumbs.db
 
 # Windows
 Thumbs.db
@@ -124,7 +131,7 @@ ehthumbs.db
 Desktop.ini
 
 # ===================
-# Прочее
+# Environment / Secrets
 # ===================
 
 # Файлы окружения
@@ -132,39 +139,49 @@ Desktop.ini
 .env.production
 .env.development
 
-# Утилиты
-*.bak
-*.tmp
-*.temp
-*.orig
-
 # Ключи и сертификаты
 *.pem
 *.key
 *.crt
 *.p12
 
-# Пользовательские загрузки
+# ===================
+# Временные и служебные файлы
+# ===================
+
+*.bak
+*.tmp
+*.temp
+*.orig
+
 downloads/
 temp/
 tmp/
 
-# Документация сборки
+# ===================
+# Документация / сборка документации
+# ===================
+
 docs/_build/
 site/
 
-# Файлы, создаваемые Composer (если используете)
+# ===================
+# Composer / PHP, если случайно появится
+# ===================
+
 composer.phar
 vendor/
 
 # ===================
-# Ваши специфические файлы
+# Дампы базы данных
 # ===================
 
-# Старые дампы базы данных
 *.sql
 *.dump
 
-# Проектные заметки (если не хотите их коммитить)
+# ===================
+# Проектные заметки
+# ===================
+
 *_notes.md
 TODO.md
