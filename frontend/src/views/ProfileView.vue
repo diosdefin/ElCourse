@@ -253,13 +253,13 @@ onMounted(fetchProfile)
     {{ pageError }}
   </div>
 
-  <div v-else-if="userData" class="mx-auto mt-8 max-w-6xl space-y-8">
+  <div v-else-if="userData" class="mx-auto mt-8 max-w-6xl max-w-full min-w-0 space-y-8">
     <!-- Шапка профиля (без изменений) -->
-    <section class="overflow-hidden rounded-[2rem] border border-slate-700/50 bg-slate-800/50 shadow-xl backdrop-blur-md">
+    <section class="max-w-full overflow-hidden rounded-[2rem] border border-slate-700/50 bg-slate-800/50 shadow-xl backdrop-blur-md">
       <div class="h-36 bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.38),_transparent_35%),linear-gradient(135deg,_rgba(15,23,42,1),_rgba(30,41,59,1))]"></div>
-      <div class="px-8 pb-8">
+      <div class="px-4 pb-6 sm:px-8 sm:pb-8">
         <div class="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between -mt-14">
-          <div class="flex items-end gap-5">
+          <div class="flex min-w-0 items-end gap-4 sm:gap-5">
             <div class="relative">
               <div class="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border border-slate-700 bg-slate-900 p-1.5 shadow-xl">
                 <img
@@ -284,9 +284,9 @@ onMounted(fetchProfile)
                 </label>
               </div>
             </div>
-            <div class="pb-1">
+            <div class="min-w-0 pb-1">
               <div class="flex items-center gap-3">
-                <h1 class="text-3xl font-bold text-slate-100">{{ userData.username }}</h1>
+                <h1 class="break-words text-2xl font-bold text-slate-100 sm:text-3xl">{{ userData.username }}</h1>
                 <svg
                   v-if="userData.is_verified"
                   title="Верифицированный аккаунт"
@@ -302,7 +302,7 @@ onMounted(fetchProfile)
                 <template v-else-if="userData.role === 'teacher'">Преподаватель</template>
                 <template v-else-if="userData.role === 'employer'">Работодатель</template>
               </p>
-              <p class="mt-2 text-slate-400">{{ userData.email }}</p>
+              <p class="mt-2 break-all text-slate-400">{{ userData.email }}</p>
             </div>
           </div>
           <div class="flex flex-wrap gap-3">
@@ -332,7 +332,7 @@ onMounted(fetchProfile)
         <div class="mt-6 rounded-2xl border border-slate-700/50 bg-slate-900/50 p-5">
           <h3 class="mb-3 text-sm font-semibold text-slate-400">О себе</h3>
           <div v-if="!isEditing">
-            <p class="leading-relaxed text-slate-300">{{ userData.bio || 'Информация не заполнена' }}</p>
+            <p class="break-words leading-relaxed text-slate-300">{{ userData.bio || 'Информация не заполнена' }}</p>
           </div>
           <div v-else>
             <textarea
@@ -357,58 +357,58 @@ onMounted(fetchProfile)
     <!-- НОВАЯ СЕКЦИЯ ГРАФИКА АКТИВНОСТИ (как в публичном профиле) -->
   <section
   v-if="showActivityHeatmap"
-  class="rounded-[2rem] border border-slate-700/50 bg-slate-800/50 p-8 shadow-xl backdrop-blur-md"
+  class="max-w-full rounded-[2rem] border border-slate-700/50 bg-slate-800/50 p-4 shadow-xl backdrop-blur-md sm:p-8"
 >
   <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-    <div>
+    <div class="min-w-0">
       <h2 class="text-2xl font-bold text-slate-100">{{ activityTitle }}</h2>
       <p class="mt-2 text-sm text-slate-400">
         {{ activityDescription }}
       </p>
     </div>
 
-    <div class="rounded-2xl border border-slate-700 bg-slate-900/50 px-4 py-3 text-right">
+    <div class="self-start rounded-2xl border border-slate-700 bg-slate-900/50 px-4 py-3 text-left xl:text-right">
       <p class="text-xs uppercase tracking-[0.25em] text-slate-500">Активностей за год</p>
       <p class="mt-2 text-2xl font-black text-white">{{ totalActivityCount }}</p>
     </div>
   </div>
 
-  <div class="mt-6 grid gap-6 xl:grid-cols-[1fr,92px]">
+  <div class="mt-6 grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr),92px]">
     <!-- Основная сетка -->
-    <div class="rounded-3xl border border-slate-700/50 bg-slate-900/50 p-4">
-      <div class="overflow-x-auto pb-2">
-        <div class="inline-flex min-w-max gap-3">
-          <div class="pt-7 text-[10px] text-slate-500">
+    <div class="min-w-0 overflow-hidden rounded-3xl border border-slate-700/50 bg-slate-900/50 p-4">
+      <div class="max-w-full overflow-x-auto pb-2">
+        <div class="inline-flex min-w-max gap-2 sm:gap-3">
+          <div class="pt-5 text-[9px] text-slate-500 sm:pt-7 sm:text-[10px]">
             <div
               v-for="(label, index) in WEEKDAY_LABELS"
               :key="index"
-              class="flex h-4 items-center"
+              class="flex h-3 items-center sm:h-4"
             >
               {{ label }}
             </div>
           </div>
 
-          <div>
-            <div class="mb-2 flex gap-1 text-[10px] uppercase tracking-[0.2em] text-slate-500">
+          <div class="min-w-0">
+            <div class="mb-2 flex gap-0.5 text-[9px] uppercase tracking-[0.12em] text-slate-500 sm:gap-1 sm:text-[10px] sm:tracking-[0.2em]">
               <div
                 v-for="(week, index) in heatmap.weeks"
                 :key="`month-${index}`"
-                class="w-4"
+                class="w-3 sm:w-4"
               >
                 {{ heatmap.monthLabels[index] || '' }}
               </div>
             </div>
 
-            <div class="flex gap-1">
+            <div class="flex gap-0.5 sm:gap-1">
               <div
                 v-for="(week, weekIndex) in heatmap.weeks"
                 :key="`week-${weekIndex}`"
-                class="flex flex-col gap-1"
+                class="flex flex-col gap-0.5 sm:gap-1"
               >
                 <div
                   v-for="day in week"
                   :key="day.date"
-                  class="h-4 w-4 rounded-[4px] transition-transform hover:scale-125"
+                  class="h-3 w-3 rounded-[3px] transition-transform sm:h-4 sm:w-4 sm:rounded-[4px] sm:hover:scale-125"
                   :class="day.levelClass"
                   :title="day.title"
                 ></div>
@@ -433,7 +433,7 @@ onMounted(fetchProfile)
     </div>
 
     <!-- Блок выбора года (справа, как в публичном профиле) -->
-    <div class="rounded-3xl border border-slate-700/50 bg-slate-900/50 p-3">
+    <div class="min-w-0 rounded-3xl border border-slate-700/50 bg-slate-900/50 p-3">
       <p class="px-2 text-xs font-bold uppercase tracking-[0.25em] text-slate-500">Год</p>
       <div class="mt-3 space-y-2">
         <button
@@ -455,15 +455,15 @@ onMounted(fetchProfile)
     <!-- Секция навыков (без изменений) -->
     <section
       v-if="userData.role === 'student'"
-      class="rounded-[2rem] border border-slate-700/50 bg-slate-800/50 p-8 shadow-xl backdrop-blur-md"
+      class="max-w-full rounded-[2rem] border border-slate-700/50 bg-slate-800/50 p-4 shadow-xl backdrop-blur-md sm:p-8"
     >
       <h2 class="border-b border-slate-700 pb-4 text-2xl font-bold text-slate-100">
         Цифровой паспорт навыков
       </h2>
       <div class="mt-8 grid gap-6 xl:grid-cols-2">
-        <div class="rounded-3xl border border-slate-700/50 bg-slate-900/50 p-6">
+        <div class="min-w-0 rounded-3xl border border-slate-700/50 bg-slate-900/50 p-6">
           <div class="flex items-center justify-between gap-3">
-            <div>
+            <div class="min-w-0">
               <h3 class="text-lg font-bold text-white">В процессе изучения</h3>
               <p class="mt-1 text-sm text-slate-400">Навыки, которые открываются по мере прохождения уроков.</p>
             </div>
@@ -474,9 +474,9 @@ onMounted(fetchProfile)
           <div v-if="learningSkills.length" class="mt-6 space-y-4">
             <div v-for="skill in learningSkills" :key="`${skill.course_name}-${skill.id}`" class="rounded-2xl border border-slate-700 bg-slate-950/70 p-4">
               <div class="mb-3 flex items-start justify-between gap-3">
-                <div>
-                  <p class="font-bold text-slate-100">{{ skill.name }}</p>
-                  <p class="mt-1 text-sm text-slate-500">{{ skill.course_name }}</p>
+                <div class="min-w-0">
+                  <p class="break-words font-bold text-slate-100">{{ skill.name }}</p>
+                  <p class="mt-1 break-words text-sm text-slate-500">{{ skill.course_name }}</p>
                 </div>
                 <span class="text-sm font-bold text-emerald-300">{{ skill.progress_percentage }}%</span>
               </div>
@@ -489,9 +489,9 @@ onMounted(fetchProfile)
             Вы пока не начали курс, который открыл бы новые навыки в процессе изучения.
           </div>
         </div>
-        <div class="rounded-3xl border border-slate-700/50 bg-slate-900/50 p-6">
+        <div class="min-w-0 rounded-3xl border border-slate-700/50 bg-slate-900/50 p-6">
           <div class="flex items-center justify-between gap-3">
-            <div>
+            <div class="min-w-0">
               <h3 class="text-lg font-bold text-white">Подтвержденные</h3>
               <p class="mt-1 text-sm text-slate-400">Навыки, уже закрепленные успешной сдачей Quiz.</p>
             </div>
@@ -500,7 +500,7 @@ onMounted(fetchProfile)
             </span>
           </div>
           <div v-if="completedSkills.length" class="mt-6 flex flex-wrap gap-3">
-            <span v-for="skill in completedSkills" :key="skill.id" class="flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-sm font-bold text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.1)]">
+            <span v-for="skill in completedSkills" :key="skill.id" class="flex max-w-full items-center gap-2 break-words rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-sm font-bold text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.1)]">
               <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
               </svg>
