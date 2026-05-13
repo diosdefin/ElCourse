@@ -295,8 +295,8 @@ onMounted(fetchNotifications)
 </script>
 
 <template>
-  <div class="mx-auto mt-8 max-w-6xl space-y-6 px-4 pb-12">
-    <section class="rounded-[28px] border border-slate-700/60 bg-slate-900/55 p-6 shadow-xl shadow-slate-950/20 backdrop-blur">
+  <div class="mx-auto mt-8 max-w-6xl max-w-full min-w-0 space-y-6 px-0 pb-12 sm:px-4">
+    <section class="max-w-full rounded-[28px] border border-slate-700/60 bg-slate-900/55 p-4 shadow-xl shadow-slate-950/20 backdrop-blur sm:p-6">
       <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p class="text-xs font-bold uppercase tracking-[0.28em] text-sky-300">Карьерный контур</p>
@@ -308,7 +308,7 @@ onMounted(fetchNotifications)
 
         <button
           type="button"
-          class="inline-flex items-center justify-center rounded-2xl border border-slate-700 px-4 py-3 text-sm font-bold text-slate-300 transition hover:border-sky-400 hover:text-white"
+          class="inline-flex w-full items-center justify-center rounded-2xl border border-slate-700 px-4 py-3 text-sm font-bold text-slate-300 transition hover:border-sky-400 hover:text-white sm:w-auto"
           @click="fetchNotifications"
         >
           Обновить
@@ -416,9 +416,9 @@ onMounted(fetchNotifications)
                   </span>
                 </div>
 
-                <h3 class="mt-2 font-bold text-slate-100">{{ item.title }}</h3>
-                <p class="mt-1 text-xs text-slate-500">{{ item.personRole }} · {{ item.personName || 'не указано' }}</p>
-                <p class="mt-2 line-clamp-2 max-w-2xl text-sm leading-6 text-slate-400">
+                <h3 class="mt-2 break-words font-bold text-slate-100">{{ item.title }}</h3>
+                <p class="mt-1 break-words text-xs text-slate-500">{{ item.personRole }} · {{ item.personName || 'не указано' }}</p>
+                <p class="mt-2 line-clamp-2 max-w-2xl break-words text-sm leading-6 text-slate-400">
                   {{ item.message || (item.type === 'application' ? 'Отклик отправлен без сопроводительного сообщения.' : 'Сообщение не указано.') }}
                 </p>
               </div>
@@ -435,39 +435,39 @@ onMounted(fetchNotifications)
 
     <div
       v-if="selectedItem"
-      class="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-md"
+      class="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/80 p-3 backdrop-blur-md sm:p-4"
       @click.self="closeModal"
     >
-      <div class="max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-[28px] border border-slate-700 bg-slate-900 shadow-2xl shadow-slate-950/50">
-        <div class="flex items-start justify-between gap-4 border-b border-slate-700/70 p-5">
-          <div>
+      <div class="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-[28px] border border-slate-700 bg-slate-900 shadow-2xl shadow-slate-950/50">
+        <div class="flex flex-col gap-4 border-b border-slate-700/70 p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5">
+          <div class="min-w-0">
             <p class="text-xs font-bold uppercase tracking-[0.22em] text-sky-300">{{ selectedItem.sourceLabel }}</p>
-            <h2 class="mt-2 text-2xl font-black text-white">{{ selectedItem.title }}</h2>
+            <h2 class="mt-2 break-words text-xl font-black text-white sm:text-2xl">{{ selectedItem.title }}</h2>
           </div>
           <button
             type="button"
-            class="rounded-2xl border border-slate-700 px-3 py-2 text-sm font-bold text-slate-400 transition hover:border-slate-500 hover:text-white"
+            class="self-start rounded-2xl border border-slate-700 px-3 py-2 text-sm font-bold text-slate-400 transition hover:border-slate-500 hover:text-white"
             @click="closeModal"
           >
             Закрыть
           </button>
         </div>
 
-        <div class="max-h-[calc(90vh-180px)] space-y-5 overflow-y-auto p-5">
+        <div class="max-h-[calc(90vh-180px)] space-y-5 overflow-y-auto p-4 sm:p-5">
           <div class="flex items-center gap-3 rounded-2xl border border-slate-700/70 bg-slate-950/35 p-4">
             <div class="flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-700 bg-slate-950 text-lg font-black text-slate-300">
               {{ initials(selectedItem.personName) }}
             </div>
-            <div>
+            <div class="min-w-0">
               <p class="text-xs text-slate-500">{{ selectedItem.personRole }}</p>
-              <p class="font-bold text-slate-100">{{ selectedItem.personName || 'Не указано' }}</p>
+              <p class="break-words font-bold text-slate-100">{{ selectedItem.personName || 'Не указано' }}</p>
             </div>
           </div>
 
           <div v-if="selectedItem.type === 'application'" class="rounded-2xl border border-slate-700/70 bg-slate-950/35 p-4">
             <p class="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Вакансия</p>
-            <h3 class="mt-2 text-lg font-black text-slate-100">{{ applicationVacancy.title || 'Вакансия' }}</h3>
-            <p class="mt-1 text-sm text-slate-400">{{ applicationVacancy.company_name || applicationVacancy.employer_name || 'Компания не указана' }}</p>
+            <h3 class="mt-2 break-words text-lg font-black text-slate-100">{{ applicationVacancy.title || 'Вакансия' }}</h3>
+            <p class="mt-1 break-words text-sm text-slate-400">{{ applicationVacancy.company_name || applicationVacancy.employer_name || 'Компания не указана' }}</p>
             <div v-if="applicationVacancy.skills?.length" class="mt-3 flex flex-wrap gap-2">
               <span
                 v-for="skill in applicationVacancy.skills"
@@ -483,7 +483,7 @@ onMounted(fetchNotifications)
             <p class="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
               {{ selectedItem.type === 'application' ? 'Сопроводительное сообщение' : 'Сообщение' }}
             </p>
-            <div class="whitespace-pre-wrap rounded-2xl border border-slate-700/70 bg-slate-950/35 p-4 text-sm leading-6 text-slate-200">
+            <div class="break-words whitespace-pre-wrap rounded-2xl border border-slate-700/70 bg-slate-950/35 p-4 text-sm leading-6 text-slate-200">
               {{ selectedItem.message || (selectedItem.type === 'application' ? 'Отклик отправлен без сопроводительного сообщения.' : 'Нет текста сообщения.') }}
             </div>
           </div>
@@ -513,7 +513,7 @@ onMounted(fetchNotifications)
           </div>
         </div>
 
-        <div class="border-t border-slate-700/70 p-5">
+        <div class="border-t border-slate-700/70 p-4 sm:p-5">
           <div v-if="canStudentAnswerOffer(selectedItem)" class="grid gap-3 sm:grid-cols-2">
             <button
               type="button"
@@ -598,10 +598,10 @@ onMounted(fetchNotifications)
 
     <div
       v-if="showConfirmModal"
-      class="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/90 p-4 backdrop-blur-sm"
+      class="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/90 p-3 backdrop-blur-sm sm:p-4"
       @click.self="showConfirmModal = false"
     >
-      <div class="w-full max-w-sm rounded-[28px] border border-slate-700 bg-slate-900 p-6 text-center shadow-2xl shadow-slate-950/50">
+      <div class="max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-[28px] border border-slate-700 bg-slate-900 p-5 text-center shadow-2xl shadow-slate-950/50 sm:p-6">
         <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-300/30 bg-amber-300/10 text-amber-200">
           <svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.8">
             <path d="M12 8v5" />

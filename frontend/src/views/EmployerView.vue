@@ -317,17 +317,17 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="space-y-8 pb-20">
-    <section class="relative overflow-hidden rounded-[2rem] border border-slate-700/60 bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.25),_transparent_30%),linear-gradient(135deg,_rgba(15,23,42,0.98),_rgba(15,23,42,0.88))] p-8 shadow-2xl shadow-slate-950/40">
+  <div class="max-w-full min-w-0 space-y-8 pb-20">
+    <section class="relative overflow-hidden rounded-[2rem] border border-slate-700/60 bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.25),_transparent_30%),linear-gradient(135deg,_rgba(15,23,42,0.98),_rgba(15,23,42,0.88))] p-4 shadow-2xl shadow-slate-950/40 sm:p-8">
       <div class="absolute -right-12 top-6 h-40 w-40 rounded-full bg-emerald-400/10 blur-3xl"></div>
       <div class="absolute -bottom-10 left-20 h-36 w-36 rounded-full bg-indigo-500/10 blur-3xl"></div>
 
       <div class="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-        <div class="max-w-2xl">
+        <div class="max-w-2xl min-w-0">
           <span class="inline-flex items-center gap-2 rounded-full border border-indigo-400/20 bg-indigo-400/10 px-4 py-1 text-xs font-bold uppercase tracking-[0.3em] text-indigo-200">
             Talent Search
           </span>
-          <h1 class="mt-4 text-4xl font-black text-white sm:text-5xl">Поиск студентов без лишних дублей</h1>
+          <h1 class="mt-4 break-words text-3xl font-black text-white sm:text-5xl">Поиск студентов без лишних дублей</h1>
           <p class="mt-4 max-w-xl text-sm leading-6 text-slate-300 sm:text-base">
             Открывайте профиль в один клик, фильтруйте кандидатов по нескольким навыкам сразу и отправляйте оффер только тем, кому он действительно еще нужен.
           </p>
@@ -374,7 +374,7 @@ onMounted(() => {
         <label class="mb-3 block text-xs font-bold uppercase tracking-[0.25em] text-slate-500">
           Мульти-поиск по навыкам
         </label>
-        <div class="flex gap-3">
+        <div class="flex flex-col gap-3 sm:flex-row">
           <input
             v-model="skillInput"
             type="text"
@@ -471,7 +471,7 @@ onMounted(() => {
       <article
         v-for="student in filteredStudents"
         :key="student.id"
-        class="card-hover flex h-full cursor-pointer flex-col rounded-[1.75rem] border border-slate-700/70 bg-slate-900/70 p-6 shadow-xl shadow-slate-950/20 backdrop-blur"
+        class="card-hover flex min-w-0 h-full cursor-pointer flex-col rounded-[1.75rem] border border-slate-700/70 bg-slate-900/70 p-6 shadow-xl shadow-slate-950/20 backdrop-blur"
         tabindex="0"
         @click="openProfile(student)"
         @keydown.enter.prevent="openProfile(student)"
@@ -501,7 +501,7 @@ onMounted(() => {
                 ✓
               </span>
             </div>
-            <p class="mt-1 truncate text-xs uppercase tracking-[0.2em] text-slate-500">{{ student.email }}</p>
+            <p class="mt-1 break-all text-xs uppercase tracking-[0.2em] text-slate-500">{{ student.email }}</p>
           </div>
         </div>
 
@@ -559,15 +559,15 @@ onMounted(() => {
 
     <div
       v-if="profileModal.isOpen && profileModal.student"
-      class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-md"
+      class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 p-3 backdrop-blur-md sm:p-4"
       @click.self="closeProfile"
     >
-      <div class="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-[2rem] border border-slate-700 bg-slate-900 shadow-2xl shadow-black/60">
+      <div class="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-[2rem] border border-slate-700 bg-slate-900 shadow-2xl shadow-black/60">
         <div class="relative overflow-hidden border-b border-slate-800 p-8">
           <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.14),_transparent_35%),radial-gradient(circle_at_top_right,_rgba(99,102,241,0.18),_transparent_30%)]"></div>
 
           <div class="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div class="flex items-start gap-5">
+            <div class="flex min-w-0 items-start gap-5">
               <div class="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-[1.5rem] border border-slate-700 bg-slate-800">
                 <img
                   v-if="getAvatarUrl(profileModal.student)"
@@ -580,9 +580,9 @@ onMounted(() => {
                 </span>
               </div>
 
-              <div class="pt-2">
+              <div class="min-w-0 pt-2">
                 <div class="flex items-center gap-3">
-                  <h2 class="text-3xl font-black text-white">{{ profileModal.student.username }}</h2>
+                  <h2 class="break-words text-2xl font-black text-white sm:text-3xl">{{ profileModal.student.username }}</h2>
                   <span
                     v-if="profileModal.student.is_verified"
                     class="inline-flex items-center rounded-full border border-sky-400/30 bg-sky-400/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-sky-200"
@@ -590,7 +590,7 @@ onMounted(() => {
                     Verified
                   </span>
                 </div>
-                <p class="mt-2 text-sm text-slate-400">{{ profileModal.student.email }}</p>
+                <p class="mt-2 break-all text-sm text-slate-400">{{ profileModal.student.email }}</p>
                 <p class="mt-4 max-w-2xl text-sm leading-6 text-slate-300">
                   {{ profileModal.student.bio || 'Студент пока не заполнил блок «О себе», но его подтвержденные навыки уже доступны ниже.' }}
                 </p>
@@ -678,20 +678,20 @@ onMounted(() => {
 
     <div
       v-if="offerModal.isOpen && offerModal.student"
-      class="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/85 p-4 backdrop-blur-md"
+      class="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/85 p-3 backdrop-blur-md sm:p-4"
       @click.self="closeOfferModal"
     >
-      <div class="w-full max-w-2xl rounded-[2rem] border border-slate-700 bg-slate-900 p-8 shadow-2xl shadow-black/60">
-        <div class="flex items-start justify-between gap-4">
-          <div>
+      <div class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[2rem] border border-slate-700 bg-slate-900 p-5 shadow-2xl shadow-black/60 sm:p-8">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div class="min-w-0">
             <p class="text-xs font-bold uppercase tracking-[0.25em] text-indigo-300">Новый оффер</p>
-            <h2 class="mt-3 text-3xl font-black text-white">Приглашение для {{ offerModal.student.username }}</h2>
+            <h2 class="mt-3 break-words text-2xl font-black text-white sm:text-3xl">Приглашение для {{ offerModal.student.username }}</h2>
             <p class="mt-3 max-w-xl text-sm leading-6 text-slate-400">
               Студент увидит приглашение в уведомлениях. После отправки кнопка на карточке сменится на статус и больше не позволит задублировать оффер.
             </p>
           </div>
 
-          <button class="text-slate-500 transition hover:text-white" @click="closeOfferModal">
+          <button class="self-start text-slate-500 transition hover:text-white" @click="closeOfferModal">
             <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>

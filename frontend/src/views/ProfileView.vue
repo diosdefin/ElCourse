@@ -308,7 +308,7 @@ onMounted(fetchProfile)
           <div class="flex flex-wrap gap-3">
             <button
               v-if="userData.role === 'student' && !isEditing"
-              class="flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 font-bold text-white shadow-lg shadow-indigo-500/25 transition-all hover:bg-indigo-500"
+              class="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 font-bold text-white shadow-lg shadow-indigo-500/25 transition-all hover:bg-indigo-500 sm:w-auto"
               @click="downloadResume"
             >
               <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -318,7 +318,7 @@ onMounted(fetchProfile)
             </button>
             <button
               v-if="!isEditing"
-              class="flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 font-bold text-white shadow-lg shadow-emerald-500/25 transition-all hover:bg-emerald-500"
+              class="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 font-bold text-white shadow-lg shadow-emerald-500/25 transition-all hover:bg-emerald-500 sm:w-auto"
               @click="startEditing"
             >
               <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -343,11 +343,11 @@ onMounted(fetchProfile)
             ></textarea>
           </div>
         </div>
-        <div v-if="isEditing" class="mt-4 flex gap-3">
-          <button class="rounded-lg bg-green-600 px-6 py-2 font-semibold text-white transition-colors hover:bg-green-500 disabled:opacity-60" :disabled="saving" @click="saveProfile">
+        <div v-if="isEditing" class="mt-4 flex flex-col gap-3 sm:flex-row">
+          <button class="w-full rounded-lg bg-green-600 px-6 py-2 font-semibold text-white transition-colors hover:bg-green-500 disabled:opacity-60 sm:w-auto" :disabled="saving" @click="saveProfile">
             {{ saving ? 'Сохраняем...' : 'Сохранить' }}
           </button>
-          <button class="rounded-lg bg-gray-600 px-6 py-2 font-semibold text-white transition-colors hover:bg-gray-500" @click="cancelEditing">
+          <button class="w-full rounded-lg bg-gray-600 px-6 py-2 font-semibold text-white transition-colors hover:bg-gray-500 sm:w-auto" @click="cancelEditing">
             Отмена
           </button>
         </div>

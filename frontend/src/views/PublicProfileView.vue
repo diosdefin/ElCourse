@@ -437,14 +437,14 @@ watch(selectedYear, () => {
             <RouterLink
               v-if="profile.is_self"
               to="/profile"
-              class="rounded-xl border border-slate-700 bg-slate-900/70 px-5 py-3 text-sm font-bold text-slate-100 transition hover:border-slate-500"
+              class="w-full rounded-xl border border-slate-700 bg-slate-900/70 px-5 py-3 text-sm font-bold text-slate-100 transition hover:border-slate-500 sm:w-auto"
             >
               Перейти в мой профиль
             </RouterLink>
 
             <button
               v-else-if="canToggleFriend"
-              class="rounded-xl px-5 py-3 text-sm font-bold text-white transition"
+              class="w-full rounded-xl px-5 py-3 text-sm font-bold text-white transition sm:w-auto"
               :class="profile.is_friend
                 ? 'bg-rose-600 hover:bg-rose-500'
                 : 'bg-indigo-600 hover:bg-indigo-500'"
@@ -456,7 +456,7 @@ watch(selectedYear, () => {
 
             <button
               v-if="canDownloadResume"
-              class="rounded-xl border border-slate-700 bg-slate-900/70 px-5 py-3 text-sm font-bold text-slate-100 transition hover:border-slate-500"
+              class="w-full rounded-xl border border-slate-700 bg-slate-900/70 px-5 py-3 text-sm font-bold text-slate-100 transition hover:border-slate-500 sm:w-auto"
               :disabled="resumeLoading"
               @click="downloadResume"
             >
@@ -474,7 +474,7 @@ watch(selectedYear, () => {
 
             <button
               v-else-if="canInvite"
-              class="rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-emerald-500"
+              class="w-full rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-emerald-500 sm:w-auto"
               @click="openOfferModal"
             >
               Пригласить
@@ -670,20 +670,20 @@ watch(selectedYear, () => {
 
     <div
       v-if="offerModal.isOpen"
-      class="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/85 p-4 backdrop-blur-md"
+      class="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/85 p-3 backdrop-blur-md sm:p-4"
       @click.self="closeOfferModal"
     >
-      <div class="w-full max-w-2xl rounded-[2rem] border border-slate-700 bg-slate-900 p-8 shadow-2xl shadow-black/60">
-        <div class="flex items-start justify-between gap-4">
-          <div>
+      <div class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[2rem] border border-slate-700 bg-slate-900 p-5 shadow-2xl shadow-black/60 sm:p-8">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div class="min-w-0">
             <p class="text-xs font-bold uppercase tracking-[0.25em] text-indigo-300">Новый оффер</p>
-            <h2 class="mt-3 text-3xl font-black text-white">Приглашение для {{ profile.username }}</h2>
+            <h2 class="mt-3 break-words text-2xl font-black text-white sm:text-3xl">Приглашение для {{ profile.username }}</h2>
             <p class="mt-3 text-sm leading-6 text-slate-400">
               Студент увидит приглашение в уведомлениях, а профиль сразу покажет статус оффера.
             </p>
           </div>
 
-          <button class="text-slate-500 transition hover:text-white" @click="closeOfferModal">
+          <button class="self-start text-slate-500 transition hover:text-white" @click="closeOfferModal">
             <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>

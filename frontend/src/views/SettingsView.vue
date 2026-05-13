@@ -314,8 +314,8 @@ onMounted(fetchSettings)
 </script>
 
 <template>
-  <div class="mx-auto mt-8 max-w-6xl space-y-6 px-4 pb-12">
-    <section class="rounded-[28px] border border-slate-700/60 bg-slate-900/55 p-6 shadow-xl shadow-slate-950/20 backdrop-blur">
+  <div class="mx-auto mt-8 max-w-6xl max-w-full min-w-0 space-y-6 px-0 pb-12 sm:px-4">
+    <section class="max-w-full rounded-[28px] border border-slate-700/60 bg-slate-900/55 p-4 shadow-xl shadow-slate-950/20 backdrop-blur sm:p-6">
       <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <p class="text-xs font-bold uppercase tracking-[0.28em] text-indigo-300">Аккаунт</p>
@@ -325,7 +325,7 @@ onMounted(fetchSettings)
           </p>
         </div>
 
-        <div class="flex items-center gap-4 rounded-2xl border border-slate-700/70 bg-slate-950/35 p-3">
+        <div class="flex min-w-0 flex-wrap items-center gap-4 rounded-2xl border border-slate-700/70 bg-slate-950/35 p-3">
           <div class="h-14 w-14 overflow-hidden rounded-2xl border border-slate-700 bg-slate-950">
             <img v-if="avatarPreview" :src="avatarPreview" alt="Аватар" class="h-full w-full object-cover">
             <div v-else class="flex h-full w-full items-center justify-center text-lg font-black text-slate-400">
@@ -363,10 +363,10 @@ onMounted(fetchSettings)
         <p class="text-sm">Загружаем настройки...</p>
       </div>
 
-      <div v-else class="p-5 sm:p-6">
+      <div v-else class="min-w-0 p-4 sm:p-6">
         <template v-if="activeTab === 'basic'">
-          <div class="grid gap-6 lg:grid-cols-[260px,1fr]">
-            <aside class="rounded-3xl border border-slate-700/70 bg-slate-950/35 p-5">
+          <div class="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,260px),minmax(0,1fr)]">
+            <aside class="min-w-0 rounded-3xl border border-slate-700/70 bg-slate-950/35 p-5">
               <div class="mx-auto h-36 w-36 overflow-hidden rounded-3xl border border-slate-700 bg-slate-950 shadow-lg shadow-slate-950/30">
                 <img v-if="avatarPreview" :src="avatarPreview" alt="Аватар" class="h-full w-full object-cover">
                 <div v-else class="flex h-full w-full items-center justify-center text-4xl font-black text-slate-600">
@@ -400,15 +400,15 @@ onMounted(fetchSettings)
               </p>
             </aside>
 
-            <div class="space-y-5">
+            <div class="min-w-0 space-y-5">
               <div class="grid gap-4 sm:grid-cols-2">
                 <div class="rounded-2xl border border-slate-700/70 bg-slate-950/35 px-4 py-3">
                   <p class="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Логин</p>
-                  <p class="mt-1 truncate text-sm font-semibold text-slate-200">{{ form.username || 'Не указан' }}</p>
+                  <p class="mt-1 break-words text-sm font-semibold text-slate-200">{{ form.username || 'Не указан' }}</p>
                 </div>
                 <div class="rounded-2xl border border-slate-700/70 bg-slate-950/35 px-4 py-3">
                   <p class="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Email</p>
-                  <p class="mt-1 truncate text-sm font-semibold text-slate-200">{{ form.email || 'Не указан' }}</p>
+                  <p class="mt-1 break-all text-sm font-semibold text-slate-200">{{ form.email || 'Не указан' }}</p>
                 </div>
               </div>
 
@@ -448,8 +448,8 @@ onMounted(fetchSettings)
         </template>
 
         <template v-if="activeTab === 'contacts'">
-          <div class="grid gap-6 lg:grid-cols-[1fr,280px]">
-            <div class="grid gap-4">
+          <div class="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr),280px]">
+            <div class="grid min-w-0 gap-4">
               <div>
                 <div class="mb-2 flex items-center justify-between gap-3">
                   <label class="text-sm font-semibold text-slate-300">Telegram</label>
@@ -499,7 +499,7 @@ onMounted(fetchSettings)
               </div>
             </div>
 
-            <aside class="rounded-3xl border border-slate-700/70 bg-slate-950/35 p-5">
+            <aside class="min-w-0 rounded-3xl border border-slate-700/70 bg-slate-950/35 p-5">
               <p class="text-xs font-bold uppercase tracking-[0.22em] text-emerald-300">Заполненность</p>
               <div class="mt-4 flex items-end justify-between">
                 <span class="text-4xl font-black text-white">{{ contactCompletion }}%</span>
@@ -516,8 +516,8 @@ onMounted(fetchSettings)
         </template>
 
         <template v-if="activeTab === 'security'">
-          <div class="grid gap-6 lg:grid-cols-[1fr,280px]">
-            <div class="max-w-2xl space-y-4">
+          <div class="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr),280px]">
+            <div class="min-w-0 max-w-2xl space-y-4">
               <div>
                 <label class="mb-2 block text-sm font-semibold text-slate-300">Текущий пароль</label>
                 <input
@@ -556,7 +556,7 @@ onMounted(fetchSettings)
 
               <button
                 type="button"
-                class="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
+                class="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                 :disabled="changingPassword"
                 @click="changeUserPassword"
               >
@@ -565,7 +565,7 @@ onMounted(fetchSettings)
               </button>
             </div>
 
-            <aside class="rounded-3xl border border-slate-700/70 bg-slate-950/35 p-5">
+            <aside class="min-w-0 rounded-3xl border border-slate-700/70 bg-slate-950/35 p-5">
               <p class="text-xs font-bold uppercase tracking-[0.22em] text-cyan-300">Рекомендации</p>
               <ul class="mt-4 space-y-3 text-xs leading-5 text-slate-500">
                 <li>Используйте минимум 8 символов.</li>
@@ -583,7 +583,7 @@ onMounted(fetchSettings)
         </p>
         <button
           type="button"
-          class="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+          class="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           :disabled="saving || !hasProfileChanges"
           @click="saveProfile"
         >

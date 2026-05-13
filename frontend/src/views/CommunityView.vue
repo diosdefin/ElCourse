@@ -286,7 +286,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-7xl space-y-6 pb-16">
+  <div class="mx-auto max-w-7xl max-w-full min-w-0 space-y-6 pb-16">
     <section
       class="z-40 rounded-[2rem] border border-slate-800/80 bg-slate-950/75 p-4 shadow-[0_30px_80px_rgba(2,6,23,0.35)] backdrop-blur-xl sm:p-5"
     >
@@ -298,7 +298,7 @@ onUnmounted(() => {
               Единый поиск людей, навыков и карьерных сигналов
             </h1>
           </div>
-          <div class="rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-3 text-right">
+          <div class="self-start rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-3 text-left sm:text-right">
             <p class="text-xs uppercase tracking-[0.24em] text-slate-500">Найдено</p>
             <p class="mt-2 text-2xl font-black text-white">{{ users.length }}</p>
           </div>
@@ -323,7 +323,7 @@ onUnmounted(() => {
               v-model="searchText"
               type="text"
               placeholder="Ищите по username или bio, навыки добавляйте тегами ниже"
-              class="min-w-[220px] flex-1 bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-500"
+              class="min-w-0 w-full flex-1 bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-500 sm:min-w-[220px]"
             >
 
             <button
@@ -385,7 +385,7 @@ onUnmounted(() => {
       <article
         v-for="user in users"
         :key="user.id"
-        class="group cursor-pointer rounded-[1.7rem] border border-slate-800/80 bg-slate-900/75 p-5 transition duration-300 hover:-translate-y-1.5 hover:border-slate-600 hover:shadow-[0_25px_60px_rgba(2,6,23,0.32)]"
+        class="group min-w-0 cursor-pointer rounded-[1.7rem] border border-slate-800/80 bg-slate-900/75 p-5 transition duration-300 hover:-translate-y-1.5 hover:border-slate-600 hover:shadow-[0_25px_60px_rgba(2,6,23,0.32)]"
         tabindex="0"
         @click="openProfile(user)"
         @keydown.enter.prevent="openProfile(user)"
@@ -396,9 +396,9 @@ onUnmounted(() => {
               <img v-if="getAvatarUrl(user)" :src="getAvatarUrl(user)" :alt="user.username" class="h-full w-full object-cover">
               <span v-else>{{ user.username.charAt(0).toUpperCase() }}</span>
             </div>
-            <div>
+            <div class="min-w-0">
               <div class="flex items-center gap-2">
-                <h2 class="text-xl font-black text-white">{{ user.username }}</h2>
+                <h2 class="truncate text-xl font-black text-white">{{ user.username }}</h2>
                 <span v-if="user.is_verified" class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-sky-500/10 text-xs font-bold text-sky-300">✓</span>
               </div>
               <p class="mt-1 text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">{{ roleLabel(user.role) }}</p>
@@ -495,19 +495,19 @@ onUnmounted(() => {
 
     <div
       v-if="offerModal.isOpen && offerModal.user"
-      class="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/85 p-4 backdrop-blur-md"
+      class="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/85 p-3 backdrop-blur-md sm:p-4"
       @click.self="closeOfferModal"
     >
-      <div class="w-full max-w-2xl rounded-[2rem] border border-slate-700 bg-slate-900 p-8 shadow-2xl shadow-black/60">
-        <div class="flex items-start justify-between gap-4">
-          <div>
+      <div class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[2rem] border border-slate-700 bg-slate-900 p-5 shadow-2xl shadow-black/60 sm:p-8">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div class="min-w-0">
             <p class="text-xs font-bold uppercase tracking-[0.28em] text-indigo-300">Новый оффер</p>
-            <h2 class="mt-3 text-3xl font-black text-white">Приглашение для {{ offerModal.user.username }}</h2>
+            <h2 class="mt-3 break-words text-2xl font-black text-white sm:text-3xl">Приглашение для {{ offerModal.user.username }}</h2>
             <p class="mt-3 text-sm leading-6 text-slate-400">
               После отправки карточка автоматически заблокирует повторный активный оффер и покажет статус.
             </p>
           </div>
-          <button class="text-slate-500 transition hover:text-white" @click="closeOfferModal">
+          <button class="self-start text-slate-500 transition hover:text-white" @click="closeOfferModal">
             <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>

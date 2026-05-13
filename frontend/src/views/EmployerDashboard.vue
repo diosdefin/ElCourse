@@ -50,22 +50,22 @@ onMounted(searchTalents)
 </script>
 
 <template>
-  <div class="max-w-6xl mx-auto mt-8 px-4">
+  <div class="mx-auto mt-8 max-w-6xl max-w-full min-w-0 px-0 sm:px-4">
     <div class="mb-12">
-      <h1 class="text-4xl font-black text-slate-100">Поиск талантов</h1>
+      <h1 class="break-words text-3xl font-black text-slate-100 sm:text-4xl">Поиск талантов</h1>
       <p class="text-slate-500 mt-2">Найдите сотрудников по подтвержденным навыкам</p>
     </div>
 
-    <div class="bg-slate-800/40 backdrop-blur-md p-6 rounded-3xl border border-slate-700/50 mb-10 flex gap-4">
+    <div class="mb-10 flex flex-col gap-4 rounded-3xl border border-slate-700/50 bg-slate-800/40 p-4 backdrop-blur-md sm:flex-row sm:p-6">
       <input 
         v-model="searchSkills" 
         @keyup.enter="searchTalents"
         placeholder="Введите навыки через запятую (например: Python, Vue...)" 
-        class="flex-1 bg-slate-900/50 border border-slate-700 rounded-2xl px-6 py-4 text-white outline-none focus:ring-2 focus:ring-indigo-500"
+        class="min-w-0 flex-1 rounded-2xl border border-slate-700 bg-slate-900/50 px-4 py-4 text-white outline-none focus:ring-2 focus:ring-indigo-500 sm:px-6"
       >
       <button 
         @click="searchTalents"
-        class="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl transition-all shadow-lg shadow-indigo-600/20"
+        class="w-full rounded-2xl bg-indigo-600 px-8 py-4 font-bold text-white transition-all shadow-lg shadow-indigo-600/20 hover:bg-indigo-500 sm:w-auto"
       >
         Найти
       </button>
@@ -74,7 +74,7 @@ onMounted(searchTalents)
     <div v-if="loading" class="text-center py-20 text-indigo-400">Ищем лучших...</div>
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <div v-for="student in students" :key="student.id" 
-        class="bg-slate-800/30 backdrop-blur-sm p-8 rounded-3xl border border-slate-700/50 hover:border-indigo-500/50 transition-all group">
+        class="group min-w-0 rounded-3xl border border-slate-700/50 bg-slate-800/30 p-6 backdrop-blur-sm transition-all hover:border-indigo-500/50 sm:p-8">
         
         <!-- Аватар: если есть фото показываем фото, иначе букву -->
         <div class="w-16 h-16 rounded-2xl mb-6 shadow-lg overflow-hidden">
@@ -93,7 +93,7 @@ onMounted(searchTalents)
           </div>
         </div>
         
-        <h3 class="text-xl font-bold text-slate-100 mb-2">{{ student.username }}</h3>
+        <h3 class="mb-2 break-words text-xl font-bold text-slate-100">{{ student.username }}</h3>
         <p class="text-slate-500 text-sm mb-6">Студент платформы ELCOURSE</p>
 
         <div class="flex flex-wrap gap-2 mb-8">
