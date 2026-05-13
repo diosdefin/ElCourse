@@ -34,9 +34,6 @@ export const changePassword = (payload) =>
     withCredentials: true,
   })
 
-export const registerUser = (payload) =>
-  api.post('/register/', payload)
-
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('access_token')

@@ -15,6 +15,8 @@ from .models import (
     QuizConfig,
     Skill,
     User,
+    Vacancy,
+    VacancyApplication,
 )
 
 
@@ -656,3 +658,193 @@ class StudentQuizQuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
         fields = ['id', 'text', 'is_multiple', 'choices']
+
+
+
+class VacancySerializer(serializers.ModelSerializer):
+    employer_name = serializers.CharField(source='employer.username', read_only=True)
+    skills = SkillSerializer(many=True, read_only=True)
+    applications_count = serializers.SerializerMethodField()
+    match_count = serializers.SerializerMethodField()
+    is_matching = serializers.SerializerMethodField()
+    application_id = serializers.SerializerMethodField()
+    application_status = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Vacancy
+        fields = [
+            'id',
+            'employer',
+            'employer_name',
+            'company_name',
+            'title',
+            'description',
+            'requirements',
+            'skills',
+            'work_format',
+            'employment_type',
+            'location',
+            'salary_from',
+            'salary_to',
+            'contact_link',
+            'status',
+            'created_at',
+            'updated_at',
+            'applications_count',
+            'match_count',
+            'is_matching',
+            'application_id',
+            'application_status',
+        ]
+        read_only_fields = ['employer', 'created_at', 'updated_at']
+
+    def _application_for(self, obj):
+        application_map = self.context.get('application_map') or {}
+        return application_map.get(obj.id)
+
+    def get_applications_count(self, obj):
+        count = getattr(obj, 'applications_count', None)
+        if count is not None:
+            return count
+        return obj.applications.count()
+
+    def get_match_count(self, obj):
+        viewer_skill_ids = self.context.get('viewer_skill_ids')
+        if viewer_skill_ids is None:
+            return 0
+
+        prefetched_skills = getattr(obj, '_prefetched_objects_cache', {}).get('skills')
+        if prefetched_skills is not None:
+            vacancy_skill_ids = {skill.id for skill in prefetched_skills}
+        else:
+            vacancy_skill_ids = set(obj.skills.values_list('id', flat=True))
+        return len(vacancy_skill_ids & viewer_skill_ids)
+
+    def get_is_matching(self, obj):
+        return self.get_match_count(obj) > 0
+
+    def get_application_id(self, obj):
+        application = self._application_for(obj)
+        return application.id if application else None
+
+    def get_application_status(self, obj):
+        application = self._application_for(obj)
+        return application.status if application else None
+
+
+class VacancyWriteSerializer(serializers.ModelSerializer):
+    skills = SkillSerializer(many=True, read_only=True)
+    skill_ids = serializers.ListField(child=serializers.IntegerField(), write_only=True, required=False)
+    skill_names = serializers.ListField(child=serializers.CharField(max_length=100), write_only=True, required=False)
+
+    class Meta:
+        model = Vacancy
+        fields = [
+            'id',
+            'company_name',
+            'title',
+            'description',
+            'requirements',
+            'skills',
+            'skill_ids',
+            'skill_names',
+            'work_format',
+            'employment_type',
+            'location',
+            'salary_from',
+            'salary_to',
+            'contact_link',
+            'status',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['created_at', 'updated_at']
+
+    def validate_title(self, value):
+        value = (value or '').strip()
+        if len(value) < 3:
+            raise serializers.ValidationError('Название вакансии должно содержать минимум 3 символа.')
+        return value
+
+    def validate_description(self, value):
+        value = (value or '').strip()
+        if len(value) < 20:
+            raise serializers.ValidationError('Описание должно содержать минимум 20 символов.')
+        return value
+
+    def validate_contact_link(self, value):
+        value = (value or '').strip()
+        lowered = value.lower()
+        if lowered.startswith('javascript:') or '<' in value or '>' in value:
+            raise serializers.ValidationError('Контактная ссылка содержит недопустимые символы.')
+        return value
+
+    def validate(self, attrs):
+        salary_from = attrs.get('salary_from')
+        salary_to = attrs.get('salary_to')
+        if salary_from and salary_to and salary_from > salary_to:
+            raise serializers.ValidationError({'salary_to': 'Верхняя граница зарплаты не может быть меньше нижней.'})
+        return attrs
+
+    def _sync_skills(self, vacancy, skill_ids=None, skill_names=None):
+        skills = []
+        if skill_ids:
+            skills.extend(list(Skill.objects.filter(id__in=skill_ids)))
+        if skill_names:
+            for raw_name in skill_names:
+                name = (raw_name or '').strip()
+                if not name:
+                    continue
+                skill, _ = Skill.objects.get_or_create(name=name[:100])
+                skills.append(skill)
+        if skill_ids is not None or skill_names is not None:
+            vacancy.skills.set(skills)
+
+    def create(self, validated_data):
+        skill_ids = validated_data.pop('skill_ids', None)
+        skill_names = validated_data.pop('skill_names', None)
+        vacancy = Vacancy.objects.create(**validated_data)
+        self._sync_skills(vacancy, skill_ids, skill_names)
+        return vacancy
+
+    def update(self, instance, validated_data):
+        skill_ids = validated_data.pop('skill_ids', None)
+        skill_names = validated_data.pop('skill_names', None)
+        for field, value in validated_data.items():
+            setattr(instance, field, value)
+        instance.save()
+        self._sync_skills(instance, skill_ids, skill_names)
+        return instance
+
+
+class VacancyApplicationSerializer(serializers.ModelSerializer):
+    vacancy = VacancySerializer(read_only=True)
+    vacancy_id = serializers.IntegerField(source='vacancy.id', read_only=True)
+    student_id = serializers.IntegerField(source='student.id', read_only=True)
+    student_username = serializers.CharField(source='student.username', read_only=True)
+    student_email = serializers.CharField(source='student.email', read_only=True)
+    student_avatar = serializers.SerializerMethodField()
+    student_skills = SkillSerializer(source='student.skills', many=True, read_only=True)
+
+    class Meta:
+        model = VacancyApplication
+        fields = [
+            'id',
+            'vacancy',
+            'vacancy_id',
+            'student_id',
+            'student_username',
+            'student_email',
+            'student_avatar',
+            'student_skills',
+            'message',
+            'status',
+            'is_read_by_student',
+            'is_read_by_employer',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['created_at', 'updated_at']
+
+    def get_student_avatar(self, obj):
+        return obj.student.avatar.url if obj.student.avatar else None

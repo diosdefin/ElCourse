@@ -3,8 +3,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import JobOffer, User
-from .serializers import JobOfferSerializer, UserSerializer
+from .models import JobOffer, User, Vacancy, VacancyApplication
+from .serializers import JobOfferSerializer, UserSerializer, VacancyApplicationSerializer, VacancySerializer, VacancyWriteSerializer
 
 
 class EmployerStudentSearchView(APIView):
@@ -90,3 +90,125 @@ class EmployerOffersListView(APIView):
         offers = JobOffer.objects.filter(employer=request.user).order_by('-created_at')
         serializer = JobOfferSerializer(offers, many=True)
         return Response(serializer.data)
+
+
+
+class EmployerVacancyListCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role != 'employer' and not request.user.is_staff:
+            return Response({'detail': 'Доступ только для работодателей.'}, status=status.HTTP_403_FORBIDDEN)
+
+        vacancies = (
+            Vacancy.objects
+            .filter(employer=request.user)
+            .prefetch_related('skills')
+            .order_by('-created_at')
+        )
+        serializer = VacancySerializer(vacancies, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    def post(self, request):
+        if request.user.role != 'employer' and not request.user.is_staff:
+            return Response({'detail': 'Создавать вакансии могут только работодатели.'}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = VacancyWriteSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        vacancy = serializer.save(employer=request.user)
+        return Response(VacancySerializer(vacancy, context={'request': request}).data, status=status.HTTP_201_CREATED)
+
+
+class EmployerVacancyDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, request, pk):
+        return Vacancy.objects.prefetch_related('skills').get(pk=pk, employer=request.user)
+
+    def patch(self, request, pk):
+        if request.user.role != 'employer' and not request.user.is_staff:
+            return Response({'detail': 'Доступ только для работодателей.'}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            vacancy = self.get_object(request, pk)
+        except Vacancy.DoesNotExist:
+            return Response({'detail': 'Вакансия не найдена.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = VacancyWriteSerializer(vacancy, data=request.data, partial=True, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        vacancy = serializer.save()
+        return Response(VacancySerializer(vacancy, context={'request': request}).data)
+
+    def delete(self, request, pk):
+        if request.user.role != 'employer' and not request.user.is_staff:
+            return Response({'detail': 'Доступ только для работодателей.'}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            vacancy = self.get_object(request, pk)
+        except Vacancy.DoesNotExist:
+            return Response({'detail': 'Вакансия не найдена.'}, status=status.HTTP_404_NOT_FOUND)
+
+        vacancy.status = Vacancy.STATUS_CLOSED
+        vacancy.save(update_fields=['status', 'updated_at'])
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class EmployerVacancyApplicationsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role != 'employer' and not request.user.is_staff:
+            return Response({'detail': 'Доступ только для работодателей.'}, status=status.HTTP_403_FORBIDDEN)
+
+        queryset = (
+            VacancyApplication.objects
+            .filter(vacancy__employer=request.user)
+            .select_related('vacancy', 'vacancy__employer', 'student')
+            .prefetch_related('vacancy__skills', 'student__skills')
+            .order_by('-created_at')
+        )
+
+        vacancy_id = request.query_params.get('vacancy_id')
+        if vacancy_id:
+            queryset = queryset.filter(vacancy_id=vacancy_id)
+
+        status_filter = request.query_params.get('status')
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+
+        serializer = VacancyApplicationSerializer(queryset, many=True, context={'request': request})
+        return Response(serializer.data)
+
+
+class EmployerVacancyApplicationUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        if request.user.role != 'employer' and not request.user.is_staff:
+            return Response({'detail': 'Доступ только для работодателей.'}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            application = VacancyApplication.objects.select_related('vacancy', 'student').get(pk=pk, vacancy__employer=request.user)
+        except VacancyApplication.DoesNotExist:
+            return Response({'detail': 'Отклик не найден.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if 'is_read_by_employer' in request.data and 'status' not in request.data:
+            application.is_read_by_employer = bool(request.data.get('is_read_by_employer'))
+            application.save(update_fields=['is_read_by_employer', 'updated_at'])
+            return Response(VacancyApplicationSerializer(application, context={'request': request}).data)
+
+        next_status = request.data.get('status')
+        allowed = {
+            VacancyApplication.STATUS_PENDING,
+            VacancyApplication.STATUS_VIEWED,
+            VacancyApplication.STATUS_ACCEPTED,
+            VacancyApplication.STATUS_REJECTED,
+        }
+        if next_status not in allowed:
+            return Response({'status': ['Недопустимый статус отклика.']}, status=status.HTTP_400_BAD_REQUEST)
+
+        application.status = next_status
+        application.is_read_by_student = False
+        application.is_read_by_employer = True
+        application.save(update_fields=['status', 'is_read_by_student', 'is_read_by_employer', 'updated_at'])
+        return Response(VacancyApplicationSerializer(application, context={'request': request}).data)

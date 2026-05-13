@@ -273,6 +273,9 @@ class TeacherUploadImageView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        if request.user.role != User.IS_TEACHER and not request.user.is_staff:
+            return Response({'detail': 'Доступ только для преподавателей.'}, status=status.HTTP_403_FORBIDDEN)
+
         image = request.FILES.get('image')
         if not image:
             return Response({'detail': 'Image is required.'}, status=status.HTTP_400_BAD_REQUEST)

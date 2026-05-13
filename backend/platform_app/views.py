@@ -13,9 +13,11 @@ from django.template.loader import get_template
 from django.utils import timezone
 from rest_framework import generics, status, viewsets
 from rest_framework.generics import RetrieveAPIView
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.db.models import Count
 
 try:
     from xhtml2pdf import pisa
@@ -36,6 +38,8 @@ from .models import (
     QuizConfig,
     Skill,
     User,
+    Vacancy,
+    VacancyApplication,
 )
 from .serializers import (
     ActivityDaySerializer,
@@ -54,8 +58,16 @@ from .serializers import (
     SkillSerializer,
     UserSettingsSerializer,
     UserProfileSerializer,
+    VacancyApplicationSerializer,
+    VacancySerializer,
 )
 from .tasks import convert_to_hls
+
+
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 12
+    page_size_query_param = 'page_size'
+    max_page_size = 30
 
 
 MAX_DAILY_ACTIVITY_COUNT = 10
@@ -137,6 +149,16 @@ def _student_can_access_lesson(student, lesson):
     }
     locked_ids = _student_locked_lesson_ids(visible_lessons, progress_map)
     return lesson.id not in locked_ids
+
+
+def _user_can_access_lesson_resource(user, lesson):
+    if user.is_staff:
+        return True
+    if user.role == User.IS_STUDENT:
+        return lesson.is_published and _student_can_access_lesson(user, lesson)
+    if user.role == User.IS_TEACHER:
+        return lesson.course.author_id == user.id
+    return False
 
 
 class ResumeExportView(APIView):
@@ -280,7 +302,10 @@ class LessonVideoManifestView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, lesson_id):
-        lesson = get_object_or_404(Lesson, id=lesson_id)
+        lesson = get_object_or_404(Lesson.objects.select_related('course'), id=lesson_id)
+        if not _user_can_access_lesson_resource(request.user, lesson):
+            return Response({'detail': 'Недостаточно прав для просмотра видео этого урока.'}, status=status.HTTP_403_FORBIDDEN)
+
         video_asset, _ = LessonVideo.objects.get_or_create(lesson=lesson)
         payload = LessonVideoSerializer(video_asset).data
 
@@ -295,10 +320,13 @@ class LessonWatchProgressView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, lesson_id):
+        lesson = get_object_or_404(Lesson.objects.select_related('course'), id=lesson_id)
+        if not _user_can_access_lesson_resource(request.user, lesson):
+            return Response({'detail': 'Lesson progress is not available for this lesson.'}, status=status.HTTP_403_FORBIDDEN)
+
         if request.user.role != User.IS_STUDENT and not request.user.is_staff:
             return Response({'detail': 'Только студенты могут получать прогресс просмотра.'}, status=status.HTTP_403_FORBIDDEN)
 
-        lesson = get_object_or_404(Lesson, id=lesson_id)
         progress, _ = LessonProgress.objects.get_or_create(user=request.user, lesson=lesson)
 
         return Response({
@@ -307,10 +335,13 @@ class LessonWatchProgressView(APIView):
         })
 
     def patch(self, request, lesson_id):
+        lesson = get_object_or_404(Lesson.objects.select_related('course'), id=lesson_id)
+        if not _user_can_access_lesson_resource(request.user, lesson):
+            return Response({'detail': 'Lesson progress is not available for this lesson.'}, status=status.HTTP_403_FORBIDDEN)
+
         if request.user.role != User.IS_STUDENT and not request.user.is_staff:
             return Response({'detail': 'Только студенты могут обновлять прогресс просмотра.'}, status=status.HTTP_403_FORBIDDEN)
 
-        lesson = get_object_or_404(Lesson, id=lesson_id)
         progress, _ = LessonProgress.objects.get_or_create(user=request.user, lesson=lesson)
 
         raw_seconds = request.data.get('watched_seconds', 0)
@@ -866,8 +897,10 @@ class NotificationCountView(APIView):
         user = request.user
         if user.role == User.IS_STUDENT:
             count = JobOffer.objects.filter(student=user, is_read_by_student=False).count()
+            count += VacancyApplication.objects.filter(student=user, is_read_by_student=False).count()
         elif user.role == User.IS_EMPLOYER:
             count = JobOffer.objects.filter(employer=user, is_read_by_employer=False).exclude(status='pending').count()
+            count += VacancyApplication.objects.filter(vacancy__employer=user, is_read_by_employer=False).count()
         else:
             count = 0
         return Response({'unread_count': count})
@@ -876,7 +909,16 @@ class NotificationCountView(APIView):
 class JobOfferUpdateView(generics.UpdateAPIView):
     serializer_class = JobOfferSerializer
     permission_classes = [IsAuthenticated]
-    queryset = JobOffer.objects.all()
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_staff:
+            return JobOffer.objects.all()
+        if user.role == User.IS_STUDENT:
+            return JobOffer.objects.filter(student=user)
+        if user.role == User.IS_EMPLOYER:
+            return JobOffer.objects.filter(employer=user)
+        return JobOffer.objects.none()
 
     def patch(self, request, *args, **kwargs):
         offer = self.get_object()
@@ -967,3 +1009,169 @@ class ProfileUpdateView(APIView):
             'bio': user.bio,
             'avatar': user.avatar.url if user.avatar else None,
         })
+
+
+
+class VacancyListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        queryset = (
+            Vacancy.objects
+            .filter(status=Vacancy.STATUS_PUBLISHED)
+            .select_related('employer')
+            .prefetch_related('skills')
+            .annotate(applications_count=Count('applications'))
+            .order_by('-created_at')
+        )
+
+        search_query = (request.query_params.get('search') or '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(title__icontains=search_query) |
+                Q(description__icontains=search_query) |
+                Q(requirements__icontains=search_query) |
+                Q(company_name__icontains=search_query) |
+                Q(location__icontains=search_query) |
+                Q(skills__name__icontains=search_query)
+            )
+
+        skills_query = request.query_params.get('skills', '')
+        skill_names = [skill.strip() for skill in skills_query.split(',') if skill.strip()]
+        for skill_name in skill_names:
+            queryset = queryset.filter(skills__name__icontains=skill_name)
+
+        work_format = request.query_params.get('work_format')
+        if work_format:
+            queryset = queryset.filter(work_format=work_format)
+
+        employment_type = request.query_params.get('employment_type')
+        if employment_type:
+            queryset = queryset.filter(employment_type=employment_type)
+
+        viewer_skill_ids = set()
+        if request.user.is_authenticated and request.user.role == User.IS_STUDENT:
+            viewer_skill_ids = set(request.user.skills.values_list('id', flat=True))
+            if request.query_params.get('matched') == '1':
+                if viewer_skill_ids:
+                    queryset = queryset.filter(skills__id__in=viewer_skill_ids)
+                else:
+                    queryset = queryset.none()
+
+        queryset = queryset.distinct()
+
+        paginator = StandardResultsSetPagination()
+        page = paginator.paginate_queryset(queryset, request)
+        vacancies = page if page is not None else list(queryset)
+
+        application_map = {}
+        if request.user.is_authenticated and request.user.role == User.IS_STUDENT and vacancies:
+            vacancy_ids = [item.id for item in vacancies]
+            application_map = {
+                item.vacancy_id: item
+                for item in VacancyApplication.objects.filter(student=request.user, vacancy_id__in=vacancy_ids)
+            }
+
+        serializer = VacancySerializer(
+            vacancies,
+            many=True,
+            context={
+                'request': request,
+                'viewer_skill_ids': viewer_skill_ids,
+                'application_map': application_map,
+            },
+        )
+
+        if page is not None:
+            return paginator.get_paginated_response(serializer.data)
+        return Response(serializer.data)
+
+
+class StudentVacancyApplicationsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role != User.IS_STUDENT and not request.user.is_staff:
+            return Response({'detail': 'Отклики доступны только студентам.'}, status=status.HTTP_403_FORBIDDEN)
+
+        queryset = (
+            VacancyApplication.objects
+            .filter(student=request.user)
+            .select_related('vacancy', 'vacancy__employer', 'student')
+            .prefetch_related('vacancy__skills', 'student__skills')
+            .order_by('-created_at')
+        )
+        serializer = VacancyApplicationSerializer(queryset, many=True, context={'request': request})
+        return Response(serializer.data)
+
+
+
+class StudentVacancyApplicationDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        if request.user.role != User.IS_STUDENT and not request.user.is_staff:
+            return Response({'detail': 'Отклики доступны только студентам.'}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            application = (
+                VacancyApplication.objects
+                .select_related('vacancy', 'vacancy__employer', 'student')
+                .prefetch_related('vacancy__skills', 'student__skills')
+                .get(pk=pk, student=request.user)
+            )
+        except VacancyApplication.DoesNotExist:
+            return Response({'detail': 'Отклик не найден.'}, status=status.HTTP_404_NOT_FOUND)
+
+        update_fields = ['updated_at']
+
+        if 'is_read_by_student' in request.data:
+            application.is_read_by_student = bool(request.data.get('is_read_by_student'))
+            update_fields.append('is_read_by_student')
+
+        next_status = request.data.get('status')
+        if next_status is not None:
+            if next_status != VacancyApplication.STATUS_WITHDRAWN:
+                return Response({'status': ['Студент может только отозвать свой отклик.']}, status=status.HTTP_400_BAD_REQUEST)
+            if application.status in {VacancyApplication.STATUS_ACCEPTED, VacancyApplication.STATUS_REJECTED}:
+                return Response({'detail': 'Нельзя отозвать отклик после финального решения работодателя.'}, status=status.HTTP_400_BAD_REQUEST)
+            application.status = VacancyApplication.STATUS_WITHDRAWN
+            application.is_read_by_employer = False
+            update_fields.extend(['status', 'is_read_by_employer'])
+
+        if len(update_fields) == 1:
+            return Response({'detail': 'Нет данных для обновления.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        application.save(update_fields=list(dict.fromkeys(update_fields)))
+        return Response(VacancyApplicationSerializer(application, context={'request': request}).data)
+
+
+class VacancyApplyView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, vacancy_id):
+        if request.user.role != User.IS_STUDENT and not request.user.is_staff:
+            return Response({'detail': 'Откликаться на вакансии могут только студенты.'}, status=status.HTTP_403_FORBIDDEN)
+
+        vacancy = get_object_or_404(Vacancy, id=vacancy_id, status=Vacancy.STATUS_PUBLISHED)
+        message = (request.data.get('message') or '').strip()
+
+        if len(message) > 1200:
+            return Response({'message': ['Сообщение не должно превышать 1200 символов.']}, status=status.HTTP_400_BAD_REQUEST)
+
+        application, created = VacancyApplication.objects.get_or_create(
+            vacancy=vacancy,
+            student=request.user,
+            defaults={
+                'message': message,
+                'status': VacancyApplication.STATUS_PENDING,
+                'is_read_by_student': True,
+                'is_read_by_employer': False,
+            },
+        )
+
+        if not created:
+            return Response({'detail': 'Вы уже откликались на эту вакансию.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = VacancyApplicationSerializer(application, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

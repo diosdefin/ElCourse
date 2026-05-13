@@ -237,3 +237,110 @@ class JobOffer(models.Model):
 
     def __str__(self):
         return f'Offer from {self.employer.username} to {self.student.username} ({self.status})'
+
+
+
+class Vacancy(models.Model):
+    FORMAT_REMOTE = 'remote'
+    FORMAT_OFFICE = 'office'
+    FORMAT_HYBRID = 'hybrid'
+    FORMAT_ANY = 'any'
+
+    WORK_FORMAT_CHOICES = [
+        (FORMAT_REMOTE, 'Удалённо'),
+        (FORMAT_OFFICE, 'В офисе'),
+        (FORMAT_HYBRID, 'Гибрид'),
+        (FORMAT_ANY, 'Любой формат'),
+    ]
+
+    TYPE_FULL_TIME = 'full_time'
+    TYPE_PART_TIME = 'part_time'
+    TYPE_INTERNSHIP = 'internship'
+    TYPE_PROJECT = 'project'
+
+    EMPLOYMENT_TYPE_CHOICES = [
+        (TYPE_FULL_TIME, 'Полная занятость'),
+        (TYPE_PART_TIME, 'Частичная занятость'),
+        (TYPE_INTERNSHIP, 'Стажировка'),
+        (TYPE_PROJECT, 'Проектная работа'),
+    ]
+
+    STATUS_DRAFT = 'draft'
+    STATUS_PUBLISHED = 'published'
+    STATUS_CLOSED = 'closed'
+
+    STATUS_CHOICES = [
+        (STATUS_DRAFT, 'Черновик'),
+        (STATUS_PUBLISHED, 'Опубликована'),
+        (STATUS_CLOSED, 'Закрыта'),
+    ]
+
+    employer = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='vacancies',
+        limit_choices_to={'role': User.IS_EMPLOYER},
+        verbose_name='Работодатель',
+    )
+    title = models.CharField(max_length=160, verbose_name='Название вакансии')
+    company_name = models.CharField(max_length=160, blank=True, verbose_name='Компания')
+    description = models.TextField(max_length=4000, verbose_name='Описание')
+    requirements = models.TextField(max_length=3000, blank=True, verbose_name='Требования')
+    skills = models.ManyToManyField(Skill, blank=True, related_name='vacancies', verbose_name='Навыки')
+    work_format = models.CharField(max_length=20, choices=WORK_FORMAT_CHOICES, default=FORMAT_ANY, verbose_name='Формат работы')
+    employment_type = models.CharField(max_length=20, choices=EMPLOYMENT_TYPE_CHOICES, default=TYPE_FULL_TIME, verbose_name='Тип занятости')
+    location = models.CharField(max_length=160, blank=True, verbose_name='Локация')
+    salary_from = models.PositiveIntegerField(null=True, blank=True, verbose_name='Зарплата от')
+    salary_to = models.PositiveIntegerField(null=True, blank=True, verbose_name='Зарплата до')
+    contact_link = models.CharField(max_length=255, blank=True, help_text='Например: https://t.me/hr')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_DRAFT, verbose_name='Статус')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status', '-created_at']),
+            models.Index(fields=['employer', 'status']),
+        ]
+
+    def __str__(self):
+        return self.title
+
+
+class VacancyApplication(models.Model):
+    STATUS_PENDING = 'pending'
+    STATUS_VIEWED = 'viewed'
+    STATUS_ACCEPTED = 'accepted'
+    STATUS_REJECTED = 'rejected'
+    STATUS_WITHDRAWN = 'withdrawn'
+
+    STATUS_CHOICES = [
+        (STATUS_PENDING, 'Отправлен'),
+        (STATUS_VIEWED, 'Просмотрен'),
+        (STATUS_ACCEPTED, 'Принят'),
+        (STATUS_REJECTED, 'Отклонён'),
+        (STATUS_WITHDRAWN, 'Отозван'),
+    ]
+
+    vacancy = models.ForeignKey(Vacancy, on_delete=models.CASCADE, related_name='applications')
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='vacancy_applications')
+    message = models.TextField(max_length=1200, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    is_read_by_student = models.BooleanField(default=True)
+    is_read_by_employer = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = ('vacancy', 'student')
+        indexes = [
+            models.Index(fields=['student', '-created_at']),
+            models.Index(fields=['vacancy', 'status']),
+            models.Index(fields=['is_read_by_student']),
+            models.Index(fields=['is_read_by_employer']),
+        ]
+
+    def __str__(self):
+        return f'{self.student.username} → {self.vacancy.title} ({self.status})'

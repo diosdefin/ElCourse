@@ -1,7 +1,15 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .employer_views import EmployerJobOfferView, EmployerOffersListView, EmployerStudentSearchView
+from .employer_views import (
+    EmployerJobOfferView,
+    EmployerOffersListView,
+    EmployerStudentSearchView,
+    EmployerVacancyApplicationUpdateView,
+    EmployerVacancyApplicationsView,
+    EmployerVacancyDetailView,
+    EmployerVacancyListCreateView,
+)
 from .teacher_views import (
     TeacherAnalyticsView,
     GenerateFinalExamView,
@@ -32,6 +40,8 @@ from .views import (
     FriendToggleView,
     GetQuizView,
     JobOfferUpdateView,
+    StudentVacancyApplicationsView,
+    StudentVacancyApplicationDetailView,
     LessonDetailAPIView,
     LessonQuizSubmitView,
     LessonQuizView,
@@ -52,6 +62,8 @@ from .views import (
     UserSettingsView,
     UserActivityView,
     UserProfileView,
+    VacancyApplyView,
+    VacancyListView,
 )
 
 router = DefaultRouter()
@@ -87,6 +99,12 @@ urlpatterns = [
 
     path('resume/export/', ResumeExportView.as_view(), name='resume-export'),
 
+    path('vacancies/', VacancyListView.as_view(), name='vacancies'),
+    path('vacancies/<int:vacancy_id>/apply/', VacancyApplyView.as_view(), name='vacancy-apply'),
+    path('student/vacancy-applications/', StudentVacancyApplicationsView.as_view(), name='student-vacancy-applications'),
+    path('student/vacancy-applications/<int:pk>/', StudentVacancyApplicationDetailView.as_view(), name='student-vacancy-application-detail'),
+
+
     path('teacher/courses/', TeacherCourseListView.as_view(), name='teacher-courses'),
     path('teacher/analytics/', TeacherAnalyticsView.as_view(), name='teacher-analytics'),
     path('teacher/activity/', TeacherActivityView.as_view(), name='teacher-activity'),
@@ -110,6 +128,10 @@ urlpatterns = [
     path('employer/search/', EmployerStudentSearchView.as_view(), name='student-search'),
     path('employer/offer/', EmployerJobOfferView.as_view(), name='send-offer'),
     path('employer/offers/', EmployerOffersListView.as_view(), name='employer-offers'),
+    path('employer/vacancies/', EmployerVacancyListCreateView.as_view(), name='employer-vacancies'),
+    path('employer/vacancies/<int:pk>/', EmployerVacancyDetailView.as_view(), name='employer-vacancy-detail'),
+    path('employer/vacancy-applications/', EmployerVacancyApplicationsView.as_view(), name='employer-vacancy-applications'),
+    path('employer/vacancy-applications/<int:pk>/', EmployerVacancyApplicationUpdateView.as_view(), name='employer-vacancy-application-update'),
 
     path('student/offers/', StudentJobOffersView.as_view(), name='student-offers'),
     path('notifications/count/', NotificationCountView.as_view(), name='notification-count'),

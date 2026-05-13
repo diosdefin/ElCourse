@@ -27,10 +27,14 @@ const roleLabel = computed(() => {
 const primaryNavigation = computed(() => {
   const links = [{ label: 'Главная', to: '/' }]
 
-  if (!authStore.isAuthenticated) {
-    links.push({ label: 'Курсы', to: '/courses' })
-    return links.filter((item) => item.to === '/' || routeExists(item.to))
-  }
+if (!authStore.isAuthenticated) {
+  links.push(
+    { label: 'Курсы', to: '/courses' },
+    { label: 'Вакансии', to: '/vacancies' }
+  )
+
+  return links.filter((item) => item.to === '/' || routeExists(item.to))
+}
 
   if (authStore.isStudent) {
     links.push(

@@ -19,20 +19,22 @@ import SettingsView from '../views/SettingsView.vue'
 import TeacherCourseBuilder from '../views/TeacherCourseBuilder.vue'
 import TeacherDashboard from '../views/TeacherDashboard.vue'
 import TeacherAnalyticsView from '../views/TeacherAnalyticsView.vue'
+import VacanciesView from '../views/VacanciesView.vue'
 
 const routes = [
   { path: '/register', name: 'register', component: RegisterView },
   { path: '/', name: 'home', component: HomeView },
   { path: '/login', name: 'login', component: LoginView },
   { path: '/courses', name: 'courses', component: CoursesView },
+  { path: '/vacancies', name: 'vacancies', component: VacanciesView },
   { path: '/community', name: 'community', component: CommunityView },
   { path: '/user/:username', name: 'public-profile', component: PublicProfileView },
   { path: '/profile', name: 'profile', component: ProfileView, meta: { requiresAuth: true } },
   { path: '/settings', name: 'settings', component: SettingsView, meta: { requiresAuth: true } },
   { path: '/course/:id', name: 'course-detail', component: CourseDetailView },
   { path: '/course/:id/play', name: 'course-play', component: CoursePlayView, meta: { requiresAuth: true } },
-  { path: '/course/:courseId/lesson/:lessonId', name: 'lesson-detail', component: LessonView },
-  { path: '/course/:id/quiz', name: 'course-quiz', component: QuizView },
+  { path: '/course/:courseId/lesson/:lessonId', name: 'lesson-detail', component: LessonView, meta: { requiresAuth: true } },
+  { path: '/course/:id/quiz', name: 'course-quiz', component: QuizView, meta: { requiresAuth: true } },
   {
     path: '/teacher/course/:id/lessons',
     name: 'teacher-lesson-editor',
