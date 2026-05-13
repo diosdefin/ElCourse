@@ -292,7 +292,7 @@ onBeforeUnmount(() => {
             >
               <div
                 v-if="isUserMenuOpen"
-                class="absolute right-0 z-[90] mt-3 w-[min(18rem,calc(100vw-1.5rem))] max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-3xl border border-white/12 bg-[rgba(15,23,42,0.96)] shadow-[0_30px_80px_rgba(2,6,23,0.62),inset_0_1px_0_rgba(255,255,255,0.10)] backdrop-blur-[24px] [backdrop-filter:saturate(160%)_blur(24px)]"
+                class="absolute right-0 top-full z-[110] mt-2 min-w-[15rem] w-[min(18rem,calc(100vw-1.5rem))] max-w-[calc(100vw-1.5rem)] origin-top-right overflow-hidden rounded-3xl border border-white/12 bg-[rgba(15,23,42,0.96)] shadow-[0_30px_80px_rgba(2,6,23,0.62),inset_0_1px_0_rgba(255,255,255,0.10)] backdrop-blur-[24px] [backdrop-filter:saturate(160%)_blur(24px)]"
               >
                 <div class="border-b border-white/10 px-4 py-4">
                   <p class="text-sm font-bold text-white">{{ authStore.user?.username || 'Аккаунт' }}</p>

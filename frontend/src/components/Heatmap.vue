@@ -45,18 +45,10 @@ const formatDateToIso = (date) => {
 }
 
 const getActivityLevelClass = (count, inYear = true) => {
-  if (!inYear) {
-    return 'bg-slate-950/20'
-  }
-  if (count >= 5) {
-    return 'bg-emerald-400'
-  }
-  if (count >= 3) {
-    return 'bg-emerald-600'
-  }
-  if (count >= 1) {
-    return 'bg-emerald-900'
-  }
+  if (!inYear) return 'bg-slate-950/20'
+  if (count >= 5) return 'bg-emerald-400'
+  if (count >= 3) return 'bg-emerald-600'
+  if (count >= 1) return 'bg-emerald-900'
   return 'bg-slate-800'
 }
 
@@ -132,96 +124,109 @@ const heatmap = computed(() => {
 
   return { weeks, monthLabels }
 })
+
+const shortMonthLabel = (label) => {
+  if (!label) return ''
+  return label.replace('.', '').slice(0, 1).toUpperCase()
+}
+
+const onYearChange = (event) => {
+  emit('update:selectedYear', Number(event.target.value))
+}
 </script>
 
 <template>
-  <section class="max-w-full rounded-[2rem] border border-slate-700/50 bg-slate-800/50 p-4 shadow-xl backdrop-blur-md sm:p-8">
-    <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-      <div class="min-w-0">
-        <h2 class="text-2xl font-bold text-slate-100">{{ title }}</h2>
-        <p class="mt-2 text-sm text-slate-400">{{ description }}</p>
-      </div>
-
-      <div class="self-start rounded-2xl border border-slate-700 bg-slate-900/50 px-4 py-3 text-left xl:text-right">
-        <p class="text-xs uppercase tracking-[0.25em] text-slate-500">{{ counterLabel }}</p>
-        <p class="mt-2 text-2xl font-black text-white">{{ totalActivityCount }}</p>
-      </div>
-    </div>
-
-    <div class="mt-6 grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr),92px]">
-      <div class="min-w-0 overflow-hidden rounded-3xl border border-slate-700/50 bg-slate-900/50 p-4">
-        <div class="max-w-full overflow-x-auto pb-2">
-          <div class="inline-flex min-w-max gap-2 sm:gap-3">
-            <div class="pt-5 text-[9px] text-slate-500 sm:pt-7 sm:text-[10px]">
-              <div
-                v-for="(label, index) in WEEKDAY_LABELS"
-                :key="index"
-                class="flex h-3 items-center sm:h-4"
-              >
-                {{ label }}
-              </div>
-            </div>
-
-            <div class="min-w-0">
-              <div class="mb-2 flex gap-0.5 text-[9px] uppercase tracking-[0.12em] text-slate-500 sm:gap-1 sm:text-[10px] sm:tracking-[0.2em]">
-                <div
-                  v-for="(week, index) in heatmap.weeks"
-                  :key="`month-${index}`"
-                  class="w-3 sm:w-4"
-                >
-                  {{ heatmap.monthLabels[index] || '' }}
-                </div>
-              </div>
-
-              <div class="flex gap-0.5 sm:gap-1">
-                <div
-                  v-for="(week, weekIndex) in heatmap.weeks"
-                  :key="`week-${weekIndex}`"
-                  class="flex flex-col gap-0.5 sm:gap-1"
-                >
-                  <div
-                    v-for="day in week"
-                    :key="day.date"
-                    class="h-3 w-3 rounded-[3px] transition-transform sm:h-4 sm:w-4 sm:rounded-[4px] sm:hover:scale-125"
-                    :class="day.levelClass"
-                    :title="day.title"
-                  ></div>
-                </div>
-              </div>
-            </div>
-          </div>
+  <section class="max-w-full rounded-[1.4rem] border border-slate-700/50 bg-slate-800/50 p-3 shadow-xl backdrop-blur-md sm:p-5 lg:p-6">
+    <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+      <div class="min-w-0 max-w-3xl">
+        <div class="flex flex-wrap items-center gap-2.5">
+          <h2 class="text-base font-bold text-slate-100 sm:text-lg lg:text-xl">{{ title }}</h2>
+          <span class="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900/70 px-2.5 py-1 text-[11px] font-semibold text-slate-300 sm:text-xs">
+            <span class="text-slate-500">{{ counterLabel }}</span>
+            <span class="text-white">{{ totalActivityCount }}</span>
+          </span>
         </div>
-
-        <div class="mt-4 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-500">
-          <p>Меньше</p>
-          <div class="flex items-center gap-2">
-            <span class="h-3 w-3 rounded-[4px] bg-slate-800"></span>
-            <span class="h-3 w-3 rounded-[4px] bg-emerald-900"></span>
-            <span class="h-3 w-3 rounded-[4px] bg-emerald-600"></span>
-            <span class="h-3 w-3 rounded-[4px] bg-emerald-400"></span>
-          </div>
-          <p>Больше</p>
-        </div>
-
-        <p v-if="error" class="mt-4 text-sm text-amber-400">{{ error }}</p>
+        <p class="mt-1.5 max-w-2xl text-xs leading-5 text-slate-400 sm:text-sm sm:leading-6">{{ description }}</p>
       </div>
 
-      <div v-if="availableYears.length" class="min-w-0 rounded-3xl border border-slate-700/50 bg-slate-900/50 p-3">
-        <p class="px-2 text-xs font-bold uppercase tracking-[0.25em] text-slate-500">Год</p>
-        <div class="mt-3 space-y-2">
-          <button
+      <label
+        v-if="availableYears.length"
+        class="flex shrink-0 items-center gap-2 self-start rounded-full border border-slate-700 bg-slate-900/70 px-3 py-1.5 text-xs font-medium text-slate-400"
+      >
+        <span>Год</span>
+        <select
+          class="min-w-[78px] bg-transparent text-sm font-semibold text-slate-100 outline-none"
+          :value="selectedYear"
+          @change="onYearChange"
+        >
+          <option
             v-for="year in availableYears"
             :key="year"
-            class="w-full rounded-2xl px-3 py-2 text-sm font-bold transition"
-            :class="selectedYear === year
-              ? 'bg-white text-slate-950'
-              : 'bg-slate-950 text-slate-300 hover:bg-slate-800 hover:text-white'"
-            @click="emit('update:selectedYear', year)"
+            :value="year"
+            class="bg-slate-900 text-slate-100"
           >
             {{ year }}
-          </button>
+          </option>
+        </select>
+      </label>
+    </div>
+
+    <div class="mt-3 min-w-0 overflow-hidden rounded-[1.2rem] border border-slate-700/50 bg-slate-900/55 p-3 sm:mt-4 sm:p-4">
+      <div class="max-w-full overflow-x-auto pb-2">
+        <div class="inline-flex min-w-max gap-1 sm:gap-2">
+          <div class="pt-3 text-[8px] text-slate-500 sm:pt-5 sm:text-[10px]">
+            <div
+              v-for="(label, index) in WEEKDAY_LABELS"
+              :key="index"
+              class="flex h-2 items-center sm:h-3.5"
+            >
+              {{ label }}
+            </div>
+          </div>
+
+          <div class="min-w-0">
+            <div class="mb-1 flex gap-0.5 text-[8px] text-slate-500 sm:mb-1.5 sm:gap-1 sm:text-[10px]">
+              <div
+                v-for="(week, index) in heatmap.weeks"
+                :key="`month-${index}`"
+                class="w-2 overflow-hidden sm:w-3.5"
+              >
+                <span class="sm:hidden">{{ shortMonthLabel(heatmap.monthLabels[index] || '') }}</span>
+                <span class="hidden sm:inline">{{ heatmap.monthLabels[index] || '' }}</span>
+              </div>
+            </div>
+
+            <div class="flex gap-0.5 sm:gap-1">
+              <div
+                v-for="(week, weekIndex) in heatmap.weeks"
+                :key="`week-${weekIndex}`"
+                class="flex flex-col gap-0.5 sm:gap-1"
+              >
+                <div
+                  v-for="day in week"
+                  :key="day.date"
+                  class="h-2 w-2 rounded-[2px] transition-transform sm:h-3.5 sm:w-3.5 sm:rounded-[4px] sm:hover:scale-125"
+                  :class="day.levelClass"
+                  :title="day.title"
+                ></div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+
+      <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 sm:text-xs">
+        <p>Меньше</p>
+        <div class="flex items-center gap-1.5 sm:gap-2">
+          <span class="h-2.5 w-2.5 rounded-[3px] bg-slate-800 sm:h-3 sm:w-3"></span>
+          <span class="h-2.5 w-2.5 rounded-[3px] bg-emerald-900 sm:h-3 sm:w-3"></span>
+          <span class="h-2.5 w-2.5 rounded-[3px] bg-emerald-600 sm:h-3 sm:w-3"></span>
+          <span class="h-2.5 w-2.5 rounded-[3px] bg-emerald-400 sm:h-3 sm:w-3"></span>
+        </div>
+        <p>Больше</p>
+      </div>
+
+      <p v-if="error" class="mt-3 text-sm text-amber-400">{{ error }}</p>
     </div>
   </section>
 </template>
