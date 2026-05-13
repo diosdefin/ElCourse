@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 
 from .employer_views import EmployerJobOfferView, EmployerOffersListView, EmployerStudentSearchView
 from .teacher_views import (
+    TeacherAnalyticsView,
     GenerateFinalExamView,
     ReorderLessonsView,
     ReorderModulesView,
@@ -87,6 +88,7 @@ urlpatterns = [
     path('resume/export/', ResumeExportView.as_view(), name='resume-export'),
 
     path('teacher/courses/', TeacherCourseListView.as_view(), name='teacher-courses'),
+    path('teacher/analytics/', TeacherAnalyticsView.as_view(), name='teacher-analytics'),
     path('teacher/activity/', TeacherActivityView.as_view(), name='teacher-activity'),
     path('teacher/modules/', TeacherModuleListCreateView.as_view(), name='teacher-modules'),
     path('teacher/modules/<int:pk>/', TeacherModuleDetailView.as_view(), name='teacher-module-detail'),

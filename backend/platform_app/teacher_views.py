@@ -2,6 +2,7 @@
 
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
+from django.db.models import Avg, Count, Sum
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.exceptions import PermissionDenied
@@ -9,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import ActivityLog, Choice, Course, Lesson, LessonAttachment, Module, Question, QuizConfig
+from .models import ActivityLog, Choice, Course, Lesson, LessonAttachment, LessonProgress, Module, Question, QuizConfig, User
 from .serializers import (
     CourseSerializer,
     LessonAttachmentSerializer,
@@ -334,6 +335,141 @@ class TeacherQuizUpdateView(APIView):
 
         record_daily_activity(request.user, ActivityLog.ACTION_QUIZ_UPDATED)
         return Response({'message': 'Question created', 'question_id': question.id}, status=status.HTTP_201_CREATED)
+
+
+class TeacherAnalyticsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role != User.IS_TEACHER and not request.user.is_staff:
+            return Response({'detail': 'Доступ только для преподавателей.'}, status=status.HTTP_403_FORBIDDEN)
+
+        courses = (
+            Course.objects
+            .filter(author=request.user)
+            .prefetch_related('skills_covered', 'modules', 'lessons')
+            .order_by('title')
+        )
+        course_ids = [course.id for course in courses]
+        lessons = Lesson.objects.filter(course_id__in=course_ids)
+        progress_rows = (
+            LessonProgress.objects
+            .filter(lesson__course_id__in=course_ids)
+            .select_related('user', 'lesson', 'lesson__course')
+            .order_by('lesson__course__title', 'user__username')
+        )
+
+        distinct_students = set(progress_rows.values_list('user_id', flat=True))
+        skill_ids = set()
+        for course in courses:
+            for skill in course.skills_covered.all():
+                skill_ids.add(skill.id)
+
+        lesson_type_counts = {
+            'text': lessons.filter(type=Lesson.TYPE_TEXT).count(),
+            'video': lessons.filter(type=Lesson.TYPE_VIDEO).count(),
+            'quiz': lessons.filter(type=Lesson.TYPE_QUIZ).count(),
+            'final_exam': lessons.filter(type=Lesson.TYPE_FINAL_EXAM).count(),
+        }
+
+        course_rows = []
+        for course in courses:
+            course_lessons = list(course.lessons.all())
+            total_lessons = len(course_lessons)
+            course_progress = [row for row in progress_rows if row.lesson.course_id == course.id]
+            course_student_ids = sorted({row.user_id for row in course_progress})
+
+            student_progress_values = []
+            for student_id in course_student_ids:
+                completed_count = sum(1 for row in course_progress if row.user_id == student_id and row.is_completed)
+                student_progress_values.append(int((completed_count / total_lessons) * 100) if total_lessons else 0)
+
+            average_progress = int(sum(student_progress_values) / len(student_progress_values)) if student_progress_values else 0
+            average_score_rows = [row.score for row in course_progress if row.score is not None and row.score > 0]
+            average_score = int(sum(average_score_rows) / len(average_score_rows)) if average_score_rows else 0
+            last_activity_values = [row.completed_at for row in course_progress if row.completed_at]
+            last_activity = max(last_activity_values) if last_activity_values else None
+
+            course_rows.append({
+                'id': course.id,
+                'title': course.title,
+                'description': course.description,
+                'image': course.image.url if course.image else None,
+                'skills': [{'id': skill.id, 'name': skill.name} for skill in course.skills_covered.all()],
+                'module_count': course.modules.count(),
+                'lesson_count': total_lessons,
+                'published_lesson_count': sum(1 for lesson in course_lessons if lesson.is_published),
+                'text_lesson_count': sum(1 for lesson in course_lessons if lesson.type == Lesson.TYPE_TEXT),
+                'video_lesson_count': sum(1 for lesson in course_lessons if lesson.type == Lesson.TYPE_VIDEO),
+                'quiz_lesson_count': sum(1 for lesson in course_lessons if lesson.type == Lesson.TYPE_QUIZ),
+                'final_exam_count': sum(1 for lesson in course_lessons if lesson.type == Lesson.TYPE_FINAL_EXAM),
+                'student_count': len(course_student_ids),
+                'completed_lesson_count': sum(1 for row in course_progress if row.is_completed),
+                'average_progress': average_progress,
+                'average_score': average_score,
+                'last_activity': last_activity,
+            })
+
+        student_map = {}
+        for row in progress_rows:
+            key = (row.lesson.course_id, row.user_id)
+            item = student_map.setdefault(key, {
+                'student_id': row.user_id,
+                'username': row.user.username,
+                'email': row.user.email,
+                'avatar': row.user.avatar.url if row.user.avatar else None,
+                'course_id': row.lesson.course_id,
+                'course_title': row.lesson.course.title,
+                'total_lessons': 0,
+                'completed_lessons': 0,
+                'attempts_used': 0,
+                'scores': [],
+                'last_activity': row.completed_at,
+            })
+            item['attempts_used'] += row.attempts_used or 0
+            if row.score is not None and row.score > 0:
+                item['scores'].append(row.score)
+            if row.completed_at and (item['last_activity'] is None or row.completed_at > item['last_activity']):
+                item['last_activity'] = row.completed_at
+            if row.is_completed:
+                item['completed_lessons'] += 1
+
+        lessons_count_by_course = {course.id: course.lessons.count() for course in courses}
+        student_rows = []
+        for item in student_map.values():
+            total_lessons = lessons_count_by_course.get(item['course_id'], 0)
+            item['total_lessons'] = total_lessons
+            item['progress_percentage'] = int((item['completed_lessons'] / total_lessons) * 100) if total_lessons else 0
+            item['average_score'] = int(sum(item['scores']) / len(item['scores'])) if item['scores'] else 0
+            item.pop('scores', None)
+            student_rows.append(item)
+
+        student_rows.sort(key=lambda item: (item['course_title'], -item['progress_percentage'], item['username']))
+
+        activity_rows = (
+            ActivityLog.objects
+            .filter(user=request.user, action_type__in=ActivityLog.TEACHER_ACTION_TYPES)
+            .values('date')
+            .annotate(count=Sum('count'))
+            .order_by('date')
+        )
+
+        return Response({
+            'summary': {
+                'total_courses': len(course_ids),
+                'total_modules': Module.objects.filter(course_id__in=course_ids).count(),
+                'total_lessons': lessons.count(),
+                'published_lessons': lessons.filter(is_published=True).count(),
+                'skills_count': len(skill_ids),
+                'students_count': len(distinct_students),
+                'completed_lessons': progress_rows.filter(is_completed=True).count(),
+                'average_score': int(progress_rows.filter(score__gt=0).aggregate(value=Avg('score'))['value'] or 0),
+                'lesson_type_counts': lesson_type_counts,
+            },
+            'courses': course_rows,
+            'students': student_rows,
+            'activity': list(activity_rows),
+        })
 
 
 class TeacherCourseListView(generics.ListCreateAPIView):

@@ -358,16 +358,28 @@ onMounted(async () => {
             </p>
           </div>
 
-          <button
-            class="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-black text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 active:scale-[0.98]"
-            type="button"
-            @click="openCreateModal"
-          >
-            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-            </svg>
-            Создать курс
-          </button>
+          <div class="flex flex-wrap gap-3">
+            <RouterLink
+              :to="{ name: 'teacher-analytics' }"
+              class="inline-flex items-center justify-center gap-2 rounded-2xl border border-sky-400/30 bg-sky-500/10 px-5 py-3 text-sm font-black text-sky-100 transition hover:bg-sky-500 hover:text-white"
+            >
+              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M5 19V5M5 19h14M9 15v-4M13 15V8M17 15v-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              Аналитика
+            </RouterLink>
+
+            <button
+              class="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-black text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 active:scale-[0.98]"
+              type="button"
+              @click="openCreateModal"
+            >
+              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+              </svg>
+              Создать курс
+            </button>
+          </div>
         </div>
       </div>
     </header>

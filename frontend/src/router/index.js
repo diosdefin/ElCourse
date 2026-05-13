@@ -3,6 +3,7 @@ import { useAuthStore } from '../stores/auth'
 import { showError } from '../utils/toast'
 
 import CommunityView from '../views/CommunityView.vue'
+import CoursesView from '../views/CoursesView.vue'
 import CourseDetailView from '../views/CourseDetailView.vue'
 import CoursePlayView from '../views/CoursePlayView.vue'
 import HomeView from '../views/HomeView.vue'
@@ -17,11 +18,13 @@ import QuizView from '../views/QuizView.vue'
 import SettingsView from '../views/SettingsView.vue'
 import TeacherCourseBuilder from '../views/TeacherCourseBuilder.vue'
 import TeacherDashboard from '../views/TeacherDashboard.vue'
+import TeacherAnalyticsView from '../views/TeacherAnalyticsView.vue'
 
 const routes = [
   { path: '/register', name: 'register', component: RegisterView },
   { path: '/', name: 'home', component: HomeView },
   { path: '/login', name: 'login', component: LoginView },
+  { path: '/courses', name: 'courses', component: CoursesView },
   { path: '/community', name: 'community', component: CommunityView },
   { path: '/user/:username', name: 'public-profile', component: PublicProfileView },
   { path: '/profile', name: 'profile', component: ProfileView, meta: { requiresAuth: true } },
@@ -40,6 +43,12 @@ const routes = [
     path: '/teacher/course/:id/quiz-editor',
     name: 'quiz-editor',
     component: QuizEditorView,
+    meta: { requiresTeacher: true },
+  },
+  {
+    path: '/teacher/analytics',
+    name: 'teacher-analytics',
+    component: TeacherAnalyticsView,
     meta: { requiresTeacher: true },
   },
   {

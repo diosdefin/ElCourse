@@ -91,16 +91,16 @@ onMounted(async () => {
 
           <div class="mt-8 flex flex-wrap gap-3">
             <RouterLink
-              :to="profileTarget"
+              to="/courses"
               class="inline-flex items-center justify-center rounded-2xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500"
             >
-              {{ profileButtonText }}
+              Смотреть курсы
             </RouterLink>
             <RouterLink
-              to="/community"
+              to="/login"
               class="inline-flex items-center justify-center rounded-2xl border border-slate-700 bg-slate-950/30 px-6 py-3 text-sm font-bold text-slate-100 transition hover:border-slate-500 hover:bg-slate-900"
             >
-              Смотреть комьюнити
+              Войти / Регистрация
             </RouterLink>
           </div>
 
@@ -190,10 +190,10 @@ onMounted(async () => {
           </p>
         </div>
         <RouterLink
-          to="/community"
+          to="/courses"
           class="inline-flex w-fit items-center justify-center rounded-2xl border border-slate-700 px-5 py-3 text-sm font-bold text-slate-200 transition hover:border-slate-500 hover:text-white"
         >
-          Перейти в комьюнити
+          Открыть все курсы
         </RouterLink>
       </div>
 
@@ -263,16 +263,16 @@ onMounted(async () => {
       </p>
       <div class="mt-8 flex flex-wrap justify-center gap-3">
         <RouterLink
-          :to="profileTarget"
+          to="/courses"
           class="rounded-2xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white transition hover:bg-indigo-500"
         >
-          {{ profileButtonText }}
+          Смотреть курсы
         </RouterLink>
         <RouterLink
-          to="/community"
+          to="/login"
           class="rounded-2xl border border-slate-700 px-6 py-3 text-sm font-bold text-slate-200 transition hover:border-slate-500 hover:text-white"
         >
-          Посмотреть пользователей
+          Войти / Регистрация
         </RouterLink>
       </div>
     </section>
