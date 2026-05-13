@@ -206,30 +206,30 @@ onMounted(fetchAnalytics)
 </script>
 
 <template>
-  <div class="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
+  <div class="mx-auto max-w-7xl px-0 py-6 sm:px-6 sm:py-7 lg:px-8">
     <header class="mb-6 overflow-hidden rounded-3xl border border-slate-700/60 bg-slate-900/65 shadow-xl shadow-slate-950/10 backdrop-blur">
-      <div class="relative p-5 sm:p-7">
+      <div class="relative p-4 sm:p-7">
         <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-400/60 to-transparent"></div>
         <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div class="max-w-3xl">
+          <div class="min-w-0 max-w-3xl">
             <div class="mb-3 inline-flex items-center rounded-full border border-sky-400/20 bg-sky-500/10 px-3 py-1 text-[11px] font-black uppercase tracking-[0.22em] text-sky-200">
               Аналитика преподавателя
             </div>
-            <h1 class="text-2xl font-black tracking-tight text-slate-50 sm:text-3xl">Мониторинг курсов и студентов</h1>
+            <h1 class="break-words text-2xl font-black tracking-tight text-slate-50 sm:text-3xl">Мониторинг курсов и студентов</h1>
             <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-400">
               Сводка по структуре курсов, активности, прогрессу студентов и результатам тестовых уроков. Раздел помогает быстро понять, какие курсы требуют внимания.
             </p>
           </div>
 
-          <div class="flex flex-wrap gap-2">
+          <div class="grid gap-2 sm:flex sm:flex-wrap">
             <RouterLink
               :to="{ name: 'teacher-dashboard' }"
-              class="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-800/80 px-4 py-2.5 text-sm font-bold text-slate-200 transition hover:border-sky-400/60 hover:text-white"
+              class="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-800/80 px-4 py-2.5 text-center text-sm font-bold text-slate-200 transition hover:border-sky-400/60 hover:text-white"
             >
               К курсам
             </RouterLink>
             <button
-              class="inline-flex items-center justify-center rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-black text-white shadow-lg shadow-sky-600/20 transition hover:bg-sky-500 active:scale-[0.98]"
+              class="inline-flex items-center justify-center rounded-xl bg-sky-600 px-4 py-2.5 text-center text-sm font-black text-white shadow-lg shadow-sky-600/20 transition hover:bg-sky-500 active:scale-[0.98]"
               type="button"
               @click="fetchAnalytics"
             >
@@ -328,7 +328,7 @@ onMounted(fetchAnalytics)
               <div v-for="course in topCourses" :key="course.id" class="rounded-2xl border border-slate-800 bg-slate-950/20 p-4">
                 <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <h3 class="font-black text-slate-100">{{ course.title }}</h3>
+                    <h3 class="break-words font-black text-slate-100">{{ course.title }}</h3>
                     <p class="mt-1 text-xs text-slate-500">{{ course.student_count }} студентов · {{ course.lesson_count }} уроков</p>
                   </div>
                   <strong class="text-sm font-black text-sky-300">{{ formatPercent(course.average_progress) }}</strong>
@@ -418,7 +418,7 @@ onMounted(fetchAnalytics)
           <article v-for="course in paginatedCourses" :key="course.id" class="rounded-2xl border border-slate-800 bg-slate-950/25 p-4">
             <div class="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
               <div class="min-w-0">
-                <h3 class="text-lg font-black text-slate-50">{{ course.title }}</h3>
+                <h3 class="break-words text-lg font-black text-slate-50">{{ course.title }}</h3>
                 <div class="mt-2 flex flex-wrap gap-1.5">
                   <span v-for="skill in course.skills" :key="skill.id" class="rounded-full border border-sky-400/20 bg-sky-500/10 px-2.5 py-1 text-[11px] font-bold text-sky-200">
                     {{ skill.name }}
@@ -429,14 +429,14 @@ onMounted(fetchAnalytics)
                 </div>
               </div>
 
-              <div class="flex flex-wrap gap-2">
-                <RouterLink :to="{ name: 'teacher-lesson-editor', params: { id: course.id } }" class="rounded-xl bg-indigo-600 px-3 py-2 text-xs font-black text-white transition hover:bg-indigo-500">
+              <div class="grid gap-2 sm:flex sm:flex-wrap">
+                <RouterLink :to="{ name: 'teacher-lesson-editor', params: { id: course.id } }" class="rounded-xl bg-indigo-600 px-3 py-2 text-center text-xs font-black text-white transition hover:bg-indigo-500">
                   Конструктор
                 </RouterLink>
-                <RouterLink :to="{ name: 'quiz-editor', params: { id: course.id } }" class="rounded-xl border border-violet-500/30 bg-violet-500/10 px-3 py-2 text-xs font-bold text-violet-200 transition hover:bg-violet-500 hover:text-white">
+                <RouterLink :to="{ name: 'quiz-editor', params: { id: course.id } }" class="rounded-xl border border-violet-500/30 bg-violet-500/10 px-3 py-2 text-center text-xs font-bold text-violet-200 transition hover:bg-violet-500 hover:text-white">
                   Тесты
                 </RouterLink>
-                <RouterLink :to="{ name: 'course-detail', params: { id: course.id } }" class="rounded-xl border border-slate-700 bg-slate-800/70 px-3 py-2 text-xs font-bold text-slate-200 transition hover:border-sky-400/60 hover:text-white">
+                <RouterLink :to="{ name: 'course-detail', params: { id: course.id } }" class="rounded-xl border border-slate-700 bg-slate-800/70 px-3 py-2 text-center text-xs font-bold text-slate-200 transition hover:border-sky-400/60 hover:text-white">
                   Просмотр
                 </RouterLink>
               </div>
@@ -477,7 +477,7 @@ onMounted(fetchAnalytics)
 
         <footer v-if="filteredCourses.length" class="mt-4 flex flex-col gap-3 border-t border-slate-800/80 pt-4 sm:flex-row sm:items-center sm:justify-between">
           <span class="text-sm font-bold text-slate-500">Показано: {{ courseRangeLabel }}</span>
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center gap-2">
             <button class="rounded-xl border border-slate-700 px-3 py-2 text-sm font-bold text-slate-300 transition hover:border-sky-400 disabled:cursor-not-allowed disabled:opacity-40" type="button" :disabled="coursePage <= 1" @click="goToCoursePage(coursePage - 1)">
               Назад
             </button>
@@ -567,7 +567,7 @@ onMounted(fetchAnalytics)
 
         <footer v-if="filteredStudents.length" class="mt-4 flex flex-col gap-3 border-t border-slate-800/80 pt-4 sm:flex-row sm:items-center sm:justify-between">
           <span class="text-sm font-bold text-slate-500">Показано: {{ studentRangeLabel }}</span>
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center gap-2">
             <button class="rounded-xl border border-slate-700 px-3 py-2 text-sm font-bold text-slate-300 transition hover:border-sky-400 disabled:cursor-not-allowed disabled:opacity-40" type="button" :disabled="studentPage <= 1" @click="goToStudentPage(studentPage - 1)">
               Назад
             </button>

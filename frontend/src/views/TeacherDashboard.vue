@@ -343,25 +343,25 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+  <div class="mx-auto max-w-7xl px-0 py-6 sm:px-6 sm:py-8 lg:px-8">
     <header class="mb-8 overflow-hidden rounded-[2rem] border border-slate-700/60 bg-slate-900/70 shadow-2xl shadow-slate-950/20 backdrop-blur">
-      <div class="relative p-6 sm:p-8">
+      <div class="relative p-4 sm:p-8">
         <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-400/70 to-transparent"></div>
         <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div class="max-w-3xl">
+          <div class="min-w-0 max-w-3xl">
             <div class="mb-4 inline-flex items-center gap-2 rounded-full border border-indigo-400/20 bg-indigo-500/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.24em] text-indigo-200">
               Панель преподавателя
             </div>
-            <h1 class="text-3xl font-black tracking-tight text-slate-50 sm:text-4xl">Управление курсами</h1>
+            <h1 class="break-words text-2xl font-black tracking-tight text-slate-50 sm:text-4xl">Управление курсами</h1>
             <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-400 sm:text-base">
               Создавайте учебные программы, настраивайте структуру модулей, управляйте тестами и проверяйте внешний вид курса перед публикацией.
             </p>
           </div>
 
-          <div class="flex flex-wrap gap-3">
+          <div class="grid gap-3 sm:flex sm:flex-wrap">
             <RouterLink
               :to="{ name: 'teacher-analytics' }"
-              class="inline-flex items-center justify-center gap-2 rounded-2xl border border-sky-400/30 bg-sky-500/10 px-5 py-3 text-sm font-black text-sky-100 transition hover:bg-sky-500 hover:text-white"
+              class="inline-flex items-center justify-center gap-2 rounded-2xl border border-sky-400/30 bg-sky-500/10 px-5 py-3 text-center text-sm font-black text-sky-100 transition hover:bg-sky-500 hover:text-white"
             >
               <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="M5 19V5M5 19h14M9 15v-4M13 15V8M17 15v-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
@@ -370,7 +370,7 @@ onMounted(async () => {
             </RouterLink>
 
             <button
-              class="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-black text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 active:scale-[0.98]"
+              class="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-5 py-3 text-center text-sm font-black text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 active:scale-[0.98]"
               type="button"
               @click="openCreateModal"
             >
@@ -531,7 +531,7 @@ onMounted(async () => {
                 <div class="flex shrink-0 flex-wrap gap-2 xl:justify-end">
                   <RouterLink
                     :to="{ name: 'teacher-lesson-editor', params: { id: course.id } }"
-                    class="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-sm font-black text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 active:scale-[0.98]"
+                    class="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-4 py-2.5 text-center text-sm font-black text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 active:scale-[0.98] sm:w-auto"
                   >
                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                       <path d="M4 7h16M4 12h16M4 17h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
@@ -634,9 +634,9 @@ onMounted(async () => {
       </div>
     </section>
 
-    <div v-if="isModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/85 p-4 backdrop-blur-sm" @click.self="closeCourseModal">
+    <div v-if="isModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/85 p-3 backdrop-blur-sm sm:p-4" @click.self="closeCourseModal">
       <div class="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-slate-700 bg-slate-900 shadow-2xl shadow-slate-950/50">
-        <div class="sticky top-0 z-10 border-b border-slate-800 bg-slate-900/95 px-6 py-5 backdrop-blur">
+        <div class="sticky top-0 z-10 border-b border-slate-800 bg-slate-900/95 px-4 py-4 backdrop-blur sm:px-6 sm:py-5">
           <div class="flex items-start justify-between gap-4">
             <div>
               <p class="text-xs font-bold uppercase tracking-[0.22em] text-indigo-300">{{ isEditMode ? 'Редактирование' : 'Создание' }}</p>
@@ -650,7 +650,7 @@ onMounted(async () => {
           </div>
         </div>
 
-        <form class="overflow-y-auto px-6 py-6" @submit.prevent="saveCourse">
+        <form class="overflow-y-auto px-4 py-5 sm:px-6 sm:py-6" @submit.prevent="saveCourse">
           <div v-if="modalError" class="mb-5 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-100">
             {{ modalError }}
           </div>
@@ -694,7 +694,7 @@ onMounted(async () => {
                   <p class="text-sm font-bold text-slate-300">Обложка курса</p>
                   <p class="mt-1 text-xs leading-5 text-slate-500">JPG, PNG или WebP до {{ IMAGE_LIMIT_MB }} МБ. Рекомендуется горизонтальное изображение.</p>
                 </div>
-                <label class="inline-flex cursor-pointer items-center justify-center rounded-2xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm font-bold text-slate-200 transition hover:border-indigo-400/60 hover:text-white">
+                <label class="inline-flex w-full cursor-pointer items-center justify-center rounded-2xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm font-bold text-slate-200 transition hover:border-indigo-400/60 hover:text-white sm:w-auto">
                   Выбрать файл
                   <input ref="imageInputRef" type="file" accept="image/*" class="sr-only" @change="handleFileUpload">
                 </label>
@@ -765,7 +765,7 @@ onMounted(async () => {
           </div>
         </form>
 
-        <div class="sticky bottom-0 z-10 flex flex-col-reverse gap-3 border-t border-slate-800 bg-slate-900/95 px-6 py-5 backdrop-blur sm:flex-row sm:justify-end">
+        <div class="sticky bottom-0 z-10 flex flex-col-reverse gap-3 border-t border-slate-800 bg-slate-900/95 px-4 py-4 backdrop-blur sm:flex-row sm:justify-end sm:px-6 sm:py-5">
           <button
             class="rounded-2xl border border-slate-700 bg-slate-800 px-5 py-3 text-sm font-bold text-slate-300 transition hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
             type="button"

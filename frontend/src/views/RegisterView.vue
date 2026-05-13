@@ -188,23 +188,23 @@ const handleRegister = async () => {
 </script>
 
 <template>
-  <div class="mx-auto flex min-h-[calc(100vh-140px)] w-full max-w-6xl items-center justify-center px-4 py-10">
+  <div class="mx-auto flex min-h-[calc(100vh-140px)] w-full max-w-6xl items-center justify-center py-6 sm:px-4 sm:py-10">
     <section class="w-full max-w-2xl">
-      <div class="rounded-[2rem] border border-slate-800 bg-slate-900/72 p-6 shadow-2xl shadow-slate-950/30 backdrop-blur sm:p-8 lg:p-9">
+      <div class="rounded-[2rem] border border-slate-800 bg-slate-900/72 p-5 shadow-2xl shadow-slate-950/30 backdrop-blur sm:p-8 lg:p-9">
         <div class="text-center">
-          <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-600 text-lg font-black text-white shadow-lg shadow-indigo-600/20">
+          <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-base font-black text-white shadow-lg shadow-indigo-600/20 sm:h-14 sm:w-14 sm:text-lg">
             EL
           </div>
           <p class="mt-6 text-xs font-bold uppercase tracking-[0.28em] text-indigo-300/70">ElCourse</p>
-          <h1 class="mt-3 text-3xl font-black text-white">Создание аккаунта</h1>
+          <h1 class="mt-3 text-2xl font-black text-white sm:text-3xl">Создание аккаунта</h1>
           <p class="mx-auto mt-2 max-w-lg text-sm leading-6 text-slate-400">
             Выберите роль и заполните данные. После регистрации вы сразу попадёте в нужный раздел платформы.
           </p>
         </div>
 
-        <form class="mt-8 space-y-6" @submit.prevent="handleRegister">
+        <form class="mt-7 space-y-5 sm:mt-8 sm:space-y-6" @submit.prevent="handleRegister">
           <div>
-            <div class="mb-3 flex items-center justify-between gap-3">
+            <div class="mb-3 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
               <label class="block text-sm font-bold text-slate-300">Роль в системе</label>
               <span class="rounded-full border border-indigo-400/20 bg-indigo-500/10 px-3 py-1 text-xs font-bold text-indigo-200">
                 {{ roleLabel }}
@@ -216,7 +216,7 @@ const handleRegister = async () => {
                 v-for="option in roleOptions"
                 :key="option.value"
                 type="button"
-                class="rounded-2xl border p-4 text-left transition focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                class="rounded-2xl border p-3 text-left transition focus:outline-none focus:ring-2 focus:ring-indigo-500/30 sm:p-4"
                 :class="form.role === option.value
                   ? 'border-indigo-400/70 bg-indigo-500/15 text-white shadow-lg shadow-indigo-950/20'
                   : 'border-slate-800 bg-slate-950/35 text-slate-300 hover:border-slate-600 hover:bg-slate-900'"

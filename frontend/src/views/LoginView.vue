@@ -77,15 +77,15 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="mx-auto flex min-h-[calc(100vh-140px)] w-full max-w-6xl items-center justify-center px-4 py-10">
+  <div class="mx-auto flex min-h-[calc(100vh-140px)] w-full max-w-6xl items-center justify-center py-6 sm:px-4 sm:py-10">
     <section class="w-full max-w-md">
-      <div class="rounded-[2rem] border border-slate-800 bg-slate-900/72 p-7 shadow-2xl shadow-slate-950/30 backdrop-blur sm:p-9">
+      <div class="rounded-[2rem] border border-slate-800 bg-slate-900/72 p-5 shadow-2xl shadow-slate-950/30 backdrop-blur sm:p-9">
         <div class="text-center">
-          <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-600 text-lg font-black text-white shadow-lg shadow-indigo-600/20">
+          <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-base font-black text-white shadow-lg shadow-indigo-600/20 sm:h-14 sm:w-14 sm:text-lg">
             EL
           </div>
           <p class="mt-6 text-xs font-bold uppercase tracking-[0.28em] text-indigo-300/70">ElCourse</p>
-          <h1 class="mt-3 text-3xl font-black text-white">Вход в аккаунт</h1>
+          <h1 class="mt-3 text-2xl font-black text-white sm:text-3xl">Вход в аккаунт</h1>
           <p class="mt-2 text-sm leading-6 text-slate-400">
             Введите логин и пароль, чтобы продолжить обучение или работу с курсами.
           </p>

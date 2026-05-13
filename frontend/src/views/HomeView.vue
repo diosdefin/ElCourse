@@ -75,13 +75,13 @@ onMounted(async () => {
   <div class="pb-14">
     <section class="relative overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-900/70 shadow-2xl shadow-slate-950/30">
       <div class="absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(99,102,241,0.22),transparent_34%),radial-gradient(circle_at_82%_16%,rgba(20,184,166,0.16),transparent_30%)]"></div>
-      <div class="relative grid gap-10 px-6 py-10 sm:px-8 lg:grid-cols-[1.05fr,0.95fr] lg:px-12 lg:py-14">
-        <div class="flex flex-col justify-center">
+      <div class="relative grid gap-8 px-4 py-8 sm:px-8 sm:py-10 lg:grid-cols-[1.05fr,0.95fr] lg:px-12 lg:py-14">
+        <div class="min-w-0 flex flex-col justify-center">
           <div class="inline-flex w-fit items-center rounded-full border border-slate-700 bg-slate-950/50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.24em] text-indigo-200">
             Платформа профессионального обучения
           </div>
 
-          <h1 class="mt-6 max-w-3xl text-4xl font-black leading-[1.08] text-white sm:text-5xl lg:text-6xl">
+          <h1 class="mt-6 max-w-3xl break-words text-3xl font-black leading-[1.08] text-white sm:text-5xl lg:text-6xl">
             ElCourse объединяет обучение, навыки и карьерный рост.
           </h1>
 
@@ -89,22 +89,22 @@ onMounted(async () => {
             Учебная платформа для курсов, тестов, подтверждённых компетенций и взаимодействия студентов с работодателями.
           </p>
 
-          <div class="mt-8 flex flex-wrap gap-3">
+          <div class="mt-8 grid gap-3 sm:flex sm:flex-wrap">
             <RouterLink
               to="/courses"
-              class="inline-flex items-center justify-center rounded-2xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500"
+              class="inline-flex items-center justify-center rounded-2xl bg-indigo-600 px-6 py-3 text-center text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500"
             >
               Смотреть курсы
             </RouterLink>
             <RouterLink
               to="/login"
-              class="inline-flex items-center justify-center rounded-2xl border border-slate-700 bg-slate-950/30 px-6 py-3 text-sm font-bold text-slate-100 transition hover:border-slate-500 hover:bg-slate-900"
+              class="inline-flex items-center justify-center rounded-2xl border border-slate-700 bg-slate-950/30 px-6 py-3 text-center text-sm font-bold text-slate-100 transition hover:border-slate-500 hover:bg-slate-900"
             >
               Войти / Регистрация
             </RouterLink>
           </div>
 
-          <div class="mt-9 grid max-w-2xl grid-cols-3 gap-3">
+          <div class="mt-9 grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3">
             <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
               <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Курсы</p>
               <p class="mt-2 text-2xl font-black text-white">{{ courseCount }}</p>
@@ -120,9 +120,9 @@ onMounted(async () => {
           </div>
         </div>
 
-        <div class="relative flex flex-col justify-center">
+        <div class="relative min-w-0 flex flex-col justify-center">
           <div class="pointer-events-none absolute inset-6 rounded-full bg-indigo-500/10 blur-3xl"></div>
-          <div class="relative rounded-[1.8rem] border border-slate-800 bg-slate-950/35 p-5 backdrop-blur">
+          <div class="relative max-w-full overflow-hidden rounded-[1.8rem] border border-slate-800 bg-slate-950/35 p-3 backdrop-blur sm:p-5">
             <HeroAnimation />
           </div>
           <div class="relative mt-4 rounded-[1.5rem] border border-slate-800 bg-slate-950/50 p-5">
@@ -161,7 +161,7 @@ onMounted(async () => {
     <section class="mt-8 rounded-[2rem] border border-slate-800 bg-slate-900/55 p-6 sm:p-8">
       <div class="max-w-3xl">
         <p class="text-xs font-bold uppercase tracking-[0.24em] text-emerald-300">Возможности</p>
-        <h2 class="mt-3 text-3xl font-black text-white">Функции, которые нужны для учебного прототипа</h2>
+        <h2 class="mt-3 text-2xl font-black text-white sm:text-3xl">Функции, которые нужны для учебного прототипа</h2>
         <p class="mt-3 text-sm leading-7 text-slate-400">
           Интерфейс показывает полный цикл: создание курса, прохождение уроков, проверка знаний и формирование профиля навыков.
         </p>
@@ -184,20 +184,20 @@ onMounted(async () => {
       <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <p class="text-xs font-bold uppercase tracking-[0.24em] text-slate-500">Каталог</p>
-          <h2 class="mt-3 text-3xl font-black text-white">Доступные курсы</h2>
+          <h2 class="mt-3 text-2xl font-black text-white sm:text-3xl">Доступные курсы</h2>
           <p class="mt-3 max-w-2xl text-sm leading-7 text-slate-400">
             Выберите программу, изучайте материалы, проходите тесты и фиксируйте прогресс в профиле.
           </p>
         </div>
         <RouterLink
           to="/courses"
-          class="inline-flex w-fit items-center justify-center rounded-2xl border border-slate-700 px-5 py-3 text-sm font-bold text-slate-200 transition hover:border-slate-500 hover:text-white"
+          class="inline-flex w-full items-center justify-center rounded-2xl border border-slate-700 px-5 py-3 text-center text-sm font-bold text-slate-200 transition hover:border-slate-500 hover:text-white sm:w-fit"
         >
           Открыть все курсы
         </RouterLink>
       </div>
 
-      <div v-if="loading" class="mt-7 grid gap-4 lg:grid-cols-3">
+      <div v-if="loading" class="mt-7 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <div v-for="item in 3" :key="item" class="h-72 animate-pulse rounded-[1.5rem] border border-slate-800 bg-slate-950/35"></div>
       </div>
 
@@ -210,7 +210,7 @@ onMounted(async () => {
         <p class="mt-2 text-sm text-slate-400">После добавления курсов они появятся в этом каталоге.</p>
       </div>
 
-      <div v-else class="mt-7 grid gap-5 lg:grid-cols-3">
+      <div v-else class="mt-7 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
         <article
           v-for="course in featuredCourses"
           :key="course.id"
@@ -238,9 +238,9 @@ onMounted(async () => {
           <div class="p-5">
             <h3 class="line-clamp-2 text-xl font-black text-white">{{ course.title }}</h3>
             <p class="mt-3 line-clamp-3 text-sm leading-6 text-slate-400">{{ course.description || 'Описание курса будет добавлено позже.' }}</p>
-            <div class="mt-5 flex items-center justify-between border-t border-slate-800 pt-4 text-xs uppercase tracking-[0.16em] text-slate-500">
+            <div class="mt-5 flex items-center justify-between gap-3 border-t border-slate-800 pt-4 text-xs uppercase tracking-[0.16em] text-slate-500">
               <span>Автор</span>
-              <span class="text-slate-300">{{ course.author_name || 'Автор курса' }}</span>
+              <span class="truncate text-slate-300">{{ course.author_name || 'Автор курса' }}</span>
             </div>
             <RouterLink
               :to="{ name: 'course-detail', params: { id: course.id } }"
@@ -253,15 +253,15 @@ onMounted(async () => {
       </div>
     </section>
 
-    <section class="mt-8 overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-950 p-8 text-center sm:p-10">
+    <section class="mt-8 overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-950 p-6 text-center sm:p-10">
       <p class="text-xs font-bold uppercase tracking-[0.24em] text-slate-500">Начните работу</p>
-      <h2 class="mx-auto mt-4 max-w-3xl text-3xl font-black leading-tight text-white sm:text-4xl">
+      <h2 class="mx-auto mt-4 max-w-3xl text-2xl font-black leading-tight text-white sm:text-4xl">
         Превратите учебный процесс в понятный профиль компетенций.
       </h2>
       <p class="mx-auto mt-4 max-w-2xl text-sm leading-7 text-slate-400">
         ElCourse подходит для демонстрации онлайн-обучения, тестирования, активности и карьерной интеграции в одном проекте.
       </p>
-      <div class="mt-8 flex flex-wrap justify-center gap-3">
+      <div class="mt-8 grid gap-3 sm:flex sm:flex-wrap sm:justify-center">
         <RouterLink
           to="/courses"
           class="rounded-2xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white transition hover:bg-indigo-500"

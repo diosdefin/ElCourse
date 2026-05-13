@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 
 import api from './api'
+import AppFooter from './components/AppFooter.vue'
 import ToastHost from './components/ToastHost.vue'
 import { useAuthStore } from './stores/auth'
 
@@ -16,6 +17,9 @@ const isMobileMenuOpen = ref(false)
 const userMenuRef = ref(null)
 
 const routeExists = (path) => router.getRoutes().some((item) => item.path === path)
+const publicFooterRouteNames = new Set(['home', 'courses', 'vacancies', 'login', 'register', 'course-detail'])
+
+const showPublicFooter = computed(() => publicFooterRouteNames.has(route.name))
 
 const roleLabel = computed(() => {
   if (authStore.isTeacher) return 'Преподаватель'
@@ -89,7 +93,14 @@ const isActiveRoute = (path) => {
 }
 
 const navigationLinkClass = (path) => [
-  'rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200',
+  'inline-flex items-center justify-center whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200',
+  isActiveRoute(path)
+    ? 'bg-slate-800 text-white shadow-inner shadow-black/10'
+    : 'text-slate-400 hover:bg-slate-800/70 hover:text-white',
+]
+
+const mobileNavigationLinkClass = (path) => [
+  'flex w-full items-center justify-between rounded-2xl px-4 py-3 text-sm font-semibold transition-colors duration-200',
   isActiveRoute(path)
     ? 'bg-slate-800 text-white shadow-inner shadow-black/10'
     : 'text-slate-400 hover:bg-slate-800/70 hover:text-white',
@@ -161,16 +172,16 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-900 text-slate-300 selection:bg-indigo-500/30">
+  <div class="flex min-h-screen flex-col bg-slate-900 text-slate-300 selection:bg-indigo-500/30">
     <ToastHost />
 
     <header class="sticky top-0 z-50 border-b border-slate-800 bg-slate-900/88 shadow-lg backdrop-blur-xl">
-      <div class="mx-auto flex min-h-[76px] w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <RouterLink to="/" class="group flex items-center gap-3 text-white" @click="closeMenus">
+      <div class="mx-auto flex min-h-[76px] w-full max-w-7xl items-center justify-between gap-2 px-3 sm:gap-4 sm:px-6 lg:px-8">
+        <RouterLink to="/" class="group flex min-w-0 items-center gap-2 text-white sm:gap-3" @click="closeMenus">
           <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500 text-sm font-black tracking-wide shadow-lg shadow-indigo-500/20 transition group-hover:bg-indigo-400">
             EL
           </div>
-          <span class="text-2xl font-black tracking-[0.22em]">COURSE</span>
+          <span class="text-xl font-black tracking-[0.16em] sm:text-2xl sm:tracking-[0.22em]">COURSE</span>
         </RouterLink>
 
         <nav class="hidden items-center gap-2 lg:flex" aria-label="Основная навигация">
@@ -184,7 +195,7 @@ onBeforeUnmount(() => {
           </RouterLink>
         </nav>
 
-        <div class="flex items-center gap-3">
+        <div class="flex shrink-0 items-center gap-2 sm:gap-3">
           <RouterLink
             v-if="!authStore.isAuthenticated"
             to="/login"
@@ -250,7 +261,7 @@ onBeforeUnmount(() => {
               >
                 <div
                   v-if="isUserMenuOpen"
-                  class="absolute right-0 mt-3 w-72 overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl shadow-black/40"
+                  class="absolute right-0 mt-3 w-[min(18rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl shadow-black/40"
                 >
                   <div class="border-b border-slate-800 px-4 py-4">
                     <p class="text-sm font-bold text-white">{{ authStore.user?.username || 'Аккаунт' }}</p>
@@ -315,13 +326,13 @@ onBeforeUnmount(() => {
         leave-from-class="translate-y-0 opacity-100"
         leave-to-class="-translate-y-2 opacity-0"
       >
-        <div v-if="isMobileMenuOpen" class="border-t border-slate-800 bg-slate-900 px-4 py-4 lg:hidden">
+        <div v-if="isMobileMenuOpen" class="max-h-[calc(100vh-76px)] overflow-y-auto border-t border-slate-800 bg-slate-900 px-3 py-4 sm:px-4 lg:hidden">
           <div class="mx-auto flex max-w-7xl flex-col gap-2">
             <RouterLink
               v-for="item in primaryNavigation"
               :key="item.to"
               :to="item.to"
-              :class="navigationLinkClass(item.to)"
+              :class="mobileNavigationLinkClass(item.to)"
             >
               {{ item.label }}
             </RouterLink>
@@ -363,8 +374,9 @@ onBeforeUnmount(() => {
       </transition>
     </header>
 
-    <main class="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <main class="mx-auto w-full max-w-7xl flex-1 px-3 py-6 sm:px-6 sm:py-8 lg:px-8">
       <RouterView />
     </main>
+    <AppFooter v-if="showPublicFooter" />
   </div>
 </template>

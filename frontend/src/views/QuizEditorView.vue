@@ -407,12 +407,12 @@ onMounted(fetchQuiz)
 </script>
 
 <template>
-  <main class="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
+  <main class="min-h-screen bg-slate-950 px-0 py-6 text-slate-100 sm:px-6 sm:py-8 lg:px-8">
     <div class="mx-auto max-w-7xl">
       <header class="overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-900/80 shadow-2xl shadow-slate-950/30">
-        <div class="border-b border-slate-800 px-6 py-5 sm:px-8">
+        <div class="border-b border-slate-800 px-4 py-5 sm:px-8">
           <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-            <div>
+            <div class="min-w-0">
               <button type="button" class="mb-4 inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs font-bold text-slate-300 transition hover:border-slate-500 hover:text-white" @click="goBack">
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                   <path d="m15 18-6-6 6-6" />
@@ -420,13 +420,13 @@ onMounted(fetchQuiz)
                 Назад
               </button>
               <p class="text-xs font-bold uppercase tracking-[0.28em] text-indigo-300">Преподавательский контур</p>
-              <h1 class="mt-2 text-3xl font-black text-white sm:text-4xl">Редактор вопросов теста</h1>
+              <h1 class="mt-2 break-words text-2xl font-black text-white sm:text-4xl">Редактор вопросов теста</h1>
               <p class="mt-3 max-w-3xl text-sm leading-6 text-slate-400">
                 Создавайте базу вопросов для проверочных заданий и итогового экзамена. Интерфейс ограничивает длину текстов и помогает не сохранить вопрос без правильного ответа.
               </p>
             </div>
 
-            <button type="button" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60" :disabled="isLoading" @click="fetchQuiz">
+            <button type="button" class="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto" :disabled="isLoading" @click="fetchQuiz">
               <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <path d="M21 12a9 9 0 0 1-15 6.7L3 16" /><path d="M3 21v-5h5" /><path d="M3 12a9 9 0 0 1 15-6.7L21 8" /><path d="M21 3v5h-5" />
               </svg>
@@ -435,7 +435,7 @@ onMounted(fetchQuiz)
           </div>
         </div>
 
-        <div class="grid gap-3 px-6 py-5 sm:grid-cols-2 sm:px-8 lg:grid-cols-4">
+        <div class="grid gap-3 px-4 py-5 sm:grid-cols-2 sm:px-8 lg:grid-cols-4">
           <article class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
             <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Всего вопросов</p>
             <p class="mt-2 text-3xl font-black text-white">{{ questionStats.total }}</p>
@@ -463,13 +463,13 @@ onMounted(fetchQuiz)
       </div>
 
       <div class="mt-8 grid gap-6 xl:grid-cols-[440px_minmax(0,1fr)]">
-        <section id="question-draft" class="h-max rounded-[2rem] border border-slate-800 bg-slate-900/80 p-5 shadow-xl shadow-slate-950/20 sm:p-6">
-          <div class="flex items-start justify-between gap-4">
+        <section id="question-draft" class="h-max min-w-0 rounded-[2rem] border border-slate-800 bg-slate-900/80 p-4 shadow-xl shadow-slate-950/20 sm:p-6">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p class="text-xs font-bold uppercase tracking-[0.24em] text-emerald-300">Новый элемент</p>
               <h2 class="mt-1 text-2xl font-black text-white">Добавить вопрос</h2>
             </div>
-            <button type="button" class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs font-bold text-slate-300 transition hover:border-slate-500 hover:text-white" @click="resetDraft">
+            <button type="button" class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs font-bold text-slate-300 transition hover:border-slate-500 hover:text-white sm:w-auto" @click="resetDraft">
               Очистить
             </button>
           </div>
@@ -509,7 +509,7 @@ onMounted(fetchQuiz)
             </div>
 
             <div>
-              <div class="mb-3 flex items-center justify-between gap-3">
+              <div class="mb-3 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <label class="text-sm font-bold text-slate-200">Варианты ответа</label>
                 <button type="button" class="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs font-bold text-slate-300 transition hover:border-slate-500 hover:text-white" @click="addChoice(draft)">
                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
@@ -518,7 +518,7 @@ onMounted(fetchQuiz)
               </div>
 
               <div class="space-y-2">
-                <div v-for="(choice, index) in draft.choices" :key="index" class="flex items-center gap-2 rounded-2xl border border-slate-700 bg-slate-950/70 p-2">
+                <div v-for="(choice, index) in draft.choices" :key="index" class="flex min-w-0 items-center gap-2 rounded-2xl border border-slate-700 bg-slate-950/70 p-2">
                   <button type="button" class="grid h-9 w-9 shrink-0 place-items-center rounded-xl border transition" :class="choice.is_correct ? 'border-emerald-400 bg-emerald-500/15 text-emerald-100' : 'border-slate-700 bg-slate-900 text-slate-500 hover:text-slate-200'" @click="setCorrect(draft, index)">
                     <span class="sr-only">Отметить правильный вариант</span>
                     <svg v-if="draft.is_multiple" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 5h16v16H4z" /><path v-if="choice.is_correct" d="m8 13 3 3 5-7" /></svg>
@@ -560,7 +560,7 @@ onMounted(fetchQuiz)
           </div>
         </section>
 
-        <section class="rounded-[2rem] border border-slate-800 bg-slate-900/80 p-5 shadow-xl shadow-slate-950/20 sm:p-6">
+        <section class="min-w-0 rounded-[2rem] border border-slate-800 bg-slate-900/80 p-4 shadow-xl shadow-slate-950/20 sm:p-6">
           <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p class="text-xs font-bold uppercase tracking-[0.24em] text-sky-300">База курса</p>
@@ -568,9 +568,9 @@ onMounted(fetchQuiz)
               <p class="mt-1 text-sm text-slate-500">Найдено: {{ filteredQuestions.length }} из {{ questions.length }}</p>
             </div>
 
-            <div class="flex flex-col gap-3 sm:flex-row">
+            <div class="grid gap-3 sm:flex sm:flex-row">
               <input v-model.trim="searchQuery" type="search" class="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-indigo-400 sm:w-72" placeholder="Поиск по вопросу или ответу">
-              <select v-model="filterMode" class="rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm font-semibold text-slate-200 outline-none transition focus:border-indigo-400">
+              <select v-model="filterMode" class="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm font-semibold text-slate-200 outline-none transition focus:border-indigo-400 sm:w-auto">
                 <option value="all">Все типы</option>
                 <option value="single">Один ответ</option>
                 <option value="multiple">Несколько ответов</option>
@@ -599,7 +599,7 @@ onMounted(fetchQuiz)
               <template v-if="editingQuestionId === question.id">
                 <div class="flex flex-wrap items-center justify-between gap-3">
                   <span class="rounded-full border border-indigo-400/30 bg-indigo-400/10 px-3 py-1 text-xs font-bold text-indigo-200">Редактирование</span>
-                  <div class="flex gap-2">
+                  <div class="flex flex-wrap gap-2">
                     <button type="button" class="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-bold text-slate-300 transition hover:text-white" @click="cancelEdit">Отмена</button>
                     <button type="button" class="rounded-xl bg-indigo-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60" :disabled="isSaving || editErrors.length" @click="saveEdit(question)">
                       Сохранить
@@ -647,7 +647,7 @@ onMounted(fetchQuiz)
                       <span class="rounded-full border px-3 py-1 text-xs font-bold" :class="question.is_multiple ? 'border-violet-400/30 bg-violet-400/10 text-violet-200' : 'border-sky-400/30 bg-sky-400/10 text-sky-200'">{{ questionTypeLabel(question) }}</span>
                       <span class="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-bold text-emerald-200">Правильных: {{ correctChoicesCount(question) }}</span>
                     </div>
-                    <h3 class="mt-3 text-base font-black leading-6 text-white">{{ question.text }}</h3>
+                    <h3 class="mt-3 break-words text-base font-black leading-6 text-white">{{ question.text }}</h3>
                     <p v-if="question.explanation" class="mt-2 rounded-2xl border border-slate-800 bg-slate-900/70 px-3 py-2 text-sm leading-6 text-slate-400">{{ question.explanation }}</p>
                   </div>
 
@@ -686,7 +686,7 @@ onMounted(fetchQuiz)
     </div>
 
     <div v-if="confirmDialog.open" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm" @mousedown.self="closeConfirmDialog">
-      <section class="w-full max-w-md rounded-3xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
+      <section class="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-slate-700 bg-slate-900 p-5 shadow-2xl sm:p-6">
         <div class="flex items-start gap-4">
           <div class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-rose-400/30 bg-rose-400/10 text-rose-200">
             <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 9v4M12 17h.01" /><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" /></svg>

@@ -50,7 +50,7 @@ onMounted(loadCourse)
     </div>
   </div>
 
-  <div v-else-if="course" class="mx-auto mt-8 max-w-6xl px-4 pb-12">
+  <div v-else-if="course" class="mx-auto mt-4 max-w-6xl px-0 pb-12 sm:mt-8 sm:px-4">
     <button
       class="mb-5 inline-flex items-center gap-2 rounded-xl border border-slate-700/80 bg-slate-900/70 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:border-indigo-400/60 hover:text-white"
       @click="router.back()"
@@ -63,7 +63,7 @@ onMounted(loadCourse)
 
     <section class="overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-900/70 shadow-2xl shadow-slate-950/20">
       <div class="grid lg:grid-cols-[minmax(0,1fr),360px]">
-        <div class="p-6 sm:p-8 lg:p-10">
+        <div class="min-w-0 p-5 sm:p-8 lg:p-10">
           <div class="mb-5 flex flex-wrap items-center gap-2">
             <span class="rounded-full border border-indigo-400/25 bg-indigo-500/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.22em] text-indigo-200">
               Учебный курс
@@ -73,7 +73,7 @@ onMounted(loadCourse)
             </span>
           </div>
 
-          <h1 class="max-w-4xl text-3xl font-black leading-tight text-slate-100 sm:text-5xl">
+          <h1 class="max-w-4xl break-words text-2xl font-black leading-tight text-slate-100 sm:text-5xl">
             {{ course.title }}
           </h1>
 
@@ -81,7 +81,7 @@ onMounted(loadCourse)
             Автор курса: <span class="text-slate-200">{{ course.author_name || 'Не указан' }}</span>
           </p>
 
-          <p class="mt-6 max-w-3xl whitespace-pre-line text-base leading-8 text-slate-300">
+          <p class="mt-6 max-w-3xl whitespace-pre-line break-words text-sm leading-7 text-slate-300 sm:text-base sm:leading-8">
             {{ course.description || 'Описание курса пока не добавлено.' }}
           </p>
 
@@ -98,11 +98,11 @@ onMounted(loadCourse)
             </div>
           </div>
 
-          <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div class="mt-8 grid gap-3 sm:flex sm:flex-wrap sm:items-center">
             <RouterLink
               v-if="hasLessonFlow"
               :to="{ name: 'course-play', params: { id: course.id } }"
-              class="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-7 py-3 text-sm font-black text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500"
+              class="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-7 py-3 text-center text-sm font-black text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500"
             >
               {{ primaryActionLabel }}
               <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -112,7 +112,7 @@ onMounted(loadCourse)
 
             <div
               v-else
-              class="inline-flex cursor-not-allowed items-center justify-center rounded-2xl border border-slate-700 bg-slate-950/50 px-7 py-3 text-sm font-bold text-slate-500"
+              class="inline-flex cursor-not-allowed items-center justify-center rounded-2xl border border-slate-700 bg-slate-950/50 px-7 py-3 text-center text-sm font-bold text-slate-500"
             >
               {{ primaryActionLabel }}
             </div>
@@ -120,14 +120,14 @@ onMounted(loadCourse)
             <RouterLink
               v-if="canEditCourse"
               :to="{ name: 'teacher-lesson-editor', params: { id: course.id } }"
-              class="inline-flex items-center justify-center rounded-2xl border border-emerald-400/25 bg-emerald-500/10 px-7 py-3 text-sm font-black text-emerald-100 transition hover:bg-emerald-500/20"
+              class="inline-flex items-center justify-center rounded-2xl border border-emerald-400/25 bg-emerald-500/10 px-7 py-3 text-center text-sm font-black text-emerald-100 transition hover:bg-emerald-500/20"
             >
               Открыть конструктор
             </RouterLink>
           </div>
         </div>
 
-        <aside class="border-t border-slate-800 bg-slate-950/35 p-6 sm:p-8 lg:border-l lg:border-t-0">
+        <aside class="min-w-0 border-t border-slate-800 bg-slate-950/35 p-5 sm:p-8 lg:border-l lg:border-t-0">
           <div class="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900">
             <img v-if="course.image" :src="course.image" :alt="course.title" class="h-52 w-full object-cover">
             <div v-else class="flex h-52 w-full items-center justify-center bg-gradient-to-br from-indigo-950/80 via-slate-900 to-slate-950 text-slate-500">
@@ -203,7 +203,7 @@ onMounted(loadCourse)
       <p class="mx-auto mt-2 max-w-2xl text-sm text-slate-400">Этот курс создан до новой модульной структуры. Итоговый тест можно открыть отдельно.</p>
       <RouterLink
         :to="{ name: 'course-quiz', params: { id: course.id } }"
-        class="mt-5 inline-flex rounded-2xl bg-indigo-600 px-7 py-3 text-sm font-black text-white transition hover:bg-indigo-500"
+        class="mt-5 inline-flex w-full justify-center rounded-2xl bg-indigo-600 px-7 py-3 text-center text-sm font-black text-white transition hover:bg-indigo-500 sm:w-auto"
       >
         Открыть итоговый тест
       </RouterLink>

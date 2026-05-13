@@ -140,11 +140,11 @@ onMounted(fetchOutline)
     </div>
   </div>
 
-  <div v-else class="mx-auto mt-6 max-w-[1480px] px-4 pb-10">
-    <div class="mb-5 flex flex-col gap-4 rounded-3xl border border-slate-800/80 bg-slate-900/65 p-5 shadow-2xl shadow-slate-950/20 lg:flex-row lg:items-center lg:justify-between">
+  <div v-else class="mx-auto mt-4 max-w-[1480px] px-0 pb-10 sm:mt-6 sm:px-4">
+    <div class="mb-5 flex flex-col gap-4 rounded-3xl border border-slate-800/80 bg-slate-900/65 p-4 shadow-2xl shadow-slate-950/20 sm:p-5 lg:flex-row lg:items-center lg:justify-between">
       <div class="min-w-0">
         <button
-          class="mb-4 inline-flex items-center gap-2 rounded-xl border border-slate-700/80 bg-slate-950/30 px-3 py-2 text-sm font-semibold text-slate-300 transition hover:border-indigo-400/60 hover:text-white"
+          class="mb-4 inline-flex max-w-full items-center gap-2 rounded-xl border border-slate-700/80 bg-slate-950/30 px-3 py-2 text-sm font-semibold text-slate-300 transition hover:border-indigo-400/60 hover:text-white"
           @click="router.push({ name: 'course-detail', params: { id: courseId } })"
         >
           <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -153,7 +153,7 @@ onMounted(fetchOutline)
           Описание курса
         </button>
         <p class="text-xs font-bold uppercase tracking-[0.28em] text-indigo-300/80">Прохождение курса</p>
-        <h1 class="mt-2 truncate text-2xl font-black text-slate-100 sm:text-3xl">{{ outline?.title }}</h1>
+        <h1 class="mt-2 line-clamp-2 text-2xl font-black text-slate-100 sm:text-3xl">{{ outline?.title }}</h1>
       </div>
 
       <div class="grid gap-3 sm:grid-cols-3 lg:min-w-[420px]">
@@ -173,8 +173,8 @@ onMounted(fetchOutline)
     </div>
 
     <div class="grid gap-5 lg:grid-cols-[360px,minmax(0,1fr)]">
-      <aside class="h-fit rounded-3xl border border-slate-800/80 bg-slate-900/70 p-4 shadow-2xl shadow-slate-950/20 lg:sticky lg:top-24">
-        <div class="mb-4 flex items-center justify-between gap-3">
+      <aside class="h-fit min-w-0 rounded-3xl border border-slate-800/80 bg-slate-900/70 p-4 shadow-2xl shadow-slate-950/20 lg:sticky lg:top-24">
+        <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 class="text-lg font-black text-slate-100">Содержание</h2>
             <p class="text-sm text-slate-500">Модули и уроки курса</p>
@@ -188,7 +188,7 @@ onMounted(fetchOutline)
           <div class="h-full rounded-full bg-indigo-500 transition-all duration-500" :style="{ width: `${progressPercent}%` }"></div>
         </div>
 
-        <div v-if="modules.length" class="space-y-3">
+        <div v-if="modules.length" class="max-h-[52vh] space-y-3 overflow-y-auto pr-1 lg:max-h-[calc(100vh-190px)]">
           <div
             v-for="(moduleItem, moduleIndex) in modules"
             :key="moduleItem.id"
@@ -198,7 +198,7 @@ onMounted(fetchOutline)
               : 'border-slate-800 bg-slate-950/35'"
           >
             <button
-              class="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-slate-800/35"
+              class="flex w-full items-center justify-between gap-3 px-3 py-3 text-left transition hover:bg-slate-800/35 sm:px-4"
               @click="toggleModule(moduleItem.id)"
             >
               <div class="min-w-0">
@@ -211,7 +211,7 @@ onMounted(fetchOutline)
                   >
                     {{ moduleIndex + 1 }}
                   </span>
-                  <span class="truncate text-sm font-bold text-slate-100">{{ moduleItem.title }}</span>
+                  <span class="line-clamp-2 text-sm font-bold text-slate-100">{{ moduleItem.title }}</span>
                 </div>
                 <div class="mt-2 flex items-center gap-2 pl-9">
                   <div class="h-1.5 w-20 overflow-hidden rounded-full bg-slate-900">
@@ -232,7 +232,7 @@ onMounted(fetchOutline)
               </svg>
             </button>
 
-            <div v-if="expandedModules[moduleItem.id]" class="space-y-2 border-t border-slate-800/90 p-2.5">
+            <div v-if="expandedModules[moduleItem.id]" class="max-h-72 space-y-2 overflow-y-auto border-t border-slate-800/90 p-2.5 lg:max-h-none lg:overflow-visible">
               <button
                 v-for="(lesson, lessonIndex) in moduleItem.lessons"
                 :key="lesson.id"
@@ -270,7 +270,7 @@ onMounted(fetchOutline)
                 </span>
 
                 <span class="min-w-0 flex-1">
-                  <span class="block truncate text-sm font-bold text-slate-100">{{ lesson.title }}</span>
+                  <span class="block line-clamp-2 text-sm font-bold text-slate-100">{{ lesson.title }}</span>
                   <span class="mt-1 flex flex-wrap items-center gap-2 text-[11px] font-semibold text-slate-500">
                     <span>{{ moduleIndex + 1 }}.{{ lessonIndex + 1 }}</span>
                     <span class="h-1 w-1 rounded-full bg-slate-700"></span>
@@ -300,14 +300,14 @@ onMounted(fetchOutline)
         </div>
       </aside>
 
-      <main class="min-w-0 rounded-3xl border border-slate-800/80 bg-slate-900/70 p-3 shadow-2xl shadow-slate-950/20 sm:p-4">
+      <main class="min-w-0 rounded-3xl border border-slate-800/80 bg-slate-900/70 p-2 shadow-2xl shadow-slate-950/20 sm:p-4">
         <div v-if="selectedLesson" class="mb-3 rounded-2xl border border-slate-800 bg-slate-950/35 px-4 py-3">
           <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div class="min-w-0">
               <p class="text-xs font-bold uppercase tracking-[0.22em] text-slate-500">
                 Модуль {{ activeModuleIndex + 1 }} · {{ lessonTypeLabel(selectedLesson.type) }}
               </p>
-              <h2 class="mt-1 truncate text-lg font-black text-slate-100">{{ selectedLesson.title }}</h2>
+              <h2 class="mt-1 line-clamp-2 text-lg font-black text-slate-100">{{ selectedLesson.title }}</h2>
             </div>
             <span
               class="inline-flex w-fit items-center rounded-full border px-3 py-1 text-xs font-bold"

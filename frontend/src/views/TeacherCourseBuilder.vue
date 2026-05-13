@@ -689,9 +689,9 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="mx-auto mt-8 max-w-7xl px-4 pb-12">
-    <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
-      <div>
+  <div class="mx-auto mt-4 max-w-7xl px-0 pb-12 sm:mt-8 sm:px-4">
+    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+      <div class="min-w-0">
         <button
           type="button"
           class="mb-4 inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900/60 px-3 py-2 text-sm font-semibold text-slate-300 transition hover:border-indigo-400/60 hover:text-white"
@@ -703,11 +703,11 @@ onUnmounted(() => {
           Назад
         </button>
         <p class="text-xs font-bold uppercase tracking-[0.28em] text-indigo-300/80">Панель преподавателя</p>
-        <h1 class="mt-2 text-3xl font-black text-slate-100 md:text-4xl">Конструктор курса</h1>
+        <h1 class="mt-2 break-words text-2xl font-black text-slate-100 md:text-4xl">Конструктор курса</h1>
       </div>
       <button
         type="button"
-        class="inline-flex items-center gap-2 rounded-xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-2.5 text-sm font-semibold text-emerald-200 shadow-lg shadow-emerald-950/20 transition hover:border-emerald-300/40 hover:bg-emerald-500/15"
+        class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-2.5 text-center text-sm font-semibold text-emerald-200 shadow-lg shadow-emerald-950/20 transition hover:border-emerald-300/40 hover:bg-emerald-500/15 sm:w-auto"
         @click="regenerateFinalExam"
       >
         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -718,8 +718,8 @@ onUnmounted(() => {
     </div>
 
     <div class="grid gap-6 xl:grid-cols-[360px,minmax(0,1fr)]">
-      <aside class="rounded-3xl border border-slate-700/70 bg-slate-900/70 p-4 shadow-xl shadow-slate-950/30">
-        <div class="mb-4 flex items-center justify-between gap-3">
+      <aside class="min-w-0 rounded-3xl border border-slate-700/70 bg-slate-900/70 p-4 shadow-xl shadow-slate-950/30">
+        <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 class="text-lg font-bold text-white">Модули курса</h2>
             <p class="text-xs text-slate-400">Выберите модуль для работы с уроками</p>
@@ -740,7 +740,7 @@ onUnmounted(() => {
           Пока нет модулей. Создайте первый модуль курса.
         </div>
 
-        <div v-else class="space-y-3">
+        <div v-else class="max-h-[62vh] space-y-3 overflow-y-auto pr-1 xl:max-h-none xl:overflow-visible">
           <article
             v-for="(module, index) in modules"
             :key="module.id"
@@ -763,7 +763,7 @@ onUnmounted(() => {
               </button>
 
               <button type="button" class="min-w-0 flex-1 text-left" @click="selectModule(module.id)">
-                <span class="block truncate text-sm font-bold" :class="selectedModuleId === module.id ? 'text-indigo-100' : 'text-slate-100'">
+                <span class="block line-clamp-2 text-sm font-bold" :class="selectedModuleId === module.id ? 'text-indigo-100' : 'text-slate-100'">
                   {{ module.title }}
                 </span>
                 <span class="mt-1 block text-xs text-slate-400">
@@ -800,7 +800,7 @@ onUnmounted(() => {
             </div>
 
             <div v-if="!collapsedModules[module.id]" class="mt-3 border-t border-slate-800 pt-3">
-              <div v-if="lessonCountForModule(module.id)" class="space-y-1.5 text-xs text-slate-400">
+              <div v-if="lessonCountForModule(module.id)" class="max-h-48 space-y-1.5 overflow-y-auto pr-1 text-xs text-slate-400">
                 <button
                   v-for="lesson in store.lessonsByModule[module.id] || []"
                   :key="lesson.id"
@@ -810,7 +810,7 @@ onUnmounted(() => {
                   @click="selectModule(module.id)"
                 >
                   <span class="h-1.5 w-1.5 rounded-full" :class="lesson.is_published ? 'bg-emerald-400' : 'bg-amber-300'"></span>
-                  <span class="truncate">{{ lesson.title }}</span>
+                  <span class="line-clamp-2">{{ lesson.title }}</span>
                 </button>
               </div>
               <p v-else class="text-xs text-slate-500">В модуле пока нет уроков.</p>
@@ -820,10 +820,10 @@ onUnmounted(() => {
       </aside>
 
       <section class="min-w-0 rounded-3xl border border-slate-700/70 bg-slate-900/70 p-4 shadow-xl shadow-slate-950/30">
-        <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
-          <div>
+        <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+          <div class="min-w-0">
             <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Рабочая область</p>
-            <h2 class="mt-1 text-xl font-bold text-white">
+            <h2 class="mt-1 break-words text-xl font-bold text-white">
               {{ selectedModule ? selectedModule.title : 'Модуль не выбран' }}
             </h2>
             <p v-if="selectedModule" class="mt-1 text-sm text-slate-400">
@@ -832,7 +832,7 @@ onUnmounted(() => {
           </div>
           <button
             type="button"
-            class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+            class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             :disabled="!selectedModule"
             @click="openCreateLesson"
           >
@@ -870,7 +870,7 @@ onUnmounted(() => {
                 {{ getLessonTypeMeta(lesson.type).short }}
               </span>
               <div class="min-w-0 xl:hidden">
-                <p class="truncate text-sm font-bold text-slate-100">{{ lesson.title }}</p>
+                <p class="line-clamp-2 text-sm font-bold text-slate-100">{{ lesson.title }}</p>
                 <p class="text-xs text-slate-500">{{ getLessonTypeMeta(lesson.type).label }}</p>
               </div>
             </div>
@@ -888,7 +888,7 @@ onUnmounted(() => {
               <p class="mt-1 text-xs text-slate-500">{{ getLessonTypeMeta(lesson.type).label }}</p>
             </div>
 
-            <div class="flex items-center gap-2" @click.stop>
+            <div class="flex flex-wrap items-center gap-2" @click.stop>
               <span
                 class="inline-flex min-w-[96px] items-center justify-center rounded-full border px-3 py-1.5 text-xs font-semibold"
                 :class="lesson.is_published ? 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200' : 'border-amber-400/30 bg-amber-400/10 text-amber-200'"
@@ -949,12 +949,12 @@ onUnmounted(() => {
       @submit="submitModuleModal"
     />
 
-    <div v-if="lessonCreateOpen" class="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 p-4 backdrop-blur-sm">
-      <div class="mx-auto my-8 w-full max-w-3xl rounded-3xl border border-slate-700 bg-slate-900 shadow-2xl shadow-slate-950/50">
-        <div class="sticky top-0 z-10 flex items-start justify-between gap-4 rounded-t-3xl border-b border-slate-800 bg-slate-900/95 px-6 py-5 backdrop-blur">
+    <div v-if="lessonCreateOpen" class="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 p-3 backdrop-blur-sm sm:p-4">
+      <div class="mx-auto my-4 flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-slate-700 bg-slate-900 shadow-2xl shadow-slate-950/50 sm:my-8">
+        <div class="sticky top-0 z-10 flex flex-col gap-3 rounded-t-3xl border-b border-slate-800 bg-slate-900/95 px-4 py-4 backdrop-blur sm:flex-row sm:items-start sm:justify-between sm:px-6 sm:py-5">
           <div>
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-300/80">{{ selectedModule?.title }}</p>
-            <h3 class="mt-1 text-2xl font-black text-white">Новый урок</h3>
+            <h3 class="mt-1 text-xl font-black text-white sm:text-2xl">Новый урок</h3>
             <p class="mt-1 text-sm text-slate-400">Создайте урок и сразу добавьте основной источник контента.</p>
           </div>
           <button type="button" class="rounded-xl bg-slate-800 px-3 py-2 text-sm font-semibold text-slate-200 transition hover:bg-slate-700" @click="closeCreateLesson">
@@ -962,7 +962,7 @@ onUnmounted(() => {
           </button>
         </div>
 
-        <div class="space-y-5 px-6 py-5">
+        <div class="flex-1 space-y-5 overflow-y-auto px-4 py-5 sm:px-6">
           <div>
             <div class="mb-2 flex items-center justify-between gap-3">
               <label class="block text-sm font-semibold text-slate-300">Название урока</label>
@@ -996,7 +996,7 @@ onUnmounted(() => {
           </div>
 
           <div v-if="lessonDraft.type === 'video'" class="rounded-2xl border border-slate-700 bg-slate-950/70 p-4">
-            <div class="flex flex-wrap items-start justify-between gap-3">
+            <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
               <div>
                 <h4 class="text-sm font-bold text-white">Источник видео</h4>
                 <p class="mt-1 text-xs text-slate-400">По умолчанию используется HLS-файл. YouTube оставлен как резервный вариант.</p>
@@ -1022,7 +1022,7 @@ onUnmounted(() => {
             </div>
 
             <div v-if="lessonVideoSource === 'file'" class="mt-4 rounded-2xl border border-dashed border-slate-700 bg-slate-900/60 p-4">
-              <label class="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500">
+              <label class="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500 sm:w-auto">
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                   <path d="M12 16V4M7 9l5-5 5 5" /><path d="M20 16v4H4v-4" />
                 </svg>
@@ -1073,7 +1073,7 @@ onUnmounted(() => {
           </label>
         </div>
 
-        <div class="flex flex-wrap justify-end gap-3 border-t border-slate-800 px-6 py-5">
+        <div class="flex flex-col-reverse gap-3 border-t border-slate-800 px-4 py-4 sm:flex-row sm:justify-end sm:px-6 sm:py-5">
           <button type="button" class="rounded-xl bg-slate-800 px-4 py-2.5 text-sm font-semibold text-slate-200 transition hover:bg-slate-700" :disabled="isCreatingLesson" @click="closeCreateLesson">
             Отмена
           </button>
@@ -1084,7 +1084,7 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <div v-if="confirmDialog.open" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
+    <div v-if="confirmDialog.open" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/80 p-3 backdrop-blur-sm sm:p-4">
       <div class="w-full max-w-md rounded-3xl border border-slate-700 bg-slate-900 p-6 shadow-2xl shadow-slate-950/50">
         <div class="flex items-start gap-4">
           <div class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-rose-500/15 text-rose-200">
@@ -1097,7 +1097,7 @@ onUnmounted(() => {
             <p class="mt-2 text-sm leading-6 text-slate-400">{{ confirmDialog.message }}</p>
           </div>
         </div>
-        <div class="mt-6 flex justify-end gap-3">
+        <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <button type="button" class="rounded-xl bg-slate-800 px-4 py-2.5 text-sm font-semibold text-slate-200 transition hover:bg-slate-700" :disabled="confirmDialog.pending" @click="closeConfirmDialog">
             Отмена
           </button>

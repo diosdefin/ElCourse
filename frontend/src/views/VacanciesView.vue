@@ -520,32 +520,32 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+  <div class="w-full pb-14">
     <header class="mb-6 overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-900/70 shadow-xl shadow-slate-950/20">
-      <div class="relative p-6 sm:p-8">
+      <div class="relative p-4 sm:p-8">
         <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-400/60 to-transparent"></div>
         <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div class="max-w-3xl">
+          <div class="min-w-0 max-w-3xl">
             <div class="mb-4 inline-flex items-center rounded-full border border-sky-400/20 bg-sky-500/10 px-3 py-1 text-xs font-black uppercase tracking-[0.22em] text-sky-200">
               Карьерный контур
             </div>
-            <h1 class="text-3xl font-black tracking-tight text-slate-50 sm:text-4xl">Вакансии и отклики</h1>
+            <h1 class="break-words text-2xl font-black tracking-tight text-slate-50 sm:text-4xl">Вакансии и отклики</h1>
             <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-400">
               Один раздел для поиска вакансий, откликов студентов и управления публикациями работодателя. Студентам по умолчанию показываются предложения по подтверждённым навыкам.
             </p>
           </div>
 
-          <div class="flex flex-wrap gap-3">
+          <div class="grid gap-3 sm:flex sm:flex-wrap">
             <button
               v-if="authStore.isEmployer"
-              class="inline-flex items-center justify-center rounded-2xl bg-sky-600 px-5 py-3 text-sm font-black text-white shadow-lg shadow-sky-600/20 transition hover:bg-sky-500 active:scale-[0.98]"
+              class="inline-flex items-center justify-center rounded-2xl bg-sky-600 px-5 py-3 text-center text-sm font-black text-white shadow-lg shadow-sky-600/20 transition hover:bg-sky-500 active:scale-[0.98]"
               type="button"
               @click="openCreateVacancy"
             >
               Создать вакансию
             </button>
             <button
-              class="inline-flex items-center justify-center rounded-2xl border border-slate-700 bg-slate-800/80 px-4 py-3 text-sm font-bold text-slate-200 transition hover:border-sky-400/60 hover:text-white"
+              class="inline-flex items-center justify-center rounded-2xl border border-slate-700 bg-slate-800/80 px-4 py-3 text-center text-sm font-bold text-slate-200 transition hover:border-sky-400/60 hover:text-white"
               type="button"
               @click="refreshCurrentTab"
             >
@@ -640,7 +640,7 @@ onMounted(async () => {
         </div>
       </aside>
 
-      <div>
+      <div class="min-w-0">
         <div v-if="loading" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <div v-for="index in pageSize" :key="index" class="h-72 animate-pulse rounded-3xl border border-slate-800 bg-slate-900/60"></div>
         </div>
@@ -653,7 +653,7 @@ onMounted(async () => {
 
         <div v-else-if="vacancies.length" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <article v-for="vacancy in vacancies" :key="vacancy.id" class="flex min-h-[300px] flex-col rounded-3xl border border-slate-800 bg-slate-900/60 p-5 transition hover:border-sky-400/40 hover:bg-slate-900/85">
-            <div class="flex items-start justify-between gap-3">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div class="min-w-0">
                 <p class="text-xs font-black uppercase tracking-[0.18em] text-slate-500">{{ vacancy.company_name || vacancy.employer_name }}</p>
                 <h3 class="mt-2 line-clamp-2 text-xl font-black text-slate-50">{{ vacancy.title }}</h3>
@@ -672,7 +672,7 @@ onMounted(async () => {
               </span>
             </div>
 
-            <div class="mt-5 grid grid-cols-2 gap-3 text-xs text-slate-500">
+            <div class="mt-5 grid grid-cols-1 gap-3 text-xs text-slate-500 sm:grid-cols-2">
               <div class="rounded-2xl border border-slate-800 bg-slate-950/30 p-3">
                 <span class="block">Формат</span>
                 <strong class="mt-1 block text-sm text-slate-200">{{ workFormatLabels[vacancy.work_format] || vacancy.work_format }}</strong>
@@ -710,7 +710,7 @@ onMounted(async () => {
 
         <div v-if="pageCount > 1" class="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-slate-800 bg-slate-900/50 p-3">
           <p class="text-sm text-slate-500">Страница {{ page }} из {{ pageCount }}</p>
-          <div class="flex gap-2">
+          <div class="flex flex-wrap gap-2">
             <button class="rounded-2xl border border-slate-700 px-4 py-2 text-sm font-bold text-slate-300 disabled:opacity-40" type="button" :disabled="page <= 1" @click="page -= 1">Назад</button>
             <button class="rounded-2xl border border-slate-700 px-4 py-2 text-sm font-bold text-slate-300 disabled:opacity-40" type="button" :disabled="page >= pageCount" @click="page += 1">Вперёд</button>
           </div>
@@ -782,7 +782,7 @@ onMounted(async () => {
 
       <div v-else-if="paginatedEmployerVacancies.length" class="grid gap-4 lg:grid-cols-2">
         <article v-for="vacancy in paginatedEmployerVacancies" :key="vacancy.id" class="rounded-3xl border border-slate-800 bg-slate-950/30 p-5">
-          <div class="flex items-start justify-between gap-4">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h3 class="text-xl font-black text-slate-50">{{ vacancy.title }}</h3>
               <p class="mt-1 text-sm text-slate-500">{{ formatDate(vacancy.created_at) }} · откликов: {{ vacancy.applications_count || 0 }}</p>
@@ -807,7 +807,7 @@ onMounted(async () => {
         У вас пока нет вакансий. Создайте первую вакансию, чтобы студенты могли откликнуться.
       </div>
 
-      <div v-if="employerVacancyPages > 1" class="mt-5 flex justify-end gap-2">
+      <div v-if="employerVacancyPages > 1" class="mt-5 flex flex-wrap justify-end gap-2">
         <button class="rounded-2xl border border-slate-700 px-4 py-2 text-sm font-bold text-slate-300 disabled:opacity-40" :disabled="employerLocalPage <= 1" @click="employerLocalPage -= 1">Назад</button>
         <button class="rounded-2xl border border-slate-700 px-4 py-2 text-sm font-bold text-slate-300 disabled:opacity-40" :disabled="employerLocalPage >= employerVacancyPages" @click="employerLocalPage += 1">Вперёд</button>
       </div>
@@ -819,7 +819,7 @@ onMounted(async () => {
           <h2 class="text-xl font-black text-slate-50">Отклики студентов</h2>
           <p class="mt-1 text-sm text-slate-500">Просматривайте заявки и обновляйте статус.</p>
         </div>
-        <select v-model="applicationFilter" class="rounded-2xl border border-slate-700 bg-slate-950/60 px-4 py-3 text-sm font-bold text-slate-100 outline-none focus:border-sky-400">
+        <select v-model="applicationFilter" class="w-full rounded-2xl border border-slate-700 bg-slate-950/60 px-4 py-3 text-sm font-bold text-slate-100 outline-none focus:border-sky-400 md:w-auto">
           <option value="all">Все статусы</option>
           <option value="pending">Отправленные</option>
           <option value="viewed">Просмотренные</option>
@@ -856,7 +856,7 @@ onMounted(async () => {
         Откликов пока нет.
       </div>
 
-      <div v-if="employerApplicationPages > 1" class="mt-5 flex justify-end gap-2">
+      <div v-if="employerApplicationPages > 1" class="mt-5 flex flex-wrap justify-end gap-2">
         <button class="rounded-2xl border border-slate-700 px-4 py-2 text-sm font-bold text-slate-300 disabled:opacity-40" :disabled="employerApplicationPage <= 1" @click="employerApplicationPage -= 1">Назад</button>
         <button class="rounded-2xl border border-slate-700 px-4 py-2 text-sm font-bold text-slate-300 disabled:opacity-40" :disabled="employerApplicationPage >= employerApplicationPages" @click="employerApplicationPage += 1">Вперёд</button>
       </div>
@@ -884,9 +884,9 @@ onMounted(async () => {
       </div>
     </section>
 
-    <div v-if="applyModalOpen" class="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur">
-      <div class="w-full max-w-xl rounded-[2rem] border border-slate-700 bg-slate-900 p-6 shadow-2xl shadow-slate-950/50">
-        <div class="flex items-start justify-between gap-4">
+    <div v-if="applyModalOpen" class="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/80 p-3 backdrop-blur sm:p-4">
+      <div class="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-[2rem] border border-slate-700 bg-slate-900 p-5 shadow-2xl shadow-slate-950/50 sm:p-6">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h2 class="text-2xl font-black text-slate-50">Отклик на вакансию</h2>
             <p class="mt-1 text-sm text-slate-500">{{ selectedVacancy?.title }}</p>
@@ -900,7 +900,7 @@ onMounted(async () => {
           <span class="text-right text-xs text-slate-500">{{ applyMessage.length }}/1200</span>
         </label>
 
-        <div class="mt-5 flex justify-end gap-3">
+        <div class="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <button class="rounded-2xl border border-slate-700 px-5 py-3 text-sm font-bold text-slate-300 transition hover:text-white" type="button" @click="applyModalOpen = false">Отмена</button>
           <button class="rounded-2xl bg-sky-600 px-5 py-3 text-sm font-black text-white transition hover:bg-sky-500 disabled:opacity-60" type="button" :disabled="submittingApply" @click="submitApply">
             {{ submittingApply ? 'Отправка...' : 'Отправить отклик' }}
@@ -909,9 +909,9 @@ onMounted(async () => {
       </div>
     </div>
 
-    <div v-if="vacancyModalOpen" class="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur">
-      <form class="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-[2rem] border border-slate-700 bg-slate-900 p-6 shadow-2xl shadow-slate-950/50" @submit.prevent="submitVacancy">
-        <div class="sticky top-0 z-10 -mx-6 -mt-6 mb-5 flex items-start justify-between gap-4 border-b border-slate-800 bg-slate-900/95 px-6 py-5 backdrop-blur">
+    <div v-if="vacancyModalOpen" class="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/80 p-3 backdrop-blur sm:p-4">
+      <form class="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-[2rem] border border-slate-700 bg-slate-900 p-4 shadow-2xl shadow-slate-950/50 sm:p-6" @submit.prevent="submitVacancy">
+        <div class="sticky top-0 z-10 -mx-4 -mt-4 mb-5 flex flex-col gap-3 border-b border-slate-800 bg-slate-900/95 px-4 py-4 backdrop-blur sm:-mx-6 sm:-mt-6 sm:flex-row sm:items-start sm:justify-between sm:px-6 sm:py-5">
           <div>
             <h2 class="text-2xl font-black text-slate-50">{{ editingVacancy ? 'Редактирование вакансии' : 'Новая вакансия' }}</h2>
             <p class="mt-1 text-sm text-slate-500">Заполните данные, которые увидят студенты.</p>
@@ -996,7 +996,7 @@ onMounted(async () => {
           </label>
         </div>
 
-        <div class="sticky bottom-0 -mx-6 -mb-6 mt-6 flex justify-end gap-3 border-t border-slate-800 bg-slate-900/95 px-6 py-5 backdrop-blur">
+        <div class="sticky bottom-0 -mx-4 -mb-4 mt-6 flex flex-col-reverse gap-3 border-t border-slate-800 bg-slate-900/95 px-4 py-4 backdrop-blur sm:-mx-6 sm:-mb-6 sm:flex-row sm:justify-end sm:px-6 sm:py-5">
           <button class="rounded-2xl border border-slate-700 px-5 py-3 text-sm font-bold text-slate-300 transition hover:text-white" type="button" @click="vacancyModalOpen = false">Отмена</button>
           <button class="rounded-2xl bg-sky-600 px-5 py-3 text-sm font-black text-white transition hover:bg-sky-500 disabled:opacity-60" type="submit" :disabled="savingVacancy">
             {{ savingVacancy ? 'Сохранение...' : 'Сохранить вакансию' }}

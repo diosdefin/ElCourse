@@ -69,15 +69,15 @@ const handleSave = () => {
 </script>
 
 <template>
-  <div v-if="open" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+  <div v-if="open" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-3 backdrop-blur-sm sm:p-4"
     @mousedown.self="handleClose">
     <section
       class="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-slate-700 bg-slate-900 shadow-2xl shadow-slate-950/40">
-      <header class="sticky top-0 z-10 border-b border-slate-800 bg-slate-900/95 px-6 py-5 backdrop-blur">
+      <header class="sticky top-0 z-10 border-b border-slate-800 bg-slate-900/95 px-4 py-4 backdrop-blur sm:px-6 sm:py-5">
         <div class="flex items-start justify-between gap-4">
           <div>
             <p class="text-xs font-bold uppercase tracking-[0.24em] text-indigo-300">Параметры прохождения</p>
-            <h3 class="mt-1 text-2xl font-black text-white">Настройки теста</h3>
+            <h3 class="mt-1 text-xl font-black text-white sm:text-2xl">Настройки теста</h3>
             <p class="mt-1 text-sm text-slate-400">Эти правила применяются к попыткам, проходному баллу и таймеру.</p>
           </div>
           <button type="button"
@@ -92,8 +92,8 @@ const handleSave = () => {
         </div>
       </header>
 
-      <div class="flex-1 overflow-y-auto px-6 py-6">
-        <div class="grid gap-4 md:grid-cols-3">
+      <div class="flex-1 overflow-y-auto px-4 py-5 sm:px-6 sm:py-6">
+        <div class="grid gap-4 sm:grid-cols-3">
           <article class="rounded-2xl border border-slate-700 bg-slate-950/70 p-4">
             <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Проходной балл</p>
             <p class="mt-2 text-3xl font-black text-white">{{ normalizedScore }}%</p>
@@ -174,7 +174,7 @@ const handleSave = () => {
         </div>
       </div>
 
-      <footer class="sticky bottom-0 z-10 border-t border-slate-800 bg-slate-900/95 px-6 py-4 backdrop-blur">
+      <footer class="sticky bottom-0 z-10 border-t border-slate-800 bg-slate-900/95 px-4 py-4 backdrop-blur sm:px-6">
         <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <button type="button"
             class="rounded-xl border border-slate-700 bg-slate-950 px-5 py-3 text-sm font-bold text-slate-200 transition hover:border-slate-500 hover:text-white"

@@ -43,16 +43,16 @@ const handleSubmit = () => {
 </script>
 
 <template>
-  <div v-if="open" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-4 backdrop-blur-sm">
-    <div class="w-full max-w-md rounded-3xl border border-slate-700 bg-slate-900 p-6 shadow-2xl shadow-slate-950/50">
-      <div class="flex items-start justify-between gap-4">
+  <div v-if="open" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-3 backdrop-blur-sm sm:p-4">
+    <div class="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-slate-700 bg-slate-900 p-5 shadow-2xl shadow-slate-950/50 sm:p-6">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p class="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-300/80">Структура курса</p>
           <h3 class="mt-1 text-xl font-black text-white">
             {{ mode === 'edit' ? 'Редактировать модуль' : 'Добавить модуль' }}
           </h3>
         </div>
-        <button type="button" class="rounded-xl bg-slate-800 px-3 py-2 text-sm font-semibold text-slate-200 transition hover:bg-slate-700" @click="emit('close')">
+        <button type="button" class="w-full rounded-xl bg-slate-800 px-3 py-2 text-sm font-semibold text-slate-200 transition hover:bg-slate-700 sm:w-auto" @click="emit('close')">
           Закрыть
         </button>
       </div>
@@ -76,7 +76,7 @@ const handleSubmit = () => {
         >
       </div>
 
-      <div class="mt-6 flex justify-end gap-2">
+      <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
         <button
           type="button"
           class="rounded-xl bg-slate-800 px-4 py-2.5 text-sm font-semibold text-slate-200 transition hover:bg-slate-700"

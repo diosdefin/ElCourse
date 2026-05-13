@@ -609,7 +609,7 @@ onUnmounted(async () => {
     {{ pageError }}
   </div>
 
-  <div v-else-if="lesson" :class="embedded ? '' : 'mx-auto mt-8 max-w-5xl px-4'">
+  <div v-else-if="lesson" :class="embedded ? 'min-w-0' : 'mx-auto mt-4 max-w-5xl px-0 sm:mt-8 sm:px-4'">
     <button
       v-if="!embedded"
       class="group mb-6 inline-flex items-center gap-2 rounded-xl border border-slate-700/70 bg-slate-900/70 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:border-indigo-400/60 hover:text-white"
@@ -621,11 +621,11 @@ onUnmounted(async () => {
       Назад
     </button>
 
-    <article class="overflow-hidden rounded-3xl border border-slate-800 bg-slate-950/20 shadow-2xl shadow-slate-950/20">
-      <section v-if="isVideoLesson" class="relative aspect-video bg-black">
+    <article class="min-w-0 overflow-hidden rounded-3xl border border-slate-800 bg-slate-950/20 shadow-2xl shadow-slate-950/20">
+      <section v-if="isVideoLesson" class="relative aspect-video max-w-full overflow-hidden bg-black">
         <div
           v-if="!isAuthenticated"
-          class="flex h-full items-center justify-center bg-slate-950/95 px-6 text-center text-slate-400"
+          class="flex h-full items-center justify-center bg-slate-950/95 px-4 text-center text-slate-400 sm:px-6"
         >
           <div>
             <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-800 bg-slate-900 text-slate-500">
@@ -640,7 +640,7 @@ onUnmounted(async () => {
 
         <div
           v-else-if="manifestLoading || isManifestProcessing"
-          class="flex h-full items-center justify-center bg-slate-950/95 px-6"
+          class="flex h-full items-center justify-center bg-slate-950/95 px-4 sm:px-6"
         >
           <div class="space-y-4 text-center">
             <div class="mx-auto h-12 w-12 animate-spin rounded-full border-2 border-slate-700 border-t-emerald-400"></div>
@@ -651,7 +651,7 @@ onUnmounted(async () => {
 
         <div
           v-else-if="manifestError"
-          class="flex h-full items-center justify-center bg-slate-950/95 px-6 text-center text-rose-300"
+          class="flex h-full items-center justify-center bg-slate-950/95 px-4 text-center text-rose-300 sm:px-6"
         >
           <div>
             <p class="font-semibold">Видео недоступно</p>
@@ -670,7 +670,7 @@ onUnmounted(async () => {
 
         <video
           v-else-if="showLegacyVideo && !legacyEmbedUrl"
-          class="h-full w-full"
+          class="h-full w-full object-contain"
           :src="legacyVideoUrl"
           controls
           preload="metadata"
@@ -679,13 +679,13 @@ onUnmounted(async () => {
         <video
           v-else
           ref="videoElement"
-          class="h-full w-full"
+          class="h-full w-full object-contain"
           controls
           preload="metadata"
         ></video>
       </section>
 
-      <header class="border-b border-slate-800 bg-slate-900/65 px-5 py-5 sm:px-6">
+      <header class="border-b border-slate-800 bg-slate-900/65 px-4 py-5 sm:px-6">
         <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div class="min-w-0">
             <div class="mb-3 flex flex-wrap items-center gap-2">
@@ -709,15 +709,15 @@ onUnmounted(async () => {
               </span>
             </div>
 
-            <h1 class="text-2xl font-black leading-tight text-slate-100 sm:text-3xl">{{ lesson.title }}</h1>
+            <h1 class="break-words text-xl font-black leading-tight text-slate-100 sm:text-3xl">{{ lesson.title }}</h1>
             <p class="mt-2 max-w-3xl text-sm leading-relaxed text-slate-400">{{ lessonHint }}</p>
           </div>
 
-          <div class="flex flex-wrap gap-2">
+          <div class="grid gap-2 sm:flex sm:flex-wrap">
             <select
               v-if="isVideoLesson && availableLevels.length > 0"
               v-model.number="selectedLevel"
-              class="rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-slate-200 outline-none transition focus:border-indigo-400"
+              class="w-full rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-slate-200 outline-none transition focus:border-indigo-400 sm:w-auto"
               @change="applyQuality"
             >
               <option v-for="option in qualityOptions" :key="option.value" :value="option.value">
@@ -734,7 +734,7 @@ onUnmounted(async () => {
             <p class="text-sm font-bold text-emerald-100">Продолжить просмотр?</p>
             <p class="text-sm text-emerald-200/80">Сохранённая позиция: {{ savedTimeLabel }}</p>
           </div>
-          <div class="flex gap-2">
+          <div class="grid gap-2 sm:flex sm:flex-wrap">
             <button
               class="rounded-xl border border-emerald-400/30 bg-emerald-500/20 px-4 py-2 text-sm font-bold text-emerald-100 transition hover:bg-emerald-500/30"
               @click="jumpToSavedTime"
@@ -751,11 +751,11 @@ onUnmounted(async () => {
         </div>
       </div>
 
-      <main class="p-5 sm:p-6">
+      <main class="min-w-0 p-4 sm:p-6">
         <div v-if="isTextLesson || isVideoLesson">
           <div
             v-if="cleanHtmlContent"
-            class="prose prose-invert max-w-none rounded-2xl border border-slate-800 bg-slate-950/30 p-5 text-slate-300 prose-headings:text-slate-100 prose-a:text-indigo-300"
+            class="prose prose-invert max-w-none break-words rounded-2xl border border-slate-800 bg-slate-950/30 p-4 text-slate-300 prose-headings:text-slate-100 prose-a:text-indigo-300 prose-img:max-w-full prose-pre:overflow-x-auto prose-table:block prose-table:overflow-x-auto sm:p-5"
             v-html="cleanHtmlContent"
           ></div>
           <div v-else class="rounded-2xl border border-dashed border-slate-800 bg-slate-950/30 p-6 text-sm text-slate-500">
@@ -770,7 +770,7 @@ onUnmounted(async () => {
           </div>
 
           <div v-else-if="quizData" class="space-y-5">
-            <div class="grid gap-3 md:grid-cols-4">
+            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <div class="rounded-2xl border border-slate-800 bg-slate-950/35 p-4">
                 <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Вопросы</p>
                 <p class="mt-1 text-2xl font-black text-slate-100">{{ quizQuestions.length }}</p>
@@ -791,7 +791,7 @@ onUnmounted(async () => {
 
             <div class="rounded-2xl border border-slate-800 bg-slate-950/35 p-4">
               <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
+                <div class="min-w-0">
                   <p class="text-sm font-bold text-slate-200">Готовность к отправке</p>
                   <p class="text-sm text-slate-500">Заполните все вопросы перед проверкой результата.</p>
                 </div>
@@ -829,9 +829,9 @@ onUnmounted(async () => {
                 class="rounded-2xl border border-slate-800 bg-slate-950/35 p-4 sm:p-5"
               >
                 <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
+                  <div class="min-w-0">
                     <p class="text-xs font-bold uppercase tracking-[0.22em] text-indigo-300">Вопрос {{ index + 1 }}</p>
-                    <h3 class="mt-2 text-base font-bold leading-relaxed text-slate-100 sm:text-lg">{{ question.text }}</h3>
+                    <h3 class="mt-2 break-words text-base font-bold leading-relaxed text-slate-100 sm:text-lg">{{ question.text }}</h3>
                   </div>
                   <span class="w-fit shrink-0 rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-xs font-bold text-slate-400">
                     {{ question.is_multiple ? 'Несколько ответов' : 'Один ответ' }}
@@ -842,7 +842,7 @@ onUnmounted(async () => {
                   <label
                     v-for="choice in question.choices"
                     :key="choice.id"
-                    class="group flex cursor-pointer items-start gap-3 rounded-xl border px-3 py-3 transition"
+                    class="group flex min-w-0 cursor-pointer items-start gap-3 rounded-xl border px-3 py-3 transition"
                     :class="isChoiceSelected(question, choice)
                       ? 'border-indigo-400/70 bg-indigo-500/15 text-slate-100'
                       : 'border-slate-800 bg-slate-900/35 text-slate-300 hover:border-slate-600 hover:bg-slate-900/70'"
@@ -877,7 +877,7 @@ onUnmounted(async () => {
                         <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
                       </svg>
                     </span>
-                    <span class="text-sm font-medium leading-relaxed">{{ choice.text }}</span>
+                    <span class="min-w-0 break-words text-sm font-medium leading-relaxed">{{ choice.text }}</span>
                   </label>
                 </div>
               </div>
@@ -927,7 +927,7 @@ onUnmounted(async () => {
               </div>
 
               <button
-                class="inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-3 text-sm font-black text-white transition disabled:cursor-not-allowed disabled:opacity-50"
+                class="inline-flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-3 text-sm font-black text-white transition disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                 :class="canSubmitQuiz ? 'bg-indigo-600 shadow-lg shadow-indigo-600/20 hover:bg-indigo-500' : 'bg-slate-700'"
                 :disabled="!canSubmitQuiz || quizSubmitting"
                 @click="submitQuiz"
@@ -947,8 +947,8 @@ onUnmounted(async () => {
         </section>
       </main>
 
-      <section v-if="attachments.length" class="border-t border-slate-800 bg-slate-900/45 p-5 sm:p-6">
-        <div class="mb-3 flex items-center justify-between gap-3">
+      <section v-if="attachments.length" class="border-t border-slate-800 bg-slate-900/45 p-4 sm:p-6">
+        <div class="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 class="text-base font-black text-slate-100">Материалы к уроку</h3>
             <p class="text-sm text-slate-500">Файлы для самостоятельной работы</p>
@@ -964,7 +964,7 @@ onUnmounted(async () => {
             :href="attachment.file_url"
             target="_blank"
             rel="noopener noreferrer"
-            class="group flex items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950/40 px-3 py-3 text-sm text-slate-200 transition hover:border-indigo-400/60 hover:bg-indigo-500/10"
+            class="group flex min-w-0 items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950/40 px-3 py-3 text-sm text-slate-200 transition hover:border-indigo-400/60 hover:bg-indigo-500/10"
           >
             <span class="flex min-w-0 items-center gap-3">
               <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-700 bg-slate-900 text-slate-400 group-hover:text-indigo-200">
@@ -982,14 +982,14 @@ onUnmounted(async () => {
 
       <div v-if="attachmentsLoading" class="border-t border-slate-800 p-4 text-sm text-slate-400">Загрузка материалов...</div>
 
-      <footer v-if="!isQuizLesson && !isPreviewMode" class="border-t border-slate-800 bg-slate-900/45 p-5 sm:p-6">
+      <footer v-if="!isQuizLesson && !isPreviewMode" class="border-t border-slate-800 bg-slate-900/45 p-4 sm:p-6">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p class="text-sm font-bold text-slate-200">Завершение урока</p>
             <p class="text-sm text-slate-500">После завершения откроется следующий доступный материал курса.</p>
           </div>
           <button
-            class="inline-flex items-center justify-center gap-2 rounded-2xl px-7 py-3 text-sm font-black text-white transition-all disabled:cursor-default"
+            class="inline-flex w-full items-center justify-center gap-2 rounded-2xl px-7 py-3 text-sm font-black text-white transition-all disabled:cursor-default sm:w-auto"
             :class="isCompleted
               ? 'bg-emerald-600/80'
               : 'bg-indigo-600 shadow-lg shadow-indigo-600/20 hover:bg-indigo-500'"

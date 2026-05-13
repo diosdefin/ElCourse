@@ -311,11 +311,11 @@ const requestDeleteQuestion = (question) => {
 </script>
 
 <template>
-  <div v-if="open" class="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 p-4 backdrop-blur-sm">
+  <div v-if="open" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-3 backdrop-blur-sm sm:p-4">
     <div
-      class="mx-auto my-8 w-full max-w-4xl rounded-3xl border border-slate-700 bg-slate-900 shadow-2xl shadow-slate-950/50">
+      class="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-slate-700 bg-slate-900 shadow-2xl shadow-slate-950/50">
       <div
-        class="sticky top-0 z-10 flex items-start justify-between gap-4 rounded-t-3xl border-b border-slate-800 bg-slate-900/95 px-6 py-5 backdrop-blur">
+        class="sticky top-0 z-10 flex flex-col gap-3 rounded-t-3xl border-b border-slate-800 bg-slate-900/95 px-4 py-4 backdrop-blur sm:flex-row sm:items-start sm:justify-between sm:px-6 sm:py-5">
         <div class="min-w-0">
           <div class="flex flex-wrap items-center gap-3">
             <span
@@ -324,19 +324,19 @@ const requestDeleteQuestion = (question) => {
               {{ lessonMeta.short }}
             </span>
             <div class="min-w-0">
-              <h3 class="truncate text-2xl font-black text-white">Редактор урока</h3>
+              <h3 class="truncate text-xl font-black text-white sm:text-2xl">Редактор урока</h3>
               <p class="text-sm text-slate-400">Тип урока: {{ lessonTypeLabel }}</p>
             </div>
           </div>
         </div>
         <button type="button"
-          class="rounded-xl bg-slate-800 px-3 py-2 text-sm font-semibold text-slate-200 transition hover:bg-slate-700"
+          class="w-full rounded-xl bg-slate-800 px-3 py-2 text-sm font-semibold text-slate-200 transition hover:bg-slate-700 sm:w-auto"
           @click="emit('close')">
           Закрыть
         </button>
       </div>
 
-      <div class="space-y-5 px-6 py-5">
+      <div class="flex-1 space-y-5 overflow-y-auto px-4 py-5 sm:px-6">
         <div v-if="formError"
           class="rounded-2xl border border-amber-400/25 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
           {{ formError }}
@@ -360,13 +360,13 @@ const requestDeleteQuestion = (question) => {
 
           <div v-if="isVideoType" class="md:col-span-2">
             <div class="rounded-2xl border border-slate-700 bg-slate-950/70 p-4">
-              <div class="flex flex-wrap items-start justify-between gap-3">
+              <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
                 <div>
                   <h4 class="text-sm font-bold text-white">Источник видео</h4>
                   <p class="mt-1 text-xs text-slate-400">HLS-файл используется как основной вариант, YouTube — как
                     резервный источник.</p>
                 </div>
-                <div class="flex rounded-xl border border-slate-700 bg-slate-900 p-1">
+                <div class="grid grid-cols-2 rounded-xl border border-slate-700 bg-slate-900 p-1">
                   <button type="button" class="rounded-lg px-3 py-2 text-xs font-bold transition"
                     :class="videoSource === 'file' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'"
                     @click="videoSource = 'file'">
@@ -392,7 +392,7 @@ const requestDeleteQuestion = (question) => {
 
               <div v-else class="mt-4 rounded-2xl border border-dashed border-slate-700 bg-slate-900/60 p-4">
                 <label
-                  class="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500">
+                  class="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500 sm:w-auto">
                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                     aria-hidden="true">
                     <path d="M12 16V4M7 9l5-5 5 5" />
@@ -434,7 +434,7 @@ const requestDeleteQuestion = (question) => {
               <p class="text-xs text-slate-400">PDF, презентации, архивы и дополнительные файлы.</p>
             </div>
             <label
-              class="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-indigo-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-indigo-500">
+              class="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-indigo-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-indigo-500 sm:w-auto">
               <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                 aria-hidden="true">
                 <path d="M12 5v14M5 12h14" />
@@ -476,9 +476,9 @@ const requestDeleteQuestion = (question) => {
               <h4 class="text-lg font-bold text-white">Вопросы теста</h4>
               <p class="text-xs text-slate-400">Настройте вопросы, варианты ответа и правила прохождения.</p>
             </div>
-            <div class="flex flex-wrap gap-2">
+            <div class="grid gap-2 sm:flex sm:flex-wrap">
               <button type="button"
-                class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-indigo-500"
+                class="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-indigo-500"
                 @click="emit('open-quiz-config')">
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                   aria-hidden="true">
@@ -489,7 +489,7 @@ const requestDeleteQuestion = (question) => {
                 Настройки теста
               </button>
               <button v-if="isFinalExamType" type="button"
-                class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-emerald-500"
+                class="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-emerald-500"
                 @click="emit('regenerate-final-exam')">
                 Обновить экзамен
               </button>
@@ -567,10 +567,10 @@ const requestDeleteQuestion = (question) => {
       </div>
 
       <div
-        class="sticky bottom-0 flex flex-wrap items-center justify-between gap-3 rounded-b-3xl border-t border-slate-800 bg-slate-900/95 px-6 py-5 backdrop-blur">
+        class="sticky bottom-0 flex flex-col gap-3 rounded-b-3xl border-t border-slate-800 bg-slate-900/95 px-4 py-4 backdrop-blur sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-6 sm:py-5">
         <p class="text-xs text-slate-500">Ограничения формы защищают интерфейс от слишком длинных данных; финальную
           проверку лучше держать и на backend.</p>
-        <div class="flex gap-3">
+        <div class="flex flex-col-reverse gap-3 sm:flex-row">
           <button type="button"
             class="rounded-xl bg-slate-800 px-4 py-2.5 text-sm font-semibold text-slate-200 transition hover:bg-slate-700"
             @click="emit('close')">
@@ -586,8 +586,8 @@ const requestDeleteQuestion = (question) => {
     </div>
 
     <div v-if="confirmDialog.open"
-      class="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
-      <div class="w-full max-w-md rounded-3xl border border-slate-700 bg-slate-900 p-6 shadow-2xl shadow-slate-950/50">
+      class="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/80 p-3 backdrop-blur-sm sm:p-4">
+      <div class="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-slate-700 bg-slate-900 p-5 shadow-2xl shadow-slate-950/50 sm:p-6">
         <div class="flex items-start gap-4">
           <div class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-rose-500/15 text-rose-200">
             <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -602,7 +602,7 @@ const requestDeleteQuestion = (question) => {
             <p class="mt-2 text-sm leading-6 text-slate-400">{{ confirmDialog.message }}</p>
           </div>
         </div>
-        <div class="mt-6 flex justify-end gap-3">
+        <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <button type="button"
             class="rounded-xl bg-slate-800 px-4 py-2.5 text-sm font-semibold text-slate-200 transition hover:bg-slate-700"
             @click="closeConfirmDialog">

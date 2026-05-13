@@ -205,17 +205,17 @@ onMounted(loadCourses)
   <div class="pb-14">
     <section class="relative overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-900/70 shadow-2xl shadow-slate-950/25">
       <div class="absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(99,102,241,0.2),transparent_32%),radial-gradient(circle_at_86%_18%,rgba(20,184,166,0.14),transparent_28%)]"></div>
-      <div class="relative grid gap-8 px-6 py-8 sm:px-8 lg:grid-cols-[minmax(0,1fr),360px] lg:px-10 lg:py-10">
-        <div>
+      <div class="relative grid gap-8 px-4 py-8 sm:px-8 lg:grid-cols-[minmax(0,1fr),360px] lg:px-10 lg:py-10">
+        <div class="min-w-0">
           <p class="text-xs font-bold uppercase tracking-[0.26em] text-indigo-200">ElCourse Learning</p>
-          <h1 class="mt-4 max-w-3xl text-3xl font-black leading-tight text-white sm:text-5xl">
+          <h1 class="mt-4 max-w-3xl break-words text-2xl font-black leading-tight text-white sm:text-5xl">
             Курсы для обучения, проверки знаний и роста навыков
           </h1>
           <p class="mt-5 max-w-3xl text-sm leading-7 text-slate-400 sm:text-base">
             В одном разделе собраны открытый каталог и личное обучение студента. Страница не перегружает навигацию: каталог, активные курсы и продолжение обучения доступны через вкладки.
           </p>
 
-          <div class="mt-7 flex flex-wrap gap-3">
+          <div class="mt-7 grid gap-3 sm:flex sm:flex-wrap">
             <button
               v-for="tab in availableTabs"
               :key="tab.key"
@@ -296,7 +296,7 @@ onMounted(loadCourses)
       </div>
     </section>
 
-    <section v-if="loading" class="mt-6 grid gap-5 lg:grid-cols-3">
+    <section v-if="loading" class="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
       <div v-for="item in 6" :key="item" class="h-96 animate-pulse rounded-[1.7rem] border border-slate-800 bg-slate-900/55"></div>
     </section>
 
@@ -331,7 +331,7 @@ onMounted(loadCourses)
       </button>
     </section>
 
-    <section v-else class="mt-6 grid gap-5 lg:grid-cols-3">
+    <section v-else class="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
       <article
         v-for="course in filteredCourses"
         :key="course.id"
