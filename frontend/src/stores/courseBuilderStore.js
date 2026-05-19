@@ -204,8 +204,15 @@ export const useCourseBuilderStore = defineStore('courseBuilder', () => {
   }
 
   const getLessonVideoManifest = async (lessonId) => {
-    const response = await api.get(`/lessons/${lessonId}/video/manifest/`)
-    return response.data
+    try {
+      const response = await api.get(`/lessons/${lessonId}/video/manifest/`)
+      return response.data
+    } catch (error) {
+      if (error.response?.status === 409 && error.response?.data) {
+        return error.response.data
+      }
+      throw error
+    }
   }
 
   return {

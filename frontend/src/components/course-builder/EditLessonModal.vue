@@ -73,6 +73,8 @@ const statusLabels = {
   processing: 'Обрабатывается',
   ready: 'Готово',
   failed: 'Ошибка обработки',
+  missing: 'Не загружено',
+  inconsistent: 'Неконсистентное состояние',
 }
 
 const lessonMeta = computed(() => lessonTypeMeta[props.lesson?.type] || lessonTypeMeta.text)

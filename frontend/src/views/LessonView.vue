@@ -38,6 +38,7 @@ const manifestLoading = ref(false)
 const manifestState = ref('pending')
 const manifestUrl = ref('')
 const manifestError = ref('')
+const playbackNotice = ref('')
 const useLegacyPlayer = ref(false)
 
 const videoElement = ref(null)
@@ -91,11 +92,11 @@ const lessonHint = computed(() => {
   return 'Изучите материал урока.'
 })
 
-const legacyVideoUrl = computed(() => lesson.value?.video_url || '')
-const showLegacyVideo = computed(() => isAuthenticated.value && useLegacyPlayer.value && Boolean(legacyVideoUrl.value))
+const fallbackVideoUrl = computed(() => lesson.value?.fallback_video_url || lesson.value?.video_url || '')
+const showLegacyVideo = computed(() => isAuthenticated.value && useLegacyPlayer.value && Boolean(fallbackVideoUrl.value))
 
 const legacyEmbedUrl = computed(() => {
-  const url = legacyVideoUrl.value
+  const url = fallbackVideoUrl.value
   if (!url) return ''
 
   try {
@@ -249,6 +250,9 @@ const fetchLesson = async () => {
     const response = await api.get(`/lessons/${resolvedLessonId.value}/`)
     lesson.value = response.data
     isCompleted.value = Boolean(response.data.is_completed)
+    manifestState.value = response.data?.hls_status || (response.data?.type === 'video' ? 'missing' : 'no_video')
+    manifestUrl.value = response.data?.hls_manifest_url || ''
+    manifestError.value = response.data?.hls_error || ''
   } catch (error) {
     console.error(error)
     pageError.value = error.response?.data?.detail || 'Не удалось загрузить урок.'
@@ -392,7 +396,7 @@ const initPlayer = async () => {
 const fetchManifest = async ({ keepLoading = false } = {}) => {
   if (!isVideoLesson.value) {
     manifestLoading.value = false
-    manifestState.value = 'ready'
+    manifestState.value = 'no_video'
     return
   }
 
@@ -406,11 +410,12 @@ const fetchManifest = async ({ keepLoading = false } = {}) => {
     manifestLoading.value = true
   }
   manifestError.value = ''
+  playbackNotice.value = ''
 
   try {
     const response = await api.get(`/lessons/${resolvedLessonId.value}/video/manifest/`)
-    manifestState.value = response.data.status || 'pending'
-    manifestUrl.value = response.data.m3u8_url || ''
+    manifestState.value = response.data.status || 'missing'
+    manifestUrl.value = response.data.manifest_url || response.data.m3u8_url || ''
     useLegacyPlayer.value = false
 
     if (manifestState.value === 'ready' && manifestUrl.value) {
@@ -418,25 +423,56 @@ const fetchManifest = async ({ keepLoading = false } = {}) => {
       manifestLoading.value = false
       await nextTick()
       await initPlayer()
+    } else if (manifestState.value === 'missing') {
+      clearManifestPolling()
+      if (fallbackVideoUrl.value) {
+        useLegacyPlayer.value = true
+        playbackNotice.value = 'Using direct video without HLS.'
+      } else {
+        manifestError.value = response.data.message || 'HLS video is not uploaded for this lesson.'
+      }
     } else if (manifestState.value === 'failed') {
       clearManifestPolling()
-      if (legacyVideoUrl.value) {
+      if (fallbackVideoUrl.value) {
         useLegacyPlayer.value = true
+        playbackNotice.value = 'Using direct video instead of HLS.'
       } else {
-        manifestError.value = response.data.error_message || 'Обработка видео завершилась ошибкой.'
+        manifestError.value = response.data.error_message || 'Video processing failed.'
       }
-    } else if (manifestState.value === 'pending' && legacyVideoUrl.value && !manifestUrl.value) {
+    } else if (manifestState.value === 'inconsistent') {
       clearManifestPolling()
-      useLegacyPlayer.value = true
+      if (fallbackVideoUrl.value) {
+        useLegacyPlayer.value = true
+        playbackNotice.value = 'Using direct video because HLS state is inconsistent.'
+      } else {
+        manifestError.value = response.data.error_message || response.data.message || 'HLS state is inconsistent.'
+      }
     } else if (isManifestProcessing.value) {
       setupManifestPolling()
     }
   } catch (error) {
     console.error(error)
-    if (legacyVideoUrl.value) {
+    const payload = error.response?.data || {}
+    const statusCode = error.response?.status
+
+    if (statusCode === 409) {
+      manifestState.value = payload.status || 'missing'
+      manifestUrl.value = payload.manifest_url || payload.m3u8_url || ''
+      useLegacyPlayer.value = false
+
+      if (payload.playback_mode === 'fallback_video' && fallbackVideoUrl.value) {
+        useLegacyPlayer.value = true
+        playbackNotice.value = manifestState.value === 'failed'
+          ? 'Using direct video instead of HLS.'
+          : 'Using direct video without HLS.'
+      } else {
+        manifestError.value = payload.error_message || payload.message || 'Could not load video manifest.'
+      }
+    } else if (fallbackVideoUrl.value) {
       useLegacyPlayer.value = true
+      playbackNotice.value = 'Using direct video.'
     } else {
-      manifestError.value = 'Не удалось загрузить манифест видео.'
+      manifestError.value = 'Could not load video manifest.'
     }
   } finally {
     if (!keepLoading && manifestState.value !== 'ready') {
@@ -671,7 +707,7 @@ onUnmounted(async () => {
         <video
           v-else-if="showLegacyVideo && !legacyEmbedUrl"
           class="h-full w-full object-contain"
-          :src="legacyVideoUrl"
+          :src="fallbackVideoUrl"
           controls
           preload="metadata"
         ></video>
@@ -683,6 +719,13 @@ onUnmounted(async () => {
           controls
           preload="metadata"
         ></video>
+
+        <div
+          v-if="showLegacyVideo && playbackNotice"
+          class="absolute right-3 top-3 rounded-full border border-amber-400/30 bg-slate-950/85 px-3 py-1 text-[11px] font-semibold text-amber-100"
+        >
+          {{ playbackNotice }}
+        </div>
       </section>
 
       <header class="border-b border-slate-800 bg-slate-900/65 px-4 py-5 sm:px-6">

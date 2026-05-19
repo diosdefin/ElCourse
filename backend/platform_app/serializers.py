@@ -21,6 +21,83 @@ from .models import (
 )
 
 
+def _build_absolute_media_url(request, value):
+    if not value:
+        return ''
+    if request:
+        return request.build_absolute_uri(value)
+    return value
+
+
+def get_lesson_playback_payload(lesson, request=None):
+    fallback_video_url = lesson.video_url or ''
+
+    if lesson.type != Lesson.TYPE_VIDEO:
+        return {
+            'hls_status': 'no_video',
+            'hls_manifest_url': '',
+            'hls_error': '',
+            'fallback_video_url': '',
+            'playback_mode': 'no_video',
+        }
+
+    try:
+        video_asset = lesson.video_asset
+    except LessonVideo.DoesNotExist:
+        return {
+            'hls_status': 'missing',
+            'hls_manifest_url': '',
+            'hls_error': 'HLS-видео для урока не загружено.',
+            'fallback_video_url': fallback_video_url,
+            'playback_mode': 'fallback_video' if fallback_video_url else 'no_video',
+        }
+
+    manifest_url = _build_absolute_media_url(request, video_asset.m3u8_url)
+
+    if video_asset.status == LessonVideo.STATUS_READY:
+        if manifest_url:
+            return {
+                'hls_status': LessonVideo.STATUS_READY,
+                'hls_manifest_url': manifest_url,
+                'hls_error': '',
+                'fallback_video_url': fallback_video_url,
+                'playback_mode': 'hls_ready',
+            }
+        return {
+            'hls_status': 'inconsistent',
+            'hls_manifest_url': '',
+            'hls_error': 'HLS-манифест отсутствует, хотя видео помечено как готовое.',
+            'fallback_video_url': fallback_video_url,
+            'playback_mode': 'fallback_video' if fallback_video_url else 'hls_failed',
+        }
+
+    if video_asset.status in {LessonVideo.STATUS_PENDING, LessonVideo.STATUS_PROCESSING}:
+        return {
+            'hls_status': video_asset.status,
+            'hls_manifest_url': '',
+            'hls_error': '',
+            'fallback_video_url': fallback_video_url,
+            'playback_mode': 'hls_processing',
+        }
+
+    if video_asset.status == LessonVideo.STATUS_FAILED:
+        return {
+            'hls_status': LessonVideo.STATUS_FAILED,
+            'hls_manifest_url': '',
+            'hls_error': video_asset.error_message or 'Не удалось подготовить HLS-видео.',
+            'fallback_video_url': fallback_video_url,
+            'playback_mode': 'fallback_video' if fallback_video_url else 'hls_failed',
+        }
+
+    return {
+        'hls_status': 'unknown',
+        'hls_manifest_url': '',
+        'hls_error': 'Статус HLS-видео не распознан.',
+        'fallback_video_url': fallback_video_url,
+        'playback_mode': 'fallback_video' if fallback_video_url else 'hls_failed',
+    }
+
+
 def build_learning_skills(user):
     if user.role != User.IS_STUDENT:
         return []
@@ -280,6 +357,11 @@ class PublicProfileSerializer(ViewerContextMixin, serializers.ModelSerializer):
 
 class LessonSerializer(serializers.ModelSerializer):
     is_completed = serializers.SerializerMethodField()
+    hls_status = serializers.SerializerMethodField()
+    hls_manifest_url = serializers.SerializerMethodField()
+    hls_error = serializers.SerializerMethodField()
+    fallback_video_url = serializers.SerializerMethodField()
+    playback_mode = serializers.SerializerMethodField()
     module = serializers.PrimaryKeyRelatedField(queryset=Module.objects.all(), required=False, allow_null=True, write_only=True)
     module_id = serializers.IntegerField(source='module.id', read_only=True)
     lesson_type = serializers.CharField(source='type', read_only=True)
@@ -302,6 +384,11 @@ class LessonSerializer(serializers.ModelSerializer):
             'lesson_type',
             'is_published',
             'is_completed',
+            'hls_status',
+            'hls_manifest_url',
+            'hls_error',
+            'fallback_video_url',
+            'playback_mode',
         ]
 
     def validate(self, attrs):
@@ -328,12 +415,38 @@ class LessonSerializer(serializers.ModelSerializer):
             return LessonProgress.objects.filter(user=user, lesson=obj, is_completed=True).exists()
         return False
 
+    def _playback_payload(self, obj):
+        cached = getattr(obj, '_playback_payload_cache', None)
+        if cached is None:
+            request = self.context.get('request')
+            cached = get_lesson_playback_payload(obj, request=request)
+            obj._playback_payload_cache = cached
+        return cached
+
+    def get_hls_status(self, obj):
+        return self._playback_payload(obj)['hls_status']
+
+    def get_hls_manifest_url(self, obj):
+        return self._playback_payload(obj)['hls_manifest_url']
+
+    def get_hls_error(self, obj):
+        return self._playback_payload(obj)['hls_error']
+
+    def get_fallback_video_url(self, obj):
+        return self._playback_payload(obj)['fallback_video_url']
+
+    def get_playback_mode(self, obj):
+        return self._playback_payload(obj)['playback_mode']
+
     def to_representation(self, instance):
         data = super().to_representation(instance)
         request = self.context.get('request')
         if request and getattr(request, 'user', None) and request.user.is_anonymous:
             data['video_url'] = None
             data['content'] = None
+            data['hls_manifest_url'] = ''
+            data['fallback_video_url'] = ''
+            data['playback_mode'] = 'no_video'
         return data
 
 

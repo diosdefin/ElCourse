@@ -54,8 +54,8 @@ from .serializers import (
     StudentAttachmentSerializer,
     StudentOutlineLessonSerializer,
     StudentQuizQuestionSerializer,
+    get_lesson_playback_payload,
     LessonSerializer,
-    LessonVideoSerializer,
     PublicProfileSerializer,
     RegisterSerializer,
     SkillSerializer,
@@ -305,14 +305,21 @@ class LessonVideoManifestView(APIView):
         if not _user_can_access_lesson_resource(request.user, lesson):
             return Response({'detail': 'Недостаточно прав для просмотра видео этого урока.'}, status=status.HTTP_403_FORBIDDEN)
 
-        video_asset, _ = LessonVideo.objects.get_or_create(lesson=lesson)
-        payload = LessonVideoSerializer(video_asset).data
+        payload = get_lesson_playback_payload(lesson, request=request)
+        response_payload = {
+            'status': payload['hls_status'],
+            'message': payload['hls_error'],
+            'error_message': payload['hls_error'],
+            'm3u8_url': payload['hls_manifest_url'],
+            'manifest_url': payload['hls_manifest_url'],
+            'fallback_video_url': payload['fallback_video_url'],
+            'playback_mode': payload['playback_mode'],
+        }
 
-        manifest_url = payload.get('m3u8_url')
-        if manifest_url:
-            payload['m3u8_url'] = request.build_absolute_uri(manifest_url)
+        if payload['hls_status'] in {'missing', 'inconsistent'}:
+            return Response(response_payload, status=status.HTTP_409_CONFLICT)
 
-        return Response(payload)
+        return Response(response_payload)
 
 
 class LessonWatchProgressView(APIView):
@@ -810,8 +817,8 @@ class LessonDetailAPIView(RetrieveAPIView):
     def get_queryset(self):
         user = self.request.user
         if user.is_authenticated and (user.is_staff or user.role == User.IS_TEACHER):
-            return Lesson.objects.all()
-        return Lesson.objects.filter(is_published=True)
+            return Lesson.objects.select_related('video_asset')
+        return Lesson.objects.filter(is_published=True).select_related('video_asset')
 
     def get(self, request, *args, **kwargs):
         lesson = self.get_object()

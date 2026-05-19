@@ -1,7 +1,7 @@
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from .models import Choice, Course, JobOffer, Lesson, LessonProgress, Module, Question, User, Vacancy, VacancyApplication
+from .models import Choice, Course, JobOffer, Lesson, LessonProgress, LessonVideo, Module, Question, User, Vacancy, VacancyApplication
 
 
 class ElCourseSmokeTests(APITestCase):
@@ -48,6 +48,14 @@ class ElCourseSmokeTests(APITestCase):
         correct_choice = Choice.objects.create(question=question, text=correct, is_correct=True)
         wrong_choice = Choice.objects.create(question=question, text=wrong, is_correct=False)
         return question, correct_choice, wrong_choice
+
+    def create_lesson_video(self, lesson, status_value=LessonVideo.STATUS_READY, m3u8_url='/media/hls/test/master.m3u8', error_message=''):
+        return LessonVideo.objects.create(
+            lesson=lesson,
+            status=status_value,
+            m3u8_url=m3u8_url,
+            error_message=error_message,
+        )
 
     def create_vacancy(self, employer=None, status_value=Vacancy.STATUS_PUBLISHED):
         employer = employer or self.create_user('employer-owner', User.IS_EMPLOYER)
@@ -216,13 +224,138 @@ class ElCourseSmokeTests(APITestCase):
         self.assertEqual(self.client.get(progress_url).status_code, status.HTTP_401_UNAUTHORIZED)
 
         self.authenticate(student)
-        self.assertEqual(self.client.get(manifest_url).status_code, status.HTTP_200_OK)
+        self.assertEqual(self.client.get(manifest_url).status_code, status.HTTP_409_CONFLICT)
         self.assertEqual(self.client.get(progress_url).status_code, status.HTTP_200_OK)
         self.assertEqual(self.client.get(hidden_manifest_url).status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(self.client.get(hidden_progress_url).status_code, status.HTTP_403_FORBIDDEN)
 
         self.authenticate(teacher)
-        self.assertEqual(self.client.get(manifest_url).status_code, status.HTTP_200_OK)
+        self.assertEqual(self.client.get(manifest_url).status_code, status.HTTP_409_CONFLICT)
+
+    def test_student_gets_manifest_for_ready_unlocked_hls_lesson(self):
+        teacher = self.create_user('hls-ready-teacher', User.IS_TEACHER)
+        student = self.create_user('hls-ready-student', User.IS_STUDENT)
+        course = self.create_course(author=teacher)
+        lesson = self.create_lesson(course, title='HLS ready lesson', is_published=True, order=0)
+        self.create_lesson_video(lesson, status_value=LessonVideo.STATUS_READY, m3u8_url='/media/hls/ready/master.m3u8')
+
+        self.authenticate(student)
+        response = self.client.get(f'/api/lessons/{lesson.id}/video/manifest/')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['status'], LessonVideo.STATUS_READY)
+        self.assertTrue(response.data['manifest_url'].endswith('/media/hls/ready/master.m3u8'))
+
+    def test_student_cannot_get_manifest_for_locked_or_unpublished_lesson(self):
+        teacher = self.create_user('hls-guard-teacher', User.IS_TEACHER)
+        student = self.create_user('hls-guard-student', User.IS_STUDENT)
+        course = self.create_course(author=teacher)
+        unlocked = self.create_lesson(course, title='Unlocked video', is_published=True, order=0)
+        locked = self.create_lesson(course, title='Locked video', is_published=True, order=1)
+        hidden = self.create_lesson(course, title='Hidden video', is_published=False, order=2)
+        self.create_lesson_video(unlocked)
+        self.create_lesson_video(locked)
+        self.create_lesson_video(hidden)
+
+        self.authenticate(student)
+        self.assertEqual(self.client.get(f'/api/lessons/{unlocked.id}/video/manifest/').status_code, status.HTTP_200_OK)
+        self.assertEqual(self.client.get(f'/api/lessons/{locked.id}/video/manifest/').status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(self.client.get(f'/api/lessons/{hidden.id}/video/manifest/').status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_teacher_can_get_manifest_for_own_ready_lesson_but_other_teacher_cannot(self):
+        owner = self.create_user('hls-owner-teacher', User.IS_TEACHER)
+        other = self.create_user('hls-other-teacher', User.IS_TEACHER)
+        course = self.create_course(author=owner)
+        lesson = self.create_lesson(course, title='Owned video lesson', is_published=False, order=0)
+        self.create_lesson_video(lesson)
+
+        self.authenticate(owner)
+        self.assertEqual(self.client.get(f'/api/lessons/{lesson.id}/video/manifest/').status_code, status.HTTP_200_OK)
+
+        self.authenticate(other)
+        self.assertEqual(self.client.get(f'/api/lessons/{lesson.id}/video/manifest/').status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_missing_lesson_video_does_not_create_fake_pending_manifest(self):
+        teacher = self.create_user('missing-video-teacher', User.IS_TEACHER)
+        student = self.create_user('missing-video-student', User.IS_STUDENT)
+        course = self.create_course(author=teacher)
+        lesson = self.create_lesson(course, title='No HLS uploaded', is_published=True, order=0)
+
+        self.authenticate(student)
+        response = self.client.get(f'/api/lessons/{lesson.id}/video/manifest/')
+
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+        self.assertEqual(response.data['status'], 'missing')
+        self.assertFalse(LessonVideo.objects.filter(lesson=lesson).exists())
+
+    def test_processing_failed_and_inconsistent_hls_states_are_reported_explicitly(self):
+        teacher = self.create_user('hls-states-teacher', User.IS_TEACHER)
+        student = self.create_user('hls-states-student', User.IS_STUDENT)
+        processing_course = self.create_course(author=teacher, title='Processing course')
+        failed_course = self.create_course(author=teacher, title='Failed course')
+        inconsistent_course = self.create_course(author=teacher, title='Inconsistent course')
+        processing_lesson = self.create_lesson(processing_course, title='Processing video', is_published=True, order=0)
+        failed_lesson = self.create_lesson(failed_course, title='Failed video', is_published=True, order=0)
+        inconsistent_lesson = self.create_lesson(inconsistent_course, title='Inconsistent video', is_published=True, order=0)
+        self.create_lesson_video(processing_lesson, status_value=LessonVideo.STATUS_PROCESSING, m3u8_url='')
+        self.create_lesson_video(failed_lesson, status_value=LessonVideo.STATUS_FAILED, m3u8_url='', error_message='ffmpeg failed')
+        self.create_lesson_video(inconsistent_lesson, status_value=LessonVideo.STATUS_READY, m3u8_url='')
+
+        self.authenticate(student)
+
+        processing_response = self.client.get(f'/api/lessons/{processing_lesson.id}/video/manifest/')
+        failed_response = self.client.get(f'/api/lessons/{failed_lesson.id}/video/manifest/')
+        inconsistent_response = self.client.get(f'/api/lessons/{inconsistent_lesson.id}/video/manifest/')
+
+        self.assertEqual(processing_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(processing_response.data['status'], LessonVideo.STATUS_PROCESSING)
+
+        self.assertEqual(failed_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(failed_response.data['status'], LessonVideo.STATUS_FAILED)
+        self.assertEqual(failed_response.data['error_message'], 'ffmpeg failed')
+
+        self.assertEqual(inconsistent_response.status_code, status.HTTP_409_CONFLICT)
+        self.assertEqual(inconsistent_response.data['status'], 'inconsistent')
+
+    def test_lesson_detail_exposes_consistent_playback_fields(self):
+        teacher = self.create_user('lesson-detail-hls-teacher', User.IS_TEACHER)
+        student = self.create_user('lesson-detail-hls-student', User.IS_STUDENT)
+        video_course = self.create_course(author=teacher, title='Playback video course')
+        text_course = self.create_course(author=teacher, title='Playback text course')
+        video_lesson = Lesson.objects.create(
+            course=video_course,
+            title='Playback video lesson',
+            type=Lesson.TYPE_VIDEO,
+            content='Video content.',
+            video_url='https://cdn.example.com/direct.mp4',
+            order=0,
+            is_published=True,
+        )
+        text_lesson = Lesson.objects.create(
+            course=text_course,
+            title='Playback text lesson',
+            type=Lesson.TYPE_TEXT,
+            content='Text content.',
+            order=0,
+            is_published=True,
+        )
+        self.create_lesson_video(video_lesson, status_value=LessonVideo.STATUS_READY, m3u8_url='/media/hls/playback/master.m3u8')
+
+        self.authenticate(student)
+        video_response = self.client.get(f'/api/lessons/{video_lesson.id}/')
+        text_response = self.client.get(f'/api/lessons/{text_lesson.id}/')
+
+        self.assertEqual(video_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(video_response.data['hls_status'], LessonVideo.STATUS_READY)
+        self.assertEqual(video_response.data['playback_mode'], 'hls_ready')
+        self.assertTrue(video_response.data['hls_manifest_url'].endswith('/media/hls/playback/master.m3u8'))
+        self.assertEqual(video_response.data['fallback_video_url'], 'https://cdn.example.com/direct.mp4')
+
+        self.assertEqual(text_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(text_response.data['hls_status'], 'no_video')
+        self.assertEqual(text_response.data['playback_mode'], 'no_video')
+        self.assertEqual(text_response.data['hls_manifest_url'], '')
+        self.assertEqual(text_response.data['fallback_video_url'], '')
 
     def test_teacher_delete_module_removes_lessons_from_student_outline(self):
         teacher = self.create_user('module-delete-teacher', User.IS_TEACHER)
