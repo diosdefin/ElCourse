@@ -5,6 +5,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import api from '../api'
+import ElCourseVideoPlayer from '../components/lesson/ElCourseVideoPlayer.vue'
 import { showError, showSuccess } from '../utils/toast'
 
 const props = defineProps({
@@ -40,6 +41,7 @@ const manifestUrl = ref('')
 const manifestError = ref('')
 const playbackNotice = ref('')
 const useLegacyPlayer = ref(false)
+const playerRef = ref(null)
 const playbackSpeed = ref(1)
 
 const videoElement = ref(null)
@@ -125,6 +127,22 @@ const canUseVideoElementControls = computed(() => isAuthenticated.value && isVid
 const shouldShowSpeedSelector = computed(() => canUseVideoElementControls.value)
 const shouldShowSkipButtons = computed(() => canUseVideoElementControls.value)
 const shouldShowQualitySelector = computed(() => isVideoLesson.value && !showLegacyVideo.value && availableLevels.value.length > 0)
+
+const resolvedPlayerMode = computed(() => {
+  if (!isVideoLesson.value) return 'no_video'
+  if (showLegacyVideo.value) return 'fallback_video'
+  if (manifestState.value === 'ready' && manifestUrl.value) return 'hls_ready'
+  if (manifestLoading.value || isManifestProcessing.value) return 'hls_processing'
+  if (manifestState.value === 'failed' || manifestState.value === 'inconsistent' || manifestError.value) return 'hls_failed'
+  return 'no_video'
+})
+
+const resolvedPlayerError = computed(() => {
+  if (resolvedPlayerMode.value === 'hls_processing' || resolvedPlayerMode.value === 'hls_ready') {
+    return ''
+  }
+  return manifestError.value || lesson.value?.hls_error || ''
+})
 
 const savedTimeLabel = computed(() => formatTime(savedWatchedSeconds.value))
 
@@ -388,13 +406,8 @@ const clearProgressSync = async () => {
 }
 
 const teardownPlayer = () => {
-  if (hlsInstance.value) {
-    hlsInstance.value.destroy()
-    hlsInstance.value = null
-  }
-  if (videoElement.value) {
-    videoElement.value.removeAttribute('src')
-    videoElement.value.load()
+  if (typeof playerRef.value?.pause === 'function') {
+    playerRef.value.pause()
   }
 }
 
@@ -466,9 +479,11 @@ const fetchWatchProgress = async () => {
 }
 
 const saveWatchProgress = async (force = false) => {
-  if (!isAuthenticated.value || isPreviewMode.value || !isVideoLesson.value || !videoElement.value) return
+  if (!isAuthenticated.value || isPreviewMode.value || !isVideoLesson.value) return
 
-  const currentSeconds = Math.floor(videoElement.value.currentTime || 0)
+  const currentSeconds = Math.floor(
+    playerRef.value?.getCurrentTime?.() ?? videoElement.value?.currentTime ?? 0
+  )
   if (currentSeconds <= 0) return
   if (!force && Math.abs(currentSeconds - lastSyncedSeconds.value) < 8) return
 
@@ -483,7 +498,8 @@ const saveWatchProgress = async (force = false) => {
 }
 
 const startProgressSync = () => {
-  if (!isAuthenticated.value || isPreviewMode.value || !isVideoLesson.value || !videoElement.value) return
+  if (!isAuthenticated.value || isPreviewMode.value || !isVideoLesson.value) return
+  if (typeof playerRef.value?.hasControllableMedia === 'function' && !playerRef.value.hasControllableMedia()) return
 
   if (progressSyncTimer) {
     window.clearInterval(progressSyncTimer)
@@ -494,18 +510,33 @@ const startProgressSync = () => {
 }
 
 const jumpToSavedTime = () => {
-  if (!videoElement.value || !savedWatchedSeconds.value) {
+  if (!savedWatchedSeconds.value) {
     resumePromptVisible.value = false
     return
   }
 
-  videoElement.value.currentTime = savedWatchedSeconds.value
+  if (typeof playerRef.value?.seekTo === 'function') {
+    playerRef.value.seekTo(savedWatchedSeconds.value)
+  } else if (videoElement.value) {
+    videoElement.value.currentTime = savedWatchedSeconds.value
+  }
   resumePromptVisible.value = false
   showSuccess(`Продолжили с ${savedTimeLabel.value}.`)
 }
 
 const startFromBeginning = () => {
   resumePromptVisible.value = false
+}
+
+const handlePlayerReady = async () => {
+  await fetchWatchProgress()
+  startProgressSync()
+}
+
+const handlePlayerProgressSave = async () => {
+  if (!isPreviewMode.value) {
+    await saveWatchProgress(true)
+  }
 }
 
 const applyQuality = () => {
@@ -815,12 +846,10 @@ watch(playbackSpeed, (value) => {
 
 onMounted(() => {
   playbackSpeed.value = readSavedPlaybackSpeed()
-  window.addEventListener('keydown', handlePlayerKeydown)
   loadAll()
 })
 
 onUnmounted(async () => {
-  window.removeEventListener('keydown', handlePlayerKeydown)
   clearManifestPolling()
   stopQuizTimer()
   await clearProgressSync()
@@ -856,7 +885,7 @@ onUnmounted(async () => {
     </button>
 
     <article class="min-w-0 overflow-hidden rounded-3xl border border-slate-800 bg-slate-950/20 shadow-2xl shadow-slate-950/20">
-      <section v-if="isVideoLesson" class="relative aspect-video max-w-full overflow-hidden bg-black">
+      <section v-if="false" class="relative aspect-video max-w-full overflow-hidden bg-black">
         <div
           v-if="!isAuthenticated"
           class="flex h-full items-center justify-center bg-slate-950/95 px-4 text-center text-slate-400 sm:px-6"
@@ -928,7 +957,7 @@ onUnmounted(async () => {
       </section>
 
       <section
-        v-if="isVideoLesson && isAuthenticated"
+        v-if="false"
         class="border-b border-slate-800 bg-slate-900/55 px-4 py-3 sm:px-6"
       >
         <div class="flex flex-wrap items-center gap-2">
@@ -1001,6 +1030,39 @@ onUnmounted(async () => {
             </select>
           </label>
         </div>
+      </section>
+
+      <section v-if="isVideoLesson" class="border-b border-slate-800 bg-slate-900/40 p-4 sm:p-6">
+        <div
+          v-if="!isAuthenticated"
+          class="flex aspect-video items-center justify-center rounded-[1.75rem] border border-slate-800 bg-slate-950/95 px-4 text-center text-slate-400 sm:px-6"
+        >
+          <div>
+            <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-800 bg-slate-900 text-slate-500">
+              <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M7 10V8a5 5 0 0110 0v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                <path d="M6 10h12v10H6V10z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+              </svg>
+            </div>
+            <p class="font-semibold text-slate-300">Р’РѕР№РґРёС‚Рµ РІ Р°РєРєР°СѓРЅС‚, С‡С‚РѕР±С‹ СЃРјРѕС‚СЂРµС‚СЊ СѓСЂРѕРє.</p>
+          </div>
+        </div>
+
+        <ElCourseVideoPlayer
+          v-else
+          ref="playerRef"
+          :manifest-url="resolvedPlayerMode === 'hls_ready' ? manifestUrl : ''"
+          :fallback-url="resolvedPlayerMode === 'fallback_video' ? fallbackVideoUrl : ''"
+          :playback-mode="resolvedPlayerMode"
+          :hls-status="manifestState"
+          :error-message="resolvedPlayerError"
+          :initial-time="0"
+          :preview="isPreviewMode"
+          :readonly="!isAuthenticated"
+          @ready="handlePlayerReady"
+          @progress-save="handlePlayerProgressSave"
+          @ended="handlePlayerProgressSave"
+        />
       </section>
 
       <header class="border-b border-slate-800 bg-slate-900/65 px-4 py-5 sm:px-6">
