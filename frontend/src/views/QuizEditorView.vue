@@ -74,6 +74,7 @@ const fetchQuiz = async () => {
   errorMessage.value = ''
 
   try {
+    // Legacy course-level quiz editor. Lesson quiz questions are edited inside the builder.
     const response = await api.get(`/teacher/courses/${courseId.value}/quiz-editor/`)
     const list = Array.isArray(response.data) ? response.data : response.data?.questions || []
     questions.value = list.map(normalizeQuestion)

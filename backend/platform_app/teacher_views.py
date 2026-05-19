@@ -3,7 +3,7 @@
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 from django.db import transaction
-from django.db.models import Avg, Count, Sum
+from django.db.models import Avg, Count, Q, Sum
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.exceptions import PermissionDenied
@@ -317,13 +317,21 @@ class TeacherQuestionDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Question.objects.filter(lesson__course__author=self.request.user).prefetch_related('choices')
+        return (
+            Question.objects
+            .filter(
+                Q(lesson__course__author=self.request.user)
+                | Q(lesson__isnull=True, course__author=self.request.user)
+            )
+            .prefetch_related('choices')
+        )
 
 
 class TeacherQuizUpdateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, course_id):
+        # Legacy course-level quiz editor: only questions not attached to lessons.
         questions = Question.objects.filter(course_id=course_id, course__author=request.user, lesson__isnull=True)
         serializer = QuestionSerializer(questions, many=True)
         return Response(serializer.data)

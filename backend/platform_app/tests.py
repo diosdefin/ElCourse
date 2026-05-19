@@ -1,7 +1,7 @@
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from .models import Course, JobOffer, Lesson, LessonProgress, Module, User, Vacancy, VacancyApplication
+from .models import Choice, Course, JobOffer, Lesson, LessonProgress, Module, Question, User, Vacancy, VacancyApplication
 
 
 class ElCourseSmokeTests(APITestCase):
@@ -36,6 +36,18 @@ class ElCourseSmokeTests(APITestCase):
 
     def create_module(self, course, title='Smoke module', order=0):
         return Module.objects.create(course=course, title=title, order=order)
+
+    def create_question(self, course, text='Question?', lesson=None, correct='Correct', wrong='Wrong'):
+        question = Question.objects.create(
+            course=course,
+            lesson=lesson,
+            text=text,
+            is_multiple=False,
+            explanation='Explanation.',
+        )
+        correct_choice = Choice.objects.create(question=question, text=correct, is_correct=True)
+        wrong_choice = Choice.objects.create(question=question, text=wrong, is_correct=False)
+        return question, correct_choice, wrong_choice
 
     def create_vacancy(self, employer=None, status_value=Vacancy.STATUS_PUBLISHED):
         employer = employer or self.create_user('employer-owner', User.IS_EMPLOYER)
@@ -366,3 +378,155 @@ class ElCourseSmokeTests(APITestCase):
         self.assertTrue(
             LessonProgress.objects.filter(user=student, lesson=lesson, is_completed=True).exists()
         )
+
+    def test_lesson_quiz_returns_only_questions_for_requested_lesson(self):
+        teacher = self.create_user('lesson-quiz-teacher', User.IS_TEACHER)
+        student = self.create_user('lesson-quiz-student', User.IS_STUDENT)
+        course = self.create_course(author=teacher)
+        lesson_one = Lesson.objects.create(course=course, title='Quiz 1', type=Lesson.TYPE_QUIZ, content='', order=0, is_published=True)
+        lesson_two = Lesson.objects.create(course=course, title='Quiz 2', type=Lesson.TYPE_QUIZ, content='', order=1, is_published=True)
+        question_one, *_ = self.create_question(course, text='Question for lesson 1', lesson=lesson_one)
+        self.create_question(course, text='Question for lesson 2', lesson=lesson_two)
+
+        self.authenticate(student)
+        response = self.client.get(f'/api/lessons/{lesson_one.id}/quiz/')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['questions']), 1)
+        self.assertEqual(response.data['questions'][0]['id'], question_one.id)
+
+    def test_legacy_course_quiz_does_not_include_lesson_questions(self):
+        teacher = self.create_user('legacy-quiz-teacher', User.IS_TEACHER)
+        student = self.create_user('legacy-quiz-student', User.IS_STUDENT)
+        course = self.create_course(author=teacher)
+        lesson = Lesson.objects.create(course=course, title='Lesson quiz', type=Lesson.TYPE_QUIZ, content='', order=0, is_published=True)
+        legacy_question, *_ = self.create_question(course, text='Legacy question', lesson=None)
+        self.create_question(course, text='Lesson question', lesson=lesson)
+
+        self.authenticate(student)
+        response = self.client.get(f'/api/courses/{course.id}/quiz/')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['id'], legacy_question.id)
+
+    def test_lesson_quiz_does_not_include_legacy_questions(self):
+        teacher = self.create_user('no-legacy-mix-teacher', User.IS_TEACHER)
+        student = self.create_user('no-legacy-mix-student', User.IS_STUDENT)
+        course = self.create_course(author=teacher)
+        lesson = Lesson.objects.create(course=course, title='Lesson quiz', type=Lesson.TYPE_QUIZ, content='', order=0, is_published=True)
+        self.create_question(course, text='Legacy question', lesson=None)
+        lesson_question, *_ = self.create_question(course, text='Lesson-only question', lesson=lesson)
+
+        self.authenticate(student)
+        response = self.client.get(f'/api/lessons/{lesson.id}/quiz/')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['questions']), 1)
+        self.assertEqual(response.data['questions'][0]['id'], lesson_question.id)
+
+    def test_submit_lesson_quiz_rejects_foreign_question_and_answer_ids(self):
+        teacher = self.create_user('foreign-answer-teacher', User.IS_TEACHER)
+        student = self.create_user('foreign-answer-student', User.IS_STUDENT)
+        course = self.create_course(author=teacher)
+        lesson_one = Lesson.objects.create(course=course, title='Quiz 1', type=Lesson.TYPE_QUIZ, content='', order=0, is_published=True)
+        lesson_two = Lesson.objects.create(course=course, title='Quiz 2', type=Lesson.TYPE_QUIZ, content='', order=1, is_published=True)
+        question_one, correct_one, _ = self.create_question(course, text='Question for lesson 1', lesson=lesson_one)
+        question_two, correct_two, _ = self.create_question(course, text='Question for lesson 2', lesson=lesson_two)
+
+        self.authenticate(student)
+
+        foreign_question_response = self.client.post(
+            f'/api/lessons/{lesson_one.id}/quiz/submit/',
+            {'answers': {str(question_two.id): correct_two.id}},
+            format='json',
+        )
+        self.assertEqual(foreign_question_response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(LessonProgress.objects.filter(user=student, lesson=lesson_one).exists())
+
+        foreign_choice_response = self.client.post(
+            f'/api/lessons/{lesson_one.id}/quiz/submit/',
+            {'answers': {str(question_one.id): correct_two.id}},
+            format='json',
+        )
+        self.assertEqual(foreign_choice_response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(LessonProgress.objects.filter(user=student, lesson=lesson_one).exists())
+
+    def test_submit_lesson_quiz_rejects_legacy_question_ids(self):
+        teacher = self.create_user('legacy-submit-teacher', User.IS_TEACHER)
+        student = self.create_user('legacy-submit-student', User.IS_STUDENT)
+        course = self.create_course(author=teacher)
+        lesson = Lesson.objects.create(course=course, title='Lesson quiz', type=Lesson.TYPE_QUIZ, content='', order=0, is_published=True)
+        lesson_question, correct_choice, _ = self.create_question(course, text='Lesson question', lesson=lesson)
+        legacy_question, legacy_correct, _ = self.create_question(course, text='Legacy question', lesson=None)
+
+        self.authenticate(student)
+        response = self.client.post(
+            f'/api/lessons/{lesson.id}/quiz/submit/',
+            {'answers': {str(legacy_question.id): legacy_correct.id, str(lesson_question.id): correct_choice.id}},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(LessonProgress.objects.filter(user=student, lesson=lesson).exists())
+
+    def test_locked_and_unpublished_quiz_lessons_are_blocked_for_student(self):
+        teacher = self.create_user('quiz-guard-teacher', User.IS_TEACHER)
+        student = self.create_user('quiz-guard-student', User.IS_STUDENT)
+        course = self.create_course(author=teacher)
+        unlocked = Lesson.objects.create(course=course, title='Unlocked quiz', type=Lesson.TYPE_QUIZ, content='', order=0, is_published=True)
+        locked = Lesson.objects.create(course=course, title='Locked quiz', type=Lesson.TYPE_QUIZ, content='', order=1, is_published=True)
+        hidden = Lesson.objects.create(course=course, title='Hidden quiz', type=Lesson.TYPE_QUIZ, content='', order=2, is_published=False)
+        self.create_question(course, text='Unlocked question', lesson=unlocked)
+        self.create_question(course, text='Locked question', lesson=locked)
+        self.create_question(course, text='Hidden question', lesson=hidden)
+
+        self.authenticate(student)
+        self.assertEqual(self.client.get(f'/api/lessons/{unlocked.id}/quiz/').status_code, status.HTTP_200_OK)
+        self.assertEqual(self.client.get(f'/api/lessons/{locked.id}/quiz/').status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(self.client.post(f'/api/lessons/{locked.id}/quiz/submit/', {'answers': {}}, format='json').status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(self.client.get(f'/api/lessons/{hidden.id}/quiz/').status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(self.client.post(f'/api/lessons/{hidden.id}/quiz/submit/', {'answers': {}}, format='json').status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_delete_quiz_lesson_removes_lesson_questions(self):
+        teacher = self.create_user('delete-quiz-teacher', User.IS_TEACHER)
+        student = self.create_user('delete-quiz-student', User.IS_STUDENT)
+        course = self.create_course(author=teacher)
+        module = self.create_module(course, title='Quiz module', order=0)
+        lesson = Lesson.objects.create(course=course, module=module, title='Quiz lesson', type=Lesson.TYPE_QUIZ, content='', order=0, is_published=True)
+        question, *_ = self.create_question(course, text='Quiz question', lesson=lesson)
+
+        self.authenticate(teacher)
+        delete_response = self.client.delete(f'/api/teacher/lessons/{lesson.id}/')
+        self.assertEqual(delete_response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Question.objects.filter(id=question.id).exists())
+
+        self.authenticate(student)
+        outline_response = self.client.get(f'/api/courses/{course.id}/outline/')
+        lesson_ids = [
+            item['id']
+            for module_payload in outline_response.data['modules']
+            for item in module_payload.get('lessons', [])
+        ]
+        self.assertNotIn(lesson.id, lesson_ids)
+        self.assertEqual(self.client.get(f'/api/lessons/{lesson.id}/quiz/').status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete_legacy_question_does_not_affect_lesson_questions(self):
+        teacher = self.create_user('legacy-delete-teacher', User.IS_TEACHER)
+        student = self.create_user('legacy-delete-student', User.IS_STUDENT)
+        course = self.create_course(author=teacher)
+        lesson = Lesson.objects.create(course=course, title='Lesson quiz', type=Lesson.TYPE_QUIZ, content='', order=0, is_published=True)
+        lesson_question, *_ = self.create_question(course, text='Lesson question survives', lesson=lesson)
+        legacy_question, *_ = self.create_question(course, text='Legacy question removed', lesson=None)
+
+        self.authenticate(teacher)
+        response = self.client.delete(f'/api/teacher/questions/{legacy_question.id}/')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Question.objects.filter(id=legacy_question.id).exists())
+        self.assertTrue(Question.objects.filter(id=lesson_question.id).exists())
+
+        self.authenticate(student)
+        lesson_quiz_response = self.client.get(f'/api/lessons/{lesson.id}/quiz/')
+        self.assertEqual(lesson_quiz_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(lesson_quiz_response.data['questions']), 1)
+        self.assertEqual(lesson_quiz_response.data['questions'][0]['id'], lesson_question.id)

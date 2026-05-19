@@ -97,6 +97,24 @@ def student_visible_lessons_queryset(course):
     )
 
 
+def lesson_quiz_questions_queryset(lesson):
+    return (
+        Question.objects
+        .filter(lesson=lesson)
+        .prefetch_related('choices')
+        .order_by('id')
+    )
+
+
+def legacy_course_quiz_questions_queryset(course):
+    return (
+        Question.objects
+        .filter(course=course, lesson__isnull=True)
+        .prefetch_related('choices')
+        .order_by('id')
+    )
+
+
 class LessonProgress(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='lesson_progress')
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='user_progress')

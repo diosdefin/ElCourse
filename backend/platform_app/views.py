@@ -40,6 +40,8 @@ from .models import (
     User,
     Vacancy,
     VacancyApplication,
+    legacy_course_quiz_questions_queryset,
+    lesson_quiz_questions_queryset,
     student_visible_lessons_queryset,
 )
 from .serializers import (
@@ -461,7 +463,7 @@ class LessonQuizView(APIView):
             return Response({'detail': 'Недостаточно прав.'}, status=status.HTTP_403_FORBIDDEN)
 
         config, _ = QuizConfig.objects.get_or_create(lesson=lesson)
-        questions = Question.objects.filter(lesson=lesson).prefetch_related('choices').order_by('id')
+        questions = lesson_quiz_questions_queryset(lesson)
         blocked_until = progress.blocked_until if progress else None
 
         return Response({
@@ -497,12 +499,50 @@ class LessonQuizSubmitView(APIView):
         if not isinstance(submitted_answers, dict):
             return Response({'detail': 'Поле answers должно быть объектом.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        questions = list(Question.objects.filter(lesson=lesson).prefetch_related('choices').order_by('id'))
+        questions = list(lesson_quiz_questions_queryset(lesson))
         if not questions:
             return Response({'detail': 'Для этого урока нет вопросов.'}, status=status.HTTP_400_BAD_REQUEST)
 
+        valid_question_ids = {str(question.id) for question in questions}
+        submitted_question_ids = {str(question_id) for question_id in submitted_answers.keys()}
+        foreign_question_ids = submitted_question_ids - valid_question_ids
+        if foreign_question_ids:
+            return Response(
+                {'detail': 'Answers contain questions from a different quiz.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         config, _ = QuizConfig.objects.get_or_create(lesson=lesson)
         now = timezone.now()
+        normalized_answers = {}
+
+        for question in questions:
+            raw_answer = submitted_answers.get(str(question.id), submitted_answers.get(question.id))
+            valid_choice_ids = {choice.id for choice in question.choices.all()}
+
+            try:
+                if question.is_multiple:
+                    if isinstance(raw_answer, list):
+                        selected_ids = {int(value) for value in raw_answer}
+                    elif raw_answer is None:
+                        selected_ids = set()
+                    else:
+                        selected_ids = {int(raw_answer)}
+                else:
+                    if raw_answer in (None, ''):
+                        selected_ids = set()
+                    else:
+                        selected_ids = {int(raw_answer)}
+            except (TypeError, ValueError):
+                selected_ids = set()
+
+            if selected_ids and not selected_ids.issubset(valid_choice_ids):
+                return Response(
+                    {'detail': 'Answers contain choices from a different quiz.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            normalized_answers[question.id] = selected_ids
 
         with transaction.atomic():
             progress, _ = LessonProgress.objects.select_for_update().get_or_create(
@@ -534,24 +574,8 @@ class LessonQuizSubmitView(APIView):
             incorrect_feedback = []
 
             for question in questions:
-                raw_answer = submitted_answers.get(str(question.id), submitted_answers.get(question.id))
                 correct_ids = {choice.id for choice in question.choices.all() if choice.is_correct}
-
-                try:
-                    if question.is_multiple:
-                        if isinstance(raw_answer, list):
-                            selected_ids = {int(value) for value in raw_answer}
-                        elif raw_answer is None:
-                            selected_ids = set()
-                        else:
-                            selected_ids = {int(raw_answer)}
-                    else:
-                        if raw_answer in (None, ''):
-                            selected_ids = set()
-                        else:
-                            selected_ids = {int(raw_answer)}
-                except (TypeError, ValueError):
-                    selected_ids = set()
+                selected_ids = normalized_answers.get(question.id, set())
 
                 is_correct = bool(selected_ids) and selected_ids == correct_ids
                 if is_correct:
@@ -809,12 +833,8 @@ class GetQuizView(APIView):
 
     def get(self, request, course_id):
         course = get_object_or_404(Course, id=course_id)
-        if Lesson.objects.filter(course=course).exists():
-            return Response(
-                {'detail': 'Курс использует новую систему тестов по урокам.'},
-                status=status.HTTP_410_GONE,
-            )
-        questions = Question.objects.filter(course_id=course_id)
+        # Legacy course-level quiz: only questions not attached to lessons.
+        questions = legacy_course_quiz_questions_queryset(course)
         if not questions.exists():
             return Response({'error': 'Вопросы для этого курса не найдены'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -838,12 +858,8 @@ class CheckQuizView(APIView):
             return Response({'error': 'Только студенты могут проходить тесты'}, status=status.HTTP_403_FORBIDDEN)
 
         course = get_object_or_404(Course.objects.prefetch_related('skills_covered'), id=course_id)
-        if Lesson.objects.filter(course=course).exists():
-            return Response(
-                {'detail': 'Курс использует новую систему тестов по урокам.'},
-                status=status.HTTP_410_GONE,
-            )
-        questions = Question.objects.filter(course=course)
+        # Legacy course-level quiz: only questions not attached to lessons.
+        questions = legacy_course_quiz_questions_queryset(course)
         answers = request.data.get('answers', {})
 
         correct_count = 0
@@ -1174,3 +1190,5 @@ class VacancyApplyView(APIView):
 
         serializer = VacancyApplicationSerializer(application, context={'request': request})
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
