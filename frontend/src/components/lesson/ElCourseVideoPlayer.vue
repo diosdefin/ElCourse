@@ -29,6 +29,8 @@ const SPEED_OPTIONS = [0.75, 1, 1.25, 1.5, 2]
 
 const wrapperRef = ref(null)
 const videoRef = ref(null)
+const settingsButtonRef = ref(null)
+const settingsMenuRef = ref(null)
 const hlsInstance = ref(null)
 
 const currentTime = ref(0)
@@ -39,6 +41,7 @@ const isMuted = ref(false)
 const isPlaying = ref(false)
 const isBuffering = ref(false)
 const isFullscreen = ref(false)
+const isSettingsOpen = ref(false)
 const playbackSpeed = ref(1)
 const availableLevels = ref([])
 const selectedLevel = ref(-1)
@@ -75,36 +78,51 @@ const youtubeEmbedUrl = computed(() => {
 const isYoutubeFallback = computed(() => isFallbackVideo.value && Boolean(youtubeEmbedUrl.value))
 const usesVideoElement = computed(() => (isHlsReady.value || isFallbackVideo.value) && !isYoutubeFallback.value)
 const showCustomControls = computed(() => usesVideoElement.value)
+const showQualitySelector = computed(() => isHlsReady.value && availableLevels.value.length > 0)
+const canOpenSettings = computed(() => showCustomControls.value)
 
 const statusMeta = computed(() => {
   if (props.playbackMode === 'fallback_video') {
     return {
-      label: 'Fallback',
-      tone: 'border-amber-400/30 bg-amber-500/10 text-amber-100',
+      label: 'Резервное видео',
+      tone: 'border-amber-400/25 bg-amber-500/10 text-amber-100',
     }
   }
   if (props.playbackMode === 'hls_ready') {
     return {
-      label: 'HLS',
-      tone: 'border-indigo-400/30 bg-indigo-500/10 text-indigo-100',
+      label: 'HLS готов',
+      tone: 'border-indigo-400/25 bg-indigo-500/10 text-indigo-100',
     }
   }
   if (props.playbackMode === 'hls_processing') {
     return {
-      label: 'Processing',
-      tone: 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100',
+      label: 'Видео обрабатывается',
+      tone: 'border-emerald-400/25 bg-emerald-500/10 text-emerald-100',
     }
   }
   if (props.playbackMode === 'hls_failed') {
     return {
-      label: 'Failed',
-      tone: 'border-rose-400/30 bg-rose-500/10 text-rose-100',
+      label: 'Ошибка обработки',
+      tone: 'border-rose-400/25 bg-rose-500/10 text-rose-100',
     }
   }
   return {
-    label: 'No video',
+    label: 'Видео недоступно',
     tone: 'border-slate-700 bg-slate-900/80 text-slate-200',
   }
+})
+
+const overlayTitle = computed(() => {
+  if (props.playbackMode === 'hls_processing') return 'Видео обрабатывается'
+  if (props.playbackMode === 'hls_failed') return 'Видео недоступно'
+  return 'Видео недоступно'
+})
+
+const overlayMessage = computed(() => {
+  if (props.playbackMode === 'hls_processing') {
+    return 'Подготавливаем поток для воспроизведения. Статус обновится автоматически.'
+  }
+  return props.errorMessage || 'Для этого урока пока нет доступного видеопотока.'
 })
 
 const timelineMax = computed(() => Math.max(duration.value, 0))
@@ -125,23 +143,9 @@ const qualityOptions = computed(() => {
   return options
 })
 
-const showQualitySelector = computed(() => isHlsReady.value && availableLevels.value.length > 0)
 const fullscreenLabel = computed(() => (
   isFullscreen.value ? 'Выйти из полноэкранного режима' : 'Открыть полноэкранный режим'
 ))
-
-const overlayTitle = computed(() => {
-  if (props.playbackMode === 'hls_processing') return 'Видео обрабатывается'
-  if (props.playbackMode === 'hls_failed') return 'Видео недоступно'
-  return 'Видео недоступно'
-})
-
-const overlayMessage = computed(() => {
-  if (props.playbackMode === 'hls_processing') {
-    return 'Подготавливаем поток для воспроизведения. Статус обновится автоматически.'
-  }
-  return props.errorMessage || 'Для этого урока пока нет доступного видеопотока.'
-})
 
 function normalizePlaybackSpeed(value) {
   const numeric = Number(value)
@@ -169,7 +173,10 @@ function formatTime(totalSeconds) {
   const hours = Math.floor(total / 3600)
   const minutes = Math.floor((total % 3600) / 60)
   const seconds = `${total % 60}`.padStart(2, '0')
-  if (hours > 0) return `${hours}:${`${minutes}`.padStart(2, '0')}:${seconds}`
+
+  if (hours > 0) {
+    return `${hours}:${`${minutes}`.padStart(2, '0')}:${seconds}`
+  }
   return `${minutes}:${seconds}`
 }
 
@@ -182,6 +189,20 @@ function showQualityNotice(message) {
     qualityNotice.value = ''
     qualityNoticeTimer = null
   }, 1800)
+}
+
+function closeSettingsMenu() {
+  isSettingsOpen.value = false
+}
+
+function toggleSettingsMenu() {
+  if (!canOpenSettings.value) return
+  isSettingsOpen.value = !isSettingsOpen.value
+}
+
+function currentQualityLabel() {
+  const option = qualityOptions.value.find((item) => item.value === Number(selectedLevel.value))
+  return option?.label || 'Auto'
 }
 
 function applyPlaybackSpeed() {
@@ -265,34 +286,69 @@ function applyVolume(value) {
   isMuted.value = videoRef.value.muted
 }
 
-async function toggleFullscreen() {
+function getFullscreenElement() {
+  return document.fullscreenElement || document.webkitFullscreenElement || null
+}
+
+async function exitFullscreen() {
+  const doc = document
+  if (typeof doc.exitFullscreen === 'function') {
+    await doc.exitFullscreen()
+    return
+  }
+  if (typeof doc.webkitExitFullscreen === 'function') {
+    doc.webkitExitFullscreen()
+    return
+  }
+  if (typeof videoRef.value?.webkitExitFullscreen === 'function') {
+    videoRef.value.webkitExitFullscreen()
+  }
+}
+
+async function enterFullscreen() {
   const target = wrapperRef.value
   if (!target) return
 
+  if (typeof target.requestFullscreen === 'function') {
+    await target.requestFullscreen()
+    return
+  }
+  if (typeof target.webkitRequestFullscreen === 'function') {
+    target.webkitRequestFullscreen()
+    return
+  }
+  if (typeof videoRef.value?.webkitEnterFullscreen === 'function') {
+    videoRef.value.webkitEnterFullscreen()
+  }
+}
+
+async function toggleFullscreen() {
   try {
-    const activeElement = document.fullscreenElement || document.webkitFullscreenElement
-    if (activeElement) {
-      if (typeof document.exitFullscreen === 'function') {
-        await document.exitFullscreen()
-      } else if (typeof document.webkitExitFullscreen === 'function') {
-        document.webkitExitFullscreen()
-      }
-    } else if (typeof target.requestFullscreen === 'function') {
-      await target.requestFullscreen()
-    } else if (typeof target.webkitRequestFullscreen === 'function') {
-      target.webkitRequestFullscreen()
+    if (getFullscreenElement() || videoRef.value?.webkitDisplayingFullscreen) {
+      await exitFullscreen()
+    } else {
+      await enterFullscreen()
     }
   } catch (error) {
   }
 }
 
 function applySelectedQuality() {
-  if (hlsInstance.value) {
-    hlsInstance.value.currentLevel = Number(selectedLevel.value)
-    emit('quality-change', selectedLevel.value)
-    const option = qualityOptions.value.find((item) => item.value === Number(selectedLevel.value))
-    showQualityNotice(`Качество: ${option?.label || 'Auto'}`)
-  }
+  if (!hlsInstance.value) return
+  hlsInstance.value.currentLevel = Number(selectedLevel.value)
+  emit('quality-change', selectedLevel.value)
+  showQualityNotice(`Качество: ${currentQualityLabel()}`)
+}
+
+function selectQuality(value) {
+  selectedLevel.value = Number(value)
+  applySelectedQuality()
+  closeSettingsMenu()
+}
+
+function selectSpeed(value) {
+  playbackSpeed.value = Number(value)
+  closeSettingsMenu()
 }
 
 function attachMediaListeners(video) {
@@ -352,6 +408,12 @@ function attachMediaListeners(video) {
     ['error', () => {
       emitPlayerError('Не удалось воспроизвести видео.')
     }],
+    ['webkitbeginfullscreen', () => {
+      isFullscreen.value = true
+    }],
+    ['webkitendfullscreen', () => {
+      isFullscreen.value = false
+    }],
   ]
 
   listeners.forEach(([eventName, handler]) => video.addEventListener(eventName, handler))
@@ -362,6 +424,8 @@ function attachMediaListeners(video) {
 
 function teardownPlayer() {
   removeMediaListeners()
+  closeSettingsMenu()
+
   if (hlsInstance.value) {
     hlsInstance.value.destroy()
     hlsInstance.value = null
@@ -371,6 +435,7 @@ function teardownPlayer() {
     videoRef.value.removeAttribute('src')
     videoRef.value.load()
   }
+
   availableLevels.value = []
   selectedLevel.value = -1
   currentTime.value = 0
@@ -425,6 +490,7 @@ async function setupPlayerSource() {
       }))
       selectedLevel.value = -1
       applyPlaybackSpeed()
+      emit('quality-change', -1)
     })
 
     hls.on(Hls.Events.ERROR, (_, data) => {
@@ -455,7 +521,22 @@ function isEditableShortcutTarget(target) {
   return tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT'
 }
 
+function handleSettingsPointerDown(event) {
+  if (!isSettingsOpen.value) return
+  const target = event.target
+  if (settingsButtonRef.value?.contains(target) || settingsMenuRef.value?.contains(target)) {
+    return
+  }
+  closeSettingsMenu()
+}
+
 function handleKeydown(event) {
+  if (event.key === 'Escape' && isSettingsOpen.value) {
+    event.preventDefault()
+    closeSettingsMenu()
+    return
+  }
+
   if (!showCustomControls.value) return
   if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return
   if (isEditableShortcutTarget(event.target)) return
@@ -490,7 +571,7 @@ function handleKeydown(event) {
 }
 
 function handleFullscreenChange() {
-  isFullscreen.value = Boolean(document.fullscreenElement || document.webkitFullscreenElement)
+  isFullscreen.value = Boolean(getFullscreenElement() || videoRef.value?.webkitDisplayingFullscreen)
 }
 
 watch(
@@ -515,12 +596,14 @@ watch(playbackSpeed, (value) => {
 onMounted(() => {
   playbackSpeed.value = readSavedPlaybackSpeed()
   window.addEventListener('keydown', handleKeydown)
+  document.addEventListener('pointerdown', handleSettingsPointerDown)
   document.addEventListener('fullscreenchange', handleFullscreenChange)
   document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
 })
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown)
+  document.removeEventListener('pointerdown', handleSettingsPointerDown)
   document.removeEventListener('fullscreenchange', handleFullscreenChange)
   document.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
   if (qualityNoticeTimer) {
@@ -548,11 +631,14 @@ defineExpose({
 </script>
 
 <template>
-  <section class="relative overflow-hidden rounded-[1.75rem] border border-slate-700/60 bg-slate-950 shadow-2xl shadow-slate-950/35">
+  <section
+    ref="wrapperRef"
+    class="relative overflow-hidden rounded-[1.8rem] border border-slate-700/50 bg-slate-950 shadow-[0_24px_60px_rgba(2,6,23,0.45)]"
+  >
     <div class="relative aspect-video bg-black">
       <div
         v-if="playbackMode === 'hls_processing'"
-        class="absolute inset-0 flex items-center justify-center bg-slate-950/95 px-4 text-center"
+        class="absolute inset-0 flex items-center justify-center bg-slate-950/94 px-4 text-center"
       >
         <div class="space-y-4">
           <div class="mx-auto h-12 w-12 animate-spin rounded-full border-2 border-slate-700 border-t-emerald-400"></div>
@@ -565,7 +651,7 @@ defineExpose({
 
       <div
         v-else-if="playbackMode === 'hls_failed' || playbackMode === 'no_video'"
-        class="absolute inset-0 flex items-center justify-center bg-slate-950/95 px-4 text-center"
+        class="absolute inset-0 flex items-center justify-center bg-slate-950/94 px-4 text-center"
       >
         <div class="space-y-3">
           <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-rose-400/20 bg-rose-500/10 text-rose-200">
@@ -594,182 +680,217 @@ defineExpose({
         ref="videoRef"
         class="h-full w-full object-contain"
         preload="metadata"
+        @click="togglePlayPause"
       ></video>
 
       <div
-        v-if="showCustomControls && !isPlaying && !isBuffering"
-        class="pointer-events-none absolute inset-0 grid place-items-center"
-      >
-        <button
-          type="button"
-          class="pointer-events-auto inline-flex h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-slate-950/70 text-white shadow-2xl shadow-black/40 backdrop-blur-xl transition hover:bg-slate-900/85 active:scale-[0.96] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/80"
-          aria-label="Воспроизвести или поставить на паузу"
-          @click="togglePlayPause"
-        >
-          <svg v-if="!isPlaying" class="ml-1 h-7 w-7" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M8 6.5v11l9-5.5-9-5.5z" />
-          </svg>
-          <svg v-else class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M8 6h3v12H8zm5 0h3v12h-3z" />
-          </svg>
-        </button>
-      </div>
-
-      <div
         v-if="showCustomControls"
-        class="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-transparent px-3 pb-3 pt-16 sm:px-5 sm:pb-5"
+        class="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-transparent"
       >
-        <div class="pointer-events-auto rounded-2xl border border-white/10 bg-slate-950/70 p-3 shadow-2xl shadow-black/30 backdrop-blur-xl sm:p-4">
-          <div class="mb-3 flex items-center justify-between gap-3 text-xs font-semibold text-slate-300">
-            <span>{{ formatTime(currentTime) }}</span>
-            <span
-              class="inline-flex min-h-8 items-center rounded-full border px-3 py-1"
-              :class="statusMeta.tone"
-            >
-              {{ statusMeta.label }}
-            </span>
-            <span>{{ formatTime(duration) }}</span>
-          </div>
-
-          <div class="relative mb-4">
-            <div class="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-white/10"></div>
-            <div
-              class="absolute left-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-white/20"
-              :style="{ width: `${bufferedPercent}%` }"
-            ></div>
-            <div
-              class="absolute left-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-indigo-400"
-              :style="{ width: `${progressPercent}%` }"
-            ></div>
-            <input
-              :value="currentTime"
-              :max="timelineMax || 0"
-              min="0"
-              step="0.1"
-              type="range"
-              class="player-range relative h-5 w-full cursor-pointer appearance-none bg-transparent"
-              aria-label="Позиция воспроизведения"
-              @input="handleTimelineInput"
-            >
-          </div>
-
+        <div class="absolute inset-0 flex items-center justify-center px-4 sm:px-8">
           <div
-            v-if="qualityNotice"
-            class="mb-3 inline-flex rounded-full border border-indigo-400/25 bg-indigo-500/10 px-3 py-1 text-xs font-semibold text-indigo-100"
+            class="pointer-events-auto flex items-center gap-3 rounded-full border border-white/10 bg-slate-950/32 px-3 py-3 shadow-[0_18px_45px_rgba(2,6,23,0.45)] backdrop-blur-2xl transition sm:gap-4"
+            :class="isPlaying ? 'opacity-88' : 'opacity-100'"
           >
-            {{ qualityNotice }}
-          </div>
-
-          <div class="flex flex-wrap items-center gap-2 sm:gap-3">
             <button
               type="button"
-              class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition hover:bg-white/10 active:scale-[0.96] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/80"
-              aria-label="Воспроизвести или поставить на паузу"
-              @click="togglePlayPause"
+              class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-100 transition hover:bg-white/12 active:scale-[0.96] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/80 sm:h-12 sm:w-12"
+              aria-label="Назад на 10 секунд"
+              @click.stop="skipBy(-10)"
             >
-              <svg v-if="!isPlaying" class="ml-0.5 h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M11 7L6 12l5 5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M18 7l-5 5 5 5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </button>
+
+            <button
+              type="button"
+              class="inline-flex h-14 w-14 items-center justify-center rounded-full border border-white/10 bg-slate-950/78 text-white shadow-2xl shadow-black/40 backdrop-blur-xl transition hover:bg-slate-900/90 active:scale-[0.96] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/80 sm:h-16 sm:w-16"
+              aria-label="Воспроизвести или поставить на паузу"
+              @click.stop="togglePlayPause"
+            >
+              <svg v-if="!isPlaying" class="ml-1 h-6 w-6 sm:h-7 sm:w-7" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M8 6.5v11l9-5.5-9-5.5z" />
               </svg>
-              <svg v-else class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <svg v-else class="h-6 w-6 sm:h-7 sm:w-7" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M8 6h3v12H8zm5 0h3v12h-3z" />
               </svg>
             </button>
 
             <button
               type="button"
-              class="inline-flex h-10 min-w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 px-3 text-sm font-semibold text-slate-100 transition hover:bg-white/10 active:scale-[0.96] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/80"
-              aria-label="Назад на 10 секунд"
-              @click="skipBy(-10)"
-            >
-              -10
-            </button>
-
-            <button
-              type="button"
-              class="inline-flex h-10 min-w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 px-3 text-sm font-semibold text-slate-100 transition hover:bg-white/10 active:scale-[0.96] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/80"
+              class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-100 transition hover:bg-white/12 active:scale-[0.96] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/80 sm:h-12 sm:w-12"
               aria-label="Вперёд на 10 секунд"
-              @click="skipBy(10)"
+              @click.stop="skipBy(10)"
             >
-              +10
-            </button>
-
-            <button
-              type="button"
-              class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-100 transition hover:bg-white/10 active:scale-[0.96] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/80"
-              aria-label="Включить или выключить звук"
-              @click="toggleMute"
-            >
-              <svg v-if="isMuted || volume === 0" class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M15 9l-6 6m0-6l6 6M5 10h4l5-4v12l-5-4H5v-4z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-              </svg>
-              <svg v-else class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M5 10h4l5-4v12l-5-4H5v-4z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-                <path d="M16 9.5a3.5 3.5 0 010 5M18.5 7a7 7 0 010 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M13 7l5 5-5 5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M6 7l5 5-5 5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
             </button>
+          </div>
+        </div>
 
-            <label class="hidden items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-200 sm:inline-flex">
-              <span class="text-xs uppercase tracking-wide text-slate-400">Vol</span>
+        <div class="absolute inset-x-0 bottom-0 px-3 pb-3 pt-16 sm:px-5 sm:pb-5">
+          <div class="pointer-events-auto rounded-[1.35rem] border border-white/10 bg-slate-950/66 p-3 shadow-[0_18px_40px_rgba(2,6,23,0.42)] backdrop-blur-2xl sm:p-4">
+            <div class="relative">
+              <div class="absolute inset-x-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-white/10"></div>
+              <div
+                class="absolute left-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-white/20"
+                :style="{ width: `${bufferedPercent}%` }"
+              ></div>
+              <div
+                class="absolute left-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-indigo-400"
+                :style="{ width: `${progressPercent}%` }"
+              ></div>
               <input
-                :value="isMuted ? 0 : volume"
-                type="range"
+                :value="currentTime"
+                :max="timelineMax || 0"
                 min="0"
-                max="1"
-                step="0.05"
-                class="player-range w-24"
-                aria-label="Громкость"
-                @input="applyVolume($event.target.value)"
+                step="0.1"
+                type="range"
+                class="player-range relative h-5 w-full cursor-pointer appearance-none bg-transparent"
+                aria-label="Позиция воспроизведения"
+                @input="handleTimelineInput"
               >
-            </label>
+            </div>
 
-            <div class="ml-auto flex flex-wrap items-center gap-2">
-              <label class="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-200 focus-within:ring-2 focus-within:ring-indigo-400/80">
-                <span class="text-xs uppercase tracking-wide text-slate-400">Speed</span>
-                <select
-                  v-model.number="playbackSpeed"
-                  class="rounded-full bg-slate-950 px-2 py-1 text-sm font-semibold text-slate-100 outline-none [color-scheme:dark]"
-                  style="color-scheme: dark;"
-                  aria-label="Скорость воспроизведения"
+            <div class="mt-3 flex flex-wrap items-center gap-2 sm:gap-3">
+              <span class="text-xs font-semibold tabular-nums text-slate-300 sm:text-sm">
+                {{ formatTime(currentTime) }} / {{ formatTime(duration) }}
+              </span>
+
+              <span
+                class="inline-flex min-h-8 items-center rounded-full border px-3 py-1 text-[11px] font-semibold sm:text-xs"
+                :class="statusMeta.tone"
+              >
+                {{ statusMeta.label }}
+              </span>
+
+              <div
+                v-if="qualityNotice"
+                class="inline-flex rounded-full border border-indigo-400/25 bg-indigo-500/10 px-3 py-1 text-[11px] font-semibold text-indigo-100 sm:text-xs"
+              >
+                {{ qualityNotice }}
+              </div>
+
+              <div class="ml-auto flex items-center gap-2">
+                <div class="relative">
+                  <button
+                    ref="settingsButtonRef"
+                    type="button"
+                    class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-100 transition hover:bg-white/10 active:scale-[0.96] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/80"
+                    aria-label="Настройки плеера"
+                    aria-haspopup="menu"
+                    :aria-expanded="isSettingsOpen"
+                    @click.stop="toggleSettingsMenu"
+                  >
+                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M12 6.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm0 7a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm0 7a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" fill="currentColor" />
+                    </svg>
+                  </button>
+
+                  <div
+                    v-if="isSettingsOpen && canOpenSettings"
+                    ref="settingsMenuRef"
+                    class="absolute bottom-12 right-0 z-20 w-[min(18rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-white/10 bg-slate-950/92 p-3 shadow-[0_18px_45px_rgba(2,6,23,0.52)] backdrop-blur-2xl"
+                    role="menu"
+                  >
+                    <div class="space-y-3">
+                      <div class="space-y-2">
+                        <div class="flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                          <span>Скорость</span>
+                          <span class="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-slate-300">{{ playbackSpeed }}x</span>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                          <button
+                            v-for="speed in SPEED_OPTIONS"
+                            :key="speed"
+                            type="button"
+                            class="inline-flex min-h-9 items-center justify-center rounded-full border px-3 py-2 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/80"
+                            :class="playbackSpeed === speed
+                              ? 'border-indigo-400/35 bg-indigo-500/15 text-indigo-100'
+                              : 'border-white/10 bg-white/5 text-slate-200 hover:bg-white/10'"
+                            :aria-label="`Скорость ${speed}x`"
+                            @click.stop="selectSpeed(speed)"
+                          >
+                            {{ speed }}x
+                          </button>
+                        </div>
+                      </div>
+
+                      <div v-if="showQualitySelector" class="space-y-2">
+                        <div class="flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                          <span>Качество</span>
+                          <span class="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-slate-300">{{ currentQualityLabel() }}</span>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                          <button
+                            v-for="option in qualityOptions"
+                            :key="option.value"
+                            type="button"
+                            class="inline-flex min-h-9 items-center justify-center rounded-full border px-3 py-2 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/80"
+                            :class="selectedLevel === option.value
+                              ? 'border-indigo-400/35 bg-indigo-500/15 text-indigo-100'
+                              : 'border-white/10 bg-white/5 text-slate-200 hover:bg-white/10'"
+                            :aria-label="`Качество ${option.label}`"
+                            @click.stop="selectQuality(option.value)"
+                          >
+                            {{ option.label }}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div class="space-y-2">
+                        <div class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Звук</div>
+                        <div class="flex items-center gap-3">
+                          <button
+                            type="button"
+                            class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-100 transition hover:bg-white/10 active:scale-[0.96] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/80"
+                            :aria-label="isMuted || volume === 0 ? 'Включить звук' : 'Выключить звук'"
+                            @click.stop="toggleMute"
+                          >
+                            <svg v-if="isMuted || volume === 0" class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                              <path d="M15 9l-6 6m0-6l6 6M5 10h4l5-4v12l-5-4H5v-4z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            <svg v-else class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                              <path d="M5 10h4l5-4v12l-5-4H5v-4z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                              <path d="M16 9.5a3.5 3.5 0 010 5M18.5 7a7 7 0 010 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                            </svg>
+                          </button>
+
+                          <input
+                            :value="isMuted ? 0 : volume"
+                            type="range"
+                            min="0"
+                            max="1"
+                            step="0.05"
+                            class="player-range w-full"
+                            aria-label="Громкость"
+                            @input="applyVolume($event.target.value)"
+                          >
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-100 transition hover:bg-white/10 active:scale-[0.96] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/80"
+                  :aria-label="fullscreenLabel"
+                  :title="fullscreenLabel"
+                  @click.stop="toggleFullscreen"
                 >
-                  <option v-for="speed in SPEED_OPTIONS" :key="speed" :value="speed" class="bg-slate-950 text-slate-100">
-                    {{ speed }}x
-                  </option>
-                </select>
-              </label>
-
-              <label
-                v-if="showQualitySelector"
-                class="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-200 focus-within:ring-2 focus-within:ring-indigo-400/80"
-              >
-                <span class="text-xs uppercase tracking-wide text-slate-400">Quality</span>
-                <select
-                  v-model.number="selectedLevel"
-                  class="rounded-full bg-slate-950 px-2 py-1 text-sm font-semibold text-slate-100 outline-none [color-scheme:dark]"
-                  style="color-scheme: dark;"
-                  aria-label="Качество видео"
-                  @change="applySelectedQuality"
-                >
-                  <option v-for="option in qualityOptions" :key="option.value" :value="option.value" class="bg-slate-950 text-slate-100">
-                    {{ option.label }}
-                  </option>
-                </select>
-              </label>
-
-              <button
-                type="button"
-                class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-100 transition hover:bg-white/10 active:scale-[0.96] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/80"
-                aria-label="Полноэкранный режим"
-                :aria-label="fullscreenLabel"
-                :title="fullscreenLabel"
-                @click="toggleFullscreen"
-              >
-                <svg v-if="!isFullscreen" class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M8 3H4v4M16 3h4v4M8 21H4v-4M20 17v4h-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-                <svg v-else class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M9 9H4V4M15 9h5V4M9 15H4v5M20 15v5h-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-              </button>
+                  <svg v-if="!isFullscreen" class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M8 3H4v4M16 3h4v4M8 21H4v-4M20 17v4h-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                  <svg v-else class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M9 9H4V4M15 9h5V4M9 15H4v5M20 15v5h-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -779,7 +900,7 @@ defineExpose({
         v-if="showCustomControls && isBuffering"
         class="pointer-events-none absolute inset-0 flex items-center justify-center"
       >
-        <div class="rounded-full border border-white/10 bg-slate-950/70 p-4 shadow-xl shadow-black/30 backdrop-blur-xl">
+        <div class="rounded-full border border-white/10 bg-slate-950/72 p-4 shadow-xl shadow-black/30 backdrop-blur-xl">
           <div class="h-8 w-8 animate-spin rounded-full border-2 border-slate-600 border-t-indigo-400"></div>
         </div>
       </div>
@@ -801,9 +922,14 @@ defineExpose({
   height: 16px;
   width: 16px;
   border-radius: 9999px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: #e2e8f0;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: #f8fafc;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.45);
+  transition: transform 0.16s ease;
+}
+
+.player-range:hover::-webkit-slider-thumb {
+  transform: scale(1.08);
 }
 
 .player-range::-moz-range-track {
@@ -815,9 +941,14 @@ defineExpose({
 .player-range::-moz-range-thumb {
   height: 16px;
   width: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.24);
   border-radius: 9999px;
-  background: #e2e8f0;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.45);
+  background: #f8fafc;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.45);
+  transition: transform 0.16s ease;
+}
+
+.player-range:hover::-moz-range-thumb {
+  transform: scale(1.08);
 }
 </style>

@@ -1,7 +1,6 @@
 <script setup>
 import DOMPurify from 'dompurify'
-import Hls from 'hls.js'
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import api from '../api'
@@ -39,15 +38,8 @@ const manifestLoading = ref(false)
 const manifestState = ref('pending')
 const manifestUrl = ref('')
 const manifestError = ref('')
-const playbackNotice = ref('')
 const useLegacyPlayer = ref(false)
 const playerRef = ref(null)
-const playbackSpeed = ref(1)
-
-const videoElement = ref(null)
-const hlsInstance = ref(null)
-const availableLevels = ref([])
-const selectedLevel = ref(-1)
 
 const resumePromptVisible = ref(false)
 const savedWatchedSeconds = ref(0)
@@ -64,9 +56,6 @@ let timerInterval = null
 
 let progressSyncTimer = null
 let manifestPollTimer = null
-
-const VIDEO_SPEED_STORAGE_KEY = 'elcourse_video_speed'
-const SPEED_OPTIONS = [0.75, 1, 1.25, 1.5, 2]
 
 const resolvedLessonId = computed(() => props.lessonId || route.params.lessonId)
 const isAuthenticated = computed(() => Boolean(localStorage.getItem('access_token')))
@@ -101,33 +90,6 @@ const lessonHint = computed(() => {
 const fallbackVideoUrl = computed(() => lesson.value?.fallback_video_url || lesson.value?.video_url || '')
 const showLegacyVideo = computed(() => isAuthenticated.value && useLegacyPlayer.value && Boolean(fallbackVideoUrl.value))
 
-const legacyEmbedUrl = computed(() => {
-  const url = fallbackVideoUrl.value
-  if (!url) return ''
-
-  try {
-    const parsed = new URL(url)
-    if (parsed.hostname.includes('youtu.be')) {
-      const videoId = parsed.pathname.replace('/', '')
-      return videoId ? `https://www.youtube.com/embed/${videoId}` : ''
-    }
-    if (parsed.hostname.includes('youtube.com')) {
-      const videoId = parsed.searchParams.get('v')
-      if (videoId) return `https://www.youtube.com/embed/${videoId}`
-      if (parsed.pathname.includes('/embed/')) return url
-    }
-  } catch (error) {
-  }
-
-  return ''
-})
-
-const isYoutubeFallback = computed(() => showLegacyVideo.value && Boolean(legacyEmbedUrl.value))
-const canUseVideoElementControls = computed(() => isAuthenticated.value && isVideoLesson.value && !isYoutubeFallback.value)
-const shouldShowSpeedSelector = computed(() => canUseVideoElementControls.value)
-const shouldShowSkipButtons = computed(() => canUseVideoElementControls.value)
-const shouldShowQualitySelector = computed(() => isVideoLesson.value && !showLegacyVideo.value && availableLevels.value.length > 0)
-
 const resolvedPlayerMode = computed(() => {
   if (!isVideoLesson.value) return 'no_video'
   if (showLegacyVideo.value) return 'fallback_video'
@@ -145,46 +107,6 @@ const resolvedPlayerError = computed(() => {
 })
 
 const savedTimeLabel = computed(() => formatTime(savedWatchedSeconds.value))
-
-const qualityOptions = computed(() => {
-  const options = [{ value: -1, label: 'Авто' }]
-  for (const level of availableLevels.value) {
-    options.push({ value: level.index, label: level.label })
-  }
-  return options
-})
-
-const videoStatusMeta = computed(() => {
-  if (!isVideoLesson.value) return null
-  if (showLegacyVideo.value) {
-    return {
-      label: 'Резервное видео',
-      tone: 'border-amber-400/30 bg-amber-500/10 text-amber-100',
-    }
-  }
-  if (manifestLoading.value || isManifestProcessing.value) {
-    return {
-      label: 'Видео обрабатывается',
-      tone: 'border-emerald-400/25 bg-emerald-500/10 text-emerald-100',
-    }
-  }
-  if (manifestState.value === 'ready') {
-    return {
-      label: 'HLS готов',
-      tone: 'border-indigo-400/25 bg-indigo-500/10 text-indigo-100',
-    }
-  }
-  if (manifestState.value === 'failed' || manifestState.value === 'inconsistent' || manifestError.value) {
-    return {
-      label: 'Ошибка обработки',
-      tone: 'border-rose-400/25 bg-rose-500/10 text-rose-100',
-    }
-  }
-  return {
-    label: 'Резервное видео',
-    tone: 'border-slate-600 bg-slate-900/80 text-slate-200',
-  }
-})
 
 const quizConfig = computed(() => quizData.value?.quiz_config || null)
 const quizQuestions = computed(() => quizData.value?.questions || [])
@@ -243,142 +165,11 @@ function formatTime(totalSeconds) {
   return `${minutes}:${seconds}`
 }
 
-function normalizePlaybackSpeed(value) {
-  const numeric = Number(value)
-  return SPEED_OPTIONS.includes(numeric) ? numeric : 1
-}
-
-function readSavedPlaybackSpeed() {
-  try {
-    return normalizePlaybackSpeed(window.localStorage.getItem(VIDEO_SPEED_STORAGE_KEY))
-  } catch (error) {
-    return 1
-  }
-}
-
 function formatFileSize(bytes) {
   const size = Number(bytes || 0)
   if (size >= 1024 * 1024) return `${(size / 1024 / 1024).toFixed(1)} MB`
   if (size >= 1024) return `${Math.round(size / 1024)} KB`
   return `${size} B`
-}
-
-const applyPlaybackSpeed = () => {
-  if (videoElement.value) {
-    videoElement.value.playbackRate = playbackSpeed.value
-  }
-}
-
-const persistPlaybackSpeed = () => {
-  try {
-    window.localStorage.setItem(VIDEO_SPEED_STORAGE_KEY, String(playbackSpeed.value))
-  } catch (error) {
-  }
-}
-
-const prepareDirectFallbackVideo = async () => {
-  if (isYoutubeFallback.value) {
-    return
-  }
-  await nextTick()
-  applyPlaybackSpeed()
-  await fetchWatchProgress()
-  startProgressSync()
-}
-
-const seekBy = (deltaSeconds) => {
-  if (!videoElement.value) return
-
-  const video = videoElement.value
-  const currentTime = Number(video.currentTime || 0)
-  const duration = Number(video.duration || 0)
-  const nextTime = Number.isFinite(duration) && duration > 0
-    ? Math.min(Math.max(currentTime + deltaSeconds, 0), duration)
-    : Math.max(currentTime + deltaSeconds, 0)
-
-  video.currentTime = nextTime
-  resumePromptVisible.value = false
-}
-
-const togglePlayPause = async () => {
-  if (!videoElement.value) return
-
-  if (videoElement.value.paused) {
-    try {
-      await videoElement.value.play()
-    } catch (error) {
-    }
-    return
-  }
-
-  videoElement.value.pause()
-}
-
-const toggleMute = () => {
-  if (videoElement.value) {
-    videoElement.value.muted = !videoElement.value.muted
-  }
-}
-
-const toggleFullscreen = async () => {
-  const target = videoElement.value
-  if (!target) return
-
-  try {
-    if (document.fullscreenElement) {
-      await document.exitFullscreen()
-    } else if (typeof target.requestFullscreen === 'function') {
-      await target.requestFullscreen()
-    }
-  } catch (error) {
-  }
-}
-
-const isEditableShortcutTarget = (target) => {
-  if (!(target instanceof HTMLElement)) return false
-  if (target.isContentEditable) return true
-
-  const tagName = target.tagName
-  return tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT'
-}
-
-const handlePlayerKeydown = (event) => {
-  if (!isVideoLesson.value || !isAuthenticated.value) return
-  if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return
-  if (isEditableShortcutTarget(event.target)) return
-  if (!canUseVideoElementControls.value) return
-
-  const key = String(event.key || '').toLowerCase()
-  if (!key) return
-
-  if (key === ' ' || key === 'k') {
-    event.preventDefault()
-    togglePlayPause()
-    return
-  }
-
-  if (key === 'arrowleft' || key === 'j') {
-    event.preventDefault()
-    seekBy(-10)
-    return
-  }
-
-  if (key === 'arrowright' || key === 'l') {
-    event.preventDefault()
-    seekBy(10)
-    return
-  }
-
-  if (key === 'm') {
-    event.preventDefault()
-    toggleMute()
-    return
-  }
-
-  if (key === 'f') {
-    event.preventDefault()
-    toggleFullscreen()
-  }
 }
 
 const clearManifestPolling = () => {
@@ -431,7 +222,6 @@ const fetchLesson = async () => {
   resumePromptVisible.value = false
   savedWatchedSeconds.value = 0
   lastSyncedSeconds.value = 0
-  playbackSpeed.value = readSavedPlaybackSpeed()
 
   try {
     const response = await api.get(`/lessons/${resolvedLessonId.value}/`)
@@ -482,7 +272,7 @@ const saveWatchProgress = async (force = false) => {
   if (!isAuthenticated.value || isPreviewMode.value || !isVideoLesson.value) return
 
   const currentSeconds = Math.floor(
-    playerRef.value?.getCurrentTime?.() ?? videoElement.value?.currentTime ?? 0
+    playerRef.value?.getCurrentTime?.() ?? 0
   )
   if (currentSeconds <= 0) return
   if (!force && Math.abs(currentSeconds - lastSyncedSeconds.value) < 8) return
@@ -517,8 +307,6 @@ const jumpToSavedTime = () => {
 
   if (typeof playerRef.value?.seekTo === 'function') {
     playerRef.value.seekTo(savedWatchedSeconds.value)
-  } else if (videoElement.value) {
-    videoElement.value.currentTime = savedWatchedSeconds.value
   }
   resumePromptVisible.value = false
   showSuccess(`Продолжили с ${savedTimeLabel.value}.`)
@@ -539,68 +327,6 @@ const handlePlayerProgressSave = async () => {
   }
 }
 
-const applyQuality = () => {
-  if (hlsInstance.value) {
-    hlsInstance.value.currentLevel = Number(selectedLevel.value)
-  }
-}
-
-const initPlayer = async () => {
-  await nextTick()
-  if (!isVideoLesson.value || !videoElement.value || !manifestUrl.value) return
-
-  teardownPlayer()
-  availableLevels.value = []
-  selectedLevel.value = -1
-
-  const video = videoElement.value
-
-  if (Hls.isSupported()) {
-    const hls = new Hls({
-      enableWorker: true,
-      capLevelToPlayerSize: true,
-      lowLatencyMode: false,
-    })
-    hlsInstance.value = hls
-    hls.attachMedia(video)
-
-    hls.on(Hls.Events.MEDIA_ATTACHED, () => {
-      hls.loadSource(manifestUrl.value)
-    })
-
-    hls.on(Hls.Events.MANIFEST_PARSED, (_, data) => {
-      availableLevels.value = data.levels.map((level, index) => ({
-        index,
-        label: level.height ? `${level.height}p` : `Поток ${index + 1}`,
-      }))
-      selectedLevel.value = -1
-      applyPlaybackSpeed()
-      startProgressSync()
-    })
-
-    hls.on(Hls.Events.ERROR, (_, data) => {
-      if (data.fatal) {
-        manifestError.value = 'Не удалось воспроизвести HLS-поток.'
-      }
-    })
-  } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-    video.src = manifestUrl.value
-    video.addEventListener(
-      'loadedmetadata',
-      () => {
-        applyPlaybackSpeed()
-        startProgressSync()
-      },
-      { once: true }
-    )
-  } else {
-    manifestError.value = 'Браузер не поддерживает HLS-воспроизведение.'
-  }
-
-  applyPlaybackSpeed()
-  await fetchWatchProgress()
-}
-
 const fetchManifest = async ({ keepLoading = false } = {}) => {
   if (!isVideoLesson.value) {
     manifestLoading.value = false
@@ -618,7 +344,6 @@ const fetchManifest = async ({ keepLoading = false } = {}) => {
     manifestLoading.value = true
   }
   manifestError.value = ''
-  playbackNotice.value = ''
 
   try {
     const response = await api.get(`/lessons/${resolvedLessonId.value}/video/manifest/`)
@@ -629,14 +354,10 @@ const fetchManifest = async ({ keepLoading = false } = {}) => {
     if (manifestState.value === 'ready' && manifestUrl.value) {
       clearManifestPolling()
       manifestLoading.value = false
-      await nextTick()
-      await initPlayer()
     } else if (manifestState.value === 'missing') {
       clearManifestPolling()
       if (fallbackVideoUrl.value) {
         useLegacyPlayer.value = true
-        playbackNotice.value = 'Using direct video without HLS.'
-        await prepareDirectFallbackVideo()
       } else {
         manifestError.value = response.data.message || 'HLS video is not uploaded for this lesson.'
       }
@@ -644,8 +365,6 @@ const fetchManifest = async ({ keepLoading = false } = {}) => {
       clearManifestPolling()
       if (fallbackVideoUrl.value) {
         useLegacyPlayer.value = true
-        playbackNotice.value = 'Using direct video instead of HLS.'
-        await prepareDirectFallbackVideo()
       } else {
         manifestError.value = response.data.error_message || 'Video processing failed.'
       }
@@ -653,8 +372,6 @@ const fetchManifest = async ({ keepLoading = false } = {}) => {
       clearManifestPolling()
       if (fallbackVideoUrl.value) {
         useLegacyPlayer.value = true
-        playbackNotice.value = 'Using direct video because HLS state is inconsistent.'
-        await prepareDirectFallbackVideo()
       } else {
         manifestError.value = response.data.error_message || response.data.message || 'HLS state is inconsistent.'
       }
@@ -673,17 +390,11 @@ const fetchManifest = async ({ keepLoading = false } = {}) => {
 
       if (payload.playback_mode === 'fallback_video' && fallbackVideoUrl.value) {
         useLegacyPlayer.value = true
-        playbackNotice.value = manifestState.value === 'failed'
-          ? 'Using direct video instead of HLS.'
-          : 'Using direct video without HLS.'
-        await prepareDirectFallbackVideo()
       } else {
         manifestError.value = payload.error_message || payload.message || 'Could not load video manifest.'
       }
     } else if (fallbackVideoUrl.value) {
       useLegacyPlayer.value = true
-      playbackNotice.value = 'Using direct video.'
-      await prepareDirectFallbackVideo()
     } else {
       manifestError.value = 'Could not load video manifest.'
     }
@@ -833,19 +544,7 @@ watch(resolvedLessonId, async (newValue, oldValue) => {
   await loadAll()
 })
 
-watch(playbackSpeed, (value) => {
-  const normalized = normalizePlaybackSpeed(value)
-  if (normalized !== value) {
-    playbackSpeed.value = normalized
-    return
-  }
-
-  persistPlaybackSpeed()
-  applyPlaybackSpeed()
-})
-
 onMounted(() => {
-  playbackSpeed.value = readSavedPlaybackSpeed()
   loadAll()
 })
 
@@ -885,153 +584,6 @@ onUnmounted(async () => {
     </button>
 
     <article class="min-w-0 overflow-hidden rounded-3xl border border-slate-800 bg-slate-950/20 shadow-2xl shadow-slate-950/20">
-      <section v-if="false" class="relative aspect-video max-w-full overflow-hidden bg-black">
-        <div
-          v-if="!isAuthenticated"
-          class="flex h-full items-center justify-center bg-slate-950/95 px-4 text-center text-slate-400 sm:px-6"
-        >
-          <div>
-            <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-800 bg-slate-900 text-slate-500">
-              <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M7 10V8a5 5 0 0110 0v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-                <path d="M6 10h12v10H6V10z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
-              </svg>
-            </div>
-            <p class="font-semibold text-slate-300">Войдите в аккаунт, чтобы смотреть урок.</p>
-          </div>
-        </div>
-
-        <div
-          v-else-if="manifestLoading || isManifestProcessing"
-          class="flex h-full items-center justify-center bg-slate-950/95 px-4 sm:px-6"
-        >
-          <div class="space-y-4 text-center">
-            <div class="mx-auto h-12 w-12 animate-spin rounded-full border-2 border-slate-700 border-t-emerald-400"></div>
-            <p class="text-sm font-semibold text-slate-300">Видео обрабатывается для HLS-воспроизведения...</p>
-            <p class="text-xs text-slate-500">Страница обновит статус автоматически.</p>
-          </div>
-        </div>
-
-        <div
-          v-else-if="manifestError"
-          class="flex h-full items-center justify-center bg-slate-950/95 px-4 text-center text-rose-300 sm:px-6"
-        >
-          <div>
-            <p class="font-semibold">Видео недоступно</p>
-            <p class="mt-1 text-sm text-rose-200/80">{{ manifestError }}</p>
-          </div>
-        </div>
-
-        <iframe
-          v-else-if="showLegacyVideo && legacyEmbedUrl"
-          class="h-full w-full"
-          :src="legacyEmbedUrl"
-          title="Видео урока"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          allowfullscreen
-        ></iframe>
-
-        <video
-          v-else-if="showLegacyVideo && !legacyEmbedUrl"
-          ref="videoElement"
-          class="h-full w-full object-contain"
-          :src="fallbackVideoUrl"
-          controls
-          preload="metadata"
-        ></video>
-
-        <video
-          v-else
-          ref="videoElement"
-          class="h-full w-full object-contain"
-          controls
-          preload="metadata"
-        ></video>
-
-        <div
-          v-if="showLegacyVideo && playbackNotice"
-          class="absolute right-3 top-3 rounded-full border border-amber-400/30 bg-slate-950/85 px-3 py-1 text-[11px] font-semibold text-amber-100"
-        >
-          {{ playbackNotice }}
-        </div>
-      </section>
-
-      <section
-        v-if="false"
-        class="border-b border-slate-800 bg-slate-900/55 px-4 py-3 sm:px-6"
-      >
-        <div class="flex flex-wrap items-center gap-2">
-          <span
-            v-if="videoStatusMeta"
-            class="inline-flex min-h-9 items-center rounded-full border px-3 py-2 text-xs font-bold"
-            :class="videoStatusMeta.tone"
-          >
-            {{ videoStatusMeta.label }}
-          </span>
-
-          <button
-            v-if="shouldShowSkipButtons"
-            type="button"
-            class="inline-flex min-h-9 items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-slate-200 transition hover:border-slate-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400/70"
-            aria-label="Назад на 10 секунд"
-            @click="seekBy(-10)"
-          >
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M11 7L6 12l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-              <path d="M18 7l-5 5 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-            <span>-10с</span>
-          </button>
-
-          <button
-            v-if="shouldShowSkipButtons"
-            type="button"
-            class="inline-flex min-h-9 items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-slate-200 transition hover:border-slate-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400/70"
-            aria-label="Вперёд на 10 секунд"
-            @click="seekBy(10)"
-          >
-            <span>+10с</span>
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M13 7l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-              <path d="M6 7l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-          </button>
-
-          <label
-            v-if="shouldShowSpeedSelector"
-            class="inline-flex min-h-9 items-center gap-2 rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-slate-200 focus-within:ring-2 focus-within:ring-indigo-400/70"
-          >
-            <span class="text-xs uppercase tracking-wide text-slate-400">Скорость</span>
-            <select
-              v-model.number="playbackSpeed"
-              class="bg-transparent text-sm font-semibold text-slate-100 outline-none"
-              aria-label="Скорость воспроизведения"
-            >
-              <option v-for="speed in SPEED_OPTIONS" :key="speed" :value="speed">
-                {{ speed }}x
-              </option>
-            </select>
-          </label>
-
-          <label
-            v-if="shouldShowQualitySelector"
-            class="inline-flex min-h-9 items-center gap-2 rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-slate-200 focus-within:ring-2 focus-within:ring-indigo-400/70"
-          >
-            <span class="text-xs uppercase tracking-wide text-slate-400">Качество</span>
-            <select
-              v-model.number="selectedLevel"
-              class="bg-transparent text-sm font-semibold text-slate-100 outline-none"
-              aria-label="Качество видео"
-              @change="applyQuality"
-            >
-              <option v-for="option in qualityOptions" :key="option.value" :value="option.value">
-                {{ option.label }}
-              </option>
-            </select>
-          </label>
-        </div>
-      </section>
-
       <section v-if="isVideoLesson" class="border-b border-slate-800 bg-slate-900/40 p-4 sm:p-6">
         <div
           v-if="!isAuthenticated"
@@ -1044,7 +596,7 @@ onUnmounted(async () => {
                 <path d="M6 10h12v10H6V10z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
               </svg>
             </div>
-            <p class="font-semibold text-slate-300">Р’РѕР№РґРёС‚Рµ РІ Р°РєРєР°СѓРЅС‚, С‡С‚РѕР±С‹ СЃРјРѕС‚СЂРµС‚СЊ СѓСЂРѕРє.</p>
+            <p class="font-semibold text-slate-300">Войдите в аккаунт, чтобы смотреть урок.</p>
           </div>
         </div>
 
@@ -1093,18 +645,6 @@ onUnmounted(async () => {
             <p class="mt-2 max-w-3xl text-sm leading-relaxed text-slate-400">{{ lessonHint }}</p>
           </div>
 
-          <div class="grid gap-2 sm:flex sm:flex-wrap">
-            <select
-              v-if="false"
-              v-model.number="selectedLevel"
-              class="w-full rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-slate-200 outline-none transition focus:border-indigo-400 sm:w-auto"
-              @change="applyQuality"
-            >
-              <option v-for="option in qualityOptions" :key="option.value" :value="option.value">
-                Качество: {{ option.label }}
-              </option>
-            </select>
-          </div>
         </div>
       </header>
 
@@ -1334,7 +874,7 @@ onUnmounted(async () => {
             <p class="text-sm text-slate-500">Файлы для самостоятельной работы</p>
           </div>
           <span class="rounded-full border border-slate-700 bg-slate-950/50 px-3 py-1 text-xs font-bold text-slate-400">
-            {{ attachments.length }} файл.
+            {{ attachments.length }} файлов
           </span>
         </div>
         <div class="grid gap-2 sm:grid-cols-2">
