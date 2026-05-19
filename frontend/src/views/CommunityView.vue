@@ -286,34 +286,34 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-7xl max-w-full min-w-0 space-y-6 pb-16">
+  <div class="mx-auto max-w-7xl max-w-full min-w-0 space-y-4 pb-16 sm:space-y-5">
     <section
-      class="z-40 rounded-[2rem] border border-slate-800/80 bg-slate-950/75 p-4 shadow-[0_30px_80px_rgba(2,6,23,0.35)] backdrop-blur-xl sm:p-5"
+      class="z-40 rounded-[1.6rem] border border-slate-800/80 bg-slate-950/75 p-3.5 shadow-[0_24px_64px_rgba(2,6,23,0.32)] backdrop-blur-xl sm:rounded-[2rem] sm:p-5"
     >
-      <div class="flex flex-col gap-4">
-        <div class="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p class="text-xs font-bold uppercase tracking-[0.35em] text-slate-500">Community</p>
-            <h1 class="mt-2 text-2xl font-black text-white sm:text-3xl">
+      <div class="flex flex-col gap-3.5 sm:gap-4">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div class="min-w-0 max-w-3xl">
+            <p class="text-[10px] font-bold uppercase tracking-[0.26em] text-slate-500 sm:text-xs sm:tracking-[0.32em]">Community</p>
+            <h1 class="mt-1.5 text-xl font-black leading-tight text-white sm:mt-2 sm:text-2xl lg:text-3xl">
               Единый поиск людей, навыков и карьерных сигналов
             </h1>
           </div>
-          <div class="self-start rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-3 text-left sm:text-right">
-            <p class="text-xs uppercase tracking-[0.24em] text-slate-500">Найдено</p>
-            <p class="mt-2 text-2xl font-black text-white">{{ users.length }}</p>
+          <div class="inline-flex items-center gap-2 self-start rounded-full border border-slate-800 bg-slate-900/75 px-3 py-1.5 text-sm font-semibold text-slate-200 shadow-[0_10px_30px_rgba(2,6,23,0.18)]">
+            <span class="text-slate-400">Найдено:</span>
+            <span class="text-base font-black text-white">{{ users.length }}</span>
           </div>
         </div>
 
-        <div class="rounded-[1.6rem] border border-slate-800 bg-slate-900/80 p-3">
-          <div class="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-3">
-            <svg class="h-5 w-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="rounded-[1.3rem] border border-slate-800 bg-slate-900/80 p-2.5 sm:rounded-[1.6rem] sm:p-3">
+          <div class="flex flex-wrap items-center gap-2 rounded-[1.1rem] border border-slate-800 bg-slate-950/70 px-3 py-2.5 sm:rounded-2xl sm:px-4 sm:py-3">
+            <svg class="h-[18px] w-[18px] text-slate-500 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
 
             <span
               v-for="skill in selectedSkills"
               :key="skill"
-              class="inline-flex items-center gap-2 rounded-full border border-indigo-400/20 bg-indigo-500/10 px-3 py-1 text-xs font-semibold text-indigo-200"
+              class="inline-flex items-center gap-1.5 rounded-full border border-indigo-400/20 bg-indigo-500/10 px-2.5 py-1 text-[11px] font-semibold text-indigo-200 sm:px-3 sm:text-xs"
             >
               {{ skill }}
               <button class="text-indigo-200 transition hover:text-white" @click="toggleSkill(skill)">×</button>
@@ -328,18 +328,18 @@ onUnmounted(() => {
 
             <button
               v-if="searchText || selectedSkills.length"
-              class="rounded-full border border-slate-700 px-3 py-1 text-xs font-semibold text-slate-300 transition hover:border-slate-500 hover:text-white"
+              class="rounded-full border border-slate-700 px-2.5 py-1 text-[11px] font-semibold text-slate-300 transition hover:border-slate-500 hover:text-white sm:px-3 sm:text-xs"
               @click="clearFilters"
             >
               Очистить
             </button>
           </div>
 
-          <div class="mt-3 flex flex-wrap gap-2">
+          <div class="mt-2.5 flex flex-wrap gap-1.5 sm:mt-3 sm:gap-2">
             <button
               v-for="skill in skillSuggestions"
               :key="skill.id"
-              class="rounded-full border px-3 py-1.5 text-xs font-semibold transition"
+              class="rounded-full border px-2.5 py-1 text-[11px] font-semibold transition sm:px-3 sm:py-1.5 sm:text-xs"
               :class="isSelectedSkill(skill.name)
                 ? 'border-emerald-400/20 bg-emerald-500/10 text-emerald-300'
                 : 'border-slate-700 bg-slate-900 text-slate-300 hover:border-slate-500 hover:text-white'"
@@ -362,92 +362,92 @@ onUnmounted(() => {
       {{ banner.message }}
     </div>
 
-    <div v-if="loading" class="rounded-[1.8rem] border border-slate-800 bg-slate-900/70 px-6 py-20 text-center text-slate-400">
+    <div v-if="loading" class="rounded-[1.4rem] border border-slate-800 bg-slate-900/70 px-5 py-12 text-center text-sm text-slate-400 sm:rounded-[1.8rem] sm:px-6 sm:py-16">
       Загружаем участников сообщества...
     </div>
 
     <div
       v-else-if="pageError"
-      class="rounded-[1.8rem] border border-rose-500/20 bg-rose-500/10 px-6 py-12 text-center text-rose-300"
+      class="rounded-[1.4rem] border border-rose-500/20 bg-rose-500/10 px-5 py-10 text-center text-sm text-rose-300 sm:rounded-[1.8rem] sm:px-6 sm:py-12"
     >
       {{ pageError }}
     </div>
 
     <div
       v-else-if="users.length === 0"
-      class="rounded-[1.8rem] border border-dashed border-slate-700 bg-slate-900/50 px-6 py-20 text-center"
+      class="rounded-[1.4rem] border border-dashed border-slate-700 bg-slate-900/50 px-5 py-12 text-center sm:rounded-[1.8rem] sm:px-6 sm:py-16"
     >
-      <p class="text-xl font-bold text-white">Совпадений пока нет</p>
-      <p class="mt-3 text-sm text-slate-500">Попробуйте убрать часть тегов или расширить текстовый запрос.</p>
+      <p class="text-lg font-bold text-white sm:text-xl">Совпадений пока нет</p>
+      <p class="mt-2 text-sm text-slate-500">Попробуйте убрать часть тегов или расширить текстовый запрос.</p>
     </div>
 
-    <section v-else class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+    <section v-else class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
       <article
         v-for="user in users"
         :key="user.id"
-        class="group min-w-0 cursor-pointer rounded-[1.7rem] border border-slate-800/80 bg-slate-900/75 p-5 transition duration-300 hover:-translate-y-1.5 hover:border-slate-600 hover:shadow-[0_25px_60px_rgba(2,6,23,0.32)]"
+        class="group min-w-0 cursor-pointer rounded-[1.35rem] border border-slate-800/80 bg-slate-900/75 p-4 transition duration-300 hover:-translate-y-1 hover:border-slate-600 hover:shadow-[0_20px_48px_rgba(2,6,23,0.28)] sm:rounded-[1.55rem] sm:p-5"
         tabindex="0"
         @click="openProfile(user)"
         @keydown.enter.prevent="openProfile(user)"
       >
-        <div class="flex items-start justify-between gap-4">
-          <div class="flex items-center gap-4">
-            <div class="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 text-xl font-black text-slate-300">
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex min-w-0 items-center gap-3">
+            <div class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-800 bg-slate-950 text-base font-black text-slate-300 sm:h-14 sm:w-14 sm:rounded-2xl sm:text-lg">
               <img v-if="getAvatarUrl(user)" :src="getAvatarUrl(user)" :alt="user.username" class="h-full w-full object-cover">
               <span v-else>{{ user.username.charAt(0).toUpperCase() }}</span>
             </div>
             <div class="min-w-0">
               <div class="flex items-center gap-2">
-                <h2 class="truncate text-xl font-black text-white">{{ user.username }}</h2>
-                <span v-if="user.is_verified" class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-sky-500/10 text-xs font-bold text-sky-300">✓</span>
+                <h2 class="truncate text-lg font-black text-white sm:text-xl">{{ user.username }}</h2>
+                <span v-if="user.is_verified" class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-sky-500/10 text-[10px] font-bold text-sky-300 sm:h-6 sm:w-6 sm:text-xs">✓</span>
               </div>
-              <p class="mt-1 text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">{{ roleLabel(user.role) }}</p>
+              <p class="mt-0.5 truncate text-[11px] font-semibold text-slate-500 sm:text-xs">{{ roleLabel(user.role) }}</p>
             </div>
           </div>
 
-          <span class="rounded-full border border-slate-800 bg-slate-950 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+          <span class="shrink-0 rounded-full border border-slate-800 bg-slate-950 px-2.5 py-1 text-[10px] font-semibold text-slate-400 sm:px-3 sm:text-[11px]">
             {{ user.friends_count }} друзей
           </span>
         </div>
 
-        <p class="mt-4 line-clamp-3 min-h-[4.5rem] text-sm leading-6 text-slate-300">
+        <p class="mt-3 line-clamp-3 break-words text-sm leading-[1.35rem] text-slate-300 sm:mt-4 sm:leading-6">
           {{ user.bio || 'Публичное описание пока пустое, но навыки и профиль уже доступны для просмотра.' }}
         </p>
 
-        <div class="mt-4 flex flex-wrap gap-2">
+        <div class="mt-3 flex flex-wrap gap-1.5 sm:mt-4 sm:gap-2">
           <span
             v-for="skill in topSkills(user)"
             :key="`${user.id}-${skill.id}`"
-            class="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300"
+            class="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-300 sm:px-3 sm:text-xs"
           >
             {{ skill.name }}
           </span>
           <span
             v-if="(user.skills || []).length > 3"
-            class="rounded-full border border-slate-700 bg-slate-950 px-3 py-1 text-xs font-semibold text-slate-400"
+            class="rounded-full border border-slate-700 bg-slate-950 px-2.5 py-1 text-[11px] font-semibold text-slate-400 sm:px-3 sm:text-xs"
           >
             +{{ user.skills.length - 3 }}
           </span>
         </div>
 
-        <p v-if="user.common_friends_count" class="mt-4 text-sm font-medium text-slate-400">
+        <p v-if="user.common_friends_count" class="mt-3 text-sm font-medium text-slate-400">
           {{ user.common_friends_count }} общих друзей
         </p>
 
-        <div class="mt-5 flex flex-wrap gap-3">
+        <div class="mt-4 flex flex-wrap gap-2.5">
           <div
             v-if="authStore.isEmployer && getOfferStatusMeta(user)"
-            class="rounded-2xl border px-4 py-3 text-sm font-semibold"
+            class="rounded-[1rem] border px-3.5 py-2 text-sm font-semibold sm:rounded-[1.1rem]"
             :class="getOfferStatusMeta(user).className"
             @click.stop
           >
             <p>{{ getOfferStatusMeta(user).text }}</p>
-            <p class="mt-1 text-xs text-slate-500">{{ getOfferStatusMeta(user).hint }}</p>
+            <p class="mt-0.5 text-[11px] text-slate-500">{{ getOfferStatusMeta(user).hint }}</p>
           </div>
 
           <button
             v-else-if="authStore.isEmployer && user.role === 'student' && !user.is_self"
-            class="rounded-2xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-indigo-500"
+            class="rounded-full bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500"
             @click.stop="openOfferModal(user)"
           >
             Пригласить
@@ -455,7 +455,7 @@ onUnmounted(() => {
 
           <button
             v-else-if="authStore.isAuthenticated && !authStore.isEmployer && !user.is_self"
-            class="rounded-2xl border px-4 py-3 text-sm font-bold transition"
+            class="rounded-full border px-3.5 py-2 text-sm font-semibold transition"
             :class="user.is_friend
               ? 'border-rose-500/20 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20'
               : 'border-slate-700 bg-slate-950 text-slate-100 hover:border-slate-500'"
@@ -467,14 +467,14 @@ onUnmounted(() => {
 
           <div
             v-else-if="user.is_self"
-            class="rounded-2xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm font-semibold text-slate-400"
+            class="rounded-full border border-slate-800 bg-slate-950 px-3.5 py-2 text-sm font-semibold text-slate-400"
             @click.stop
           >
             Это вы
           </div>
 
           <button
-            class="rounded-2xl border border-slate-700 px-4 py-3 text-sm font-bold text-slate-200 transition hover:border-slate-500 hover:text-white"
+            class="rounded-full border border-slate-700 px-3.5 py-2 text-sm font-semibold text-slate-200 transition hover:border-slate-500 hover:text-white"
             @click.stop="openProfile(user)"
           >
             Профиль
@@ -485,7 +485,7 @@ onUnmounted(() => {
 
     <div class="flex justify-center pt-3" v-if="nextPageUrl && users.length > 0">
       <button
-        class="rounded-2xl border border-slate-700 bg-slate-900 px-5 py-2 text-sm font-semibold text-slate-200 transition hover:border-slate-500 hover:text-white disabled:opacity-60"
+        class="rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-slate-500 hover:text-white disabled:opacity-60"
         :disabled="loadingMore"
         @click="loadMore"
       >

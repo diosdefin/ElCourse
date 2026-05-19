@@ -12,34 +12,42 @@ const loadError = ref('')
 const roleCards = [
   {
     title: 'Студент',
-    text: 'Проходит курсы, сдаёт тесты, собирает подтверждённые навыки и формирует учебный профиль.',
+    text: 'Проходит курсы, выполняет тесты и формирует профиль подтверждённых навыков.',
   },
   {
     title: 'Преподаватель',
-    text: 'Создаёт модули, уроки, тесты, материалы и управляет структурой курса в едином конструкторе.',
+    text: 'Создаёт курсы, уроки и тесты, отслеживает прогресс обучающихся.',
   },
   {
     title: 'Работодатель',
-    text: 'Находит кандидатов по навыкам, просматривает профиль и отправляет карьерные предложения.',
+    text: 'Публикует вакансии, ищет кандидатов и анализирует подтверждённые компетенции.',
   },
 ]
 
 const advantages = [
   {
     title: 'Модульное обучение',
-    text: 'Курс строится из модулей и уроков, поэтому учебный путь остаётся понятным и последовательным.',
+    text: 'Курс собирается из модулей и уроков с понятной структурой.',
   },
   {
     title: 'Видео и материалы',
-    text: 'Видеоуроки, HLS-обработка, текстовые материалы и вложения доступны в одном интерфейсе.',
+    text: 'Видео, текстовые материалы и вложения доступны в одном интерфейсе.',
   },
   {
     title: 'Проверка знаний',
-    text: 'Тесты и финальные экзамены помогают подтверждать результат, а не просто фиксировать просмотр.',
+    text: 'Quiz и итоговые проверки подтверждают освоение материала.',
   },
   {
-    title: 'Карьерный профиль',
-    text: 'Навыки, активность и публичный профиль связывают обучение с дальнейшим трудоустройством.',
+    title: 'Цифровой паспорт навыков',
+    text: 'Профиль фиксирует активность, навыки и подтверждённые результаты.',
+  },
+  {
+    title: 'Аналитика преподавателя',
+    text: 'Преподаватель видит прогресс, попытки и динамику обучения.',
+  },
+  {
+    title: 'Карьерный контур',
+    text: 'Вакансии и профили связывают обучение с поиском кандидатов.',
   },
 ]
 
@@ -55,8 +63,61 @@ const skillCount = computed(() => {
   return uniqueSkills.size
 })
 
-const profileTarget = computed(() => (authStore.isAuthenticated ? '/profile' : '/login'))
-const profileButtonText = computed(() => (authStore.isAuthenticated ? 'Открыть профиль' : 'Войти в систему'))
+const heroActions = computed(() => {
+  if (!authStore.isAuthenticated) {
+    return [
+      { to: '/courses', label: 'Смотреть курсы', variant: 'primary' },
+      { to: '/login', label: 'Войти / Регистрация', variant: 'secondary' },
+    ]
+  }
+
+  if (authStore.isTeacher) {
+    return [
+      { to: '/teacher', label: 'Кабинет автора', variant: 'primary' },
+      { to: '/teacher/analytics', label: 'Аналитика', variant: 'secondary' },
+    ]
+  }
+
+  if (authStore.isEmployer) {
+    return [
+      { to: '/vacancies', label: 'Вакансии', variant: 'primary' },
+      { to: '/employer', label: 'Кандидаты', variant: 'secondary' },
+    ]
+  }
+
+  return [
+    { to: '/courses', label: 'Продолжить обучение', variant: 'primary' },
+    { to: '/vacancies', label: 'Вакансии', variant: 'secondary' },
+  ]
+})
+
+const finalActions = computed(() => {
+  if (!authStore.isAuthenticated) {
+    return [
+      { to: '/courses', label: 'Смотреть курсы', variant: 'primary' },
+      { to: '/login', label: 'Войти / Регистрация', variant: 'secondary' },
+    ]
+  }
+
+  if (authStore.isTeacher) {
+    return [
+      { to: '/teacher', label: 'Перейти в кабинет', variant: 'primary' },
+      { to: '/teacher/analytics', label: 'Открыть аналитику', variant: 'secondary' },
+    ]
+  }
+
+  if (authStore.isEmployer) {
+    return [
+      { to: '/vacancies', label: 'Открыть вакансии', variant: 'primary' },
+      { to: '/employer', label: 'Найти кандидатов', variant: 'secondary' },
+    ]
+  }
+
+  return [
+    { to: '/courses', label: 'Мои курсы', variant: 'primary' },
+    { to: '/vacancies', label: 'Открыть вакансии', variant: 'secondary' },
+  ]
+})
 
 onMounted(async () => {
   try {
@@ -72,209 +133,141 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="pb-14">
-    <section class="relative overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-900/70 shadow-2xl shadow-slate-950/30">
-      <div class="absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(99,102,241,0.22),transparent_34%),radial-gradient(circle_at_82%_16%,rgba(20,184,166,0.16),transparent_30%)]"></div>
-      <div class="relative grid gap-8 px-4 py-8 sm:px-8 sm:py-10 lg:grid-cols-[1.05fr,0.95fr] lg:px-12 lg:py-14">
-        <div class="min-w-0 flex flex-col justify-center">
-          <div class="inline-flex w-fit items-center rounded-full border border-slate-700 bg-slate-950/50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.24em] text-indigo-200">
-            Платформа профессионального обучения
-          </div>
-
-          <h1 class="mt-6 max-w-3xl break-words text-3xl font-black leading-[1.08] text-white sm:text-5xl lg:text-6xl">
-            ElCourse объединяет обучение, навыки и карьерный рост.
-          </h1>
-
-          <p class="mt-5 max-w-2xl text-base leading-8 text-slate-300 sm:text-lg">
-            Учебная платформа для курсов, тестов, подтверждённых компетенций и взаимодействия студентов с работодателями.
-          </p>
-
-          <div class="mt-8 grid gap-3 sm:flex sm:flex-wrap">
-            <RouterLink
-              to="/courses"
-              class="inline-flex items-center justify-center rounded-2xl bg-indigo-600 px-6 py-3 text-center text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500"
-            >
-              Смотреть курсы
-            </RouterLink>
-            <RouterLink
-              to="/login"
-              class="inline-flex items-center justify-center rounded-2xl border border-slate-700 bg-slate-950/30 px-6 py-3 text-center text-sm font-bold text-slate-100 transition hover:border-slate-500 hover:bg-slate-900"
-            >
-              Войти / Регистрация
-            </RouterLink>
-          </div>
-
-          <div class="mt-9 grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3">
-            <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
-              <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Курсы</p>
-              <p class="mt-2 text-2xl font-black text-white">{{ courseCount }}</p>
-            </div>
-            <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
-              <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Навыки</p>
-              <p class="mt-2 text-2xl font-black text-white">{{ skillCount }}</p>
-            </div>
-            <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
-              <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Роли</p>
-              <p class="mt-2 text-2xl font-black text-white">3</p>
-            </div>
-          </div>
+  <div class="mx-auto max-w-[1140px] px-4 pb-14 sm:px-6 lg:px-8 lg:pb-16">
+<section class="relative overflow-hidden rounded-[1.5rem] border border-slate-800 bg-slate-900/70 shadow-[0_20px_64px_rgba(2,6,23,0.18)] sm:rounded-[1.85rem] shadow-[inset_0px_0px_5px_1px_rgba(0,0,0,0)] shadow-black/100">
+  <div class="absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(99,102,241,0.22),transparent_34%),radial-gradient(circle_at_82%_16%,rgba(20,184,166,0.16),transparent_30%)]"></div>
+  
+  <div class="relative grid gap-5 px-4 py-4 sm:px-6 sm:py-5 lg:grid-cols-[1.06fr,0.94fr] lg:gap-5 lg:px-7 lg:py-5 xl:px-8 xl:py-6 items-center">
+    
+    <div class="min-w-0 flex flex-col justify-center">
+      <div>
+        <div class="inline-flex w-fit items-center rounded-full border border-slate-700 bg-slate-950/50 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.22em] text-indigo-200 sm:text-[11px]">
+          Платформа профессионального обучения
         </div>
-
-        <div class="relative min-w-0 flex flex-col justify-center">
-          <div class="pointer-events-none absolute inset-6 rounded-full bg-indigo-500/10 blur-3xl"></div>
-          <div class="relative max-w-full overflow-hidden rounded-[1.8rem] border border-slate-800 bg-slate-950/35 p-3 backdrop-blur sm:p-5">
-            <HeroAnimation />
-          </div>
-          <div class="relative mt-4 rounded-[1.5rem] border border-slate-800 bg-slate-950/50 p-5">
-            <p class="text-xs font-bold uppercase tracking-[0.24em] text-slate-500">Рабочий процесс</p>
-            <div class="mt-4 grid gap-3 sm:grid-cols-3">
-              <div class="rounded-2xl bg-slate-900/80 p-4">
-                <p class="text-sm font-black text-white">Курс</p>
-                <p class="mt-2 text-xs leading-5 text-slate-400">Модули, уроки и материалы.</p>
-              </div>
-              <div class="rounded-2xl bg-slate-900/80 p-4">
-                <p class="text-sm font-black text-white">Проверка</p>
-                <p class="mt-2 text-xs leading-5 text-slate-400">Quiz и итоговый экзамен.</p>
-              </div>
-              <div class="rounded-2xl bg-slate-900/80 p-4">
-                <p class="text-sm font-black text-white">Профиль</p>
-                <p class="mt-2 text-xs leading-5 text-slate-400">Навыки и активность.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="mt-8 grid gap-4 lg:grid-cols-3">
-      <article
-        v-for="role in roleCards"
-        :key="role.title"
-        class="rounded-[1.5rem] border border-slate-800 bg-slate-900/60 p-6 transition hover:border-slate-700 hover:bg-slate-900/80"
-      >
-        <p class="text-xs font-bold uppercase tracking-[0.24em] text-slate-500">Роль</p>
-        <h2 class="mt-3 text-2xl font-black text-white">{{ role.title }}</h2>
-        <p class="mt-3 text-sm leading-7 text-slate-400">{{ role.text }}</p>
-      </article>
-    </section>
-
-    <section class="mt-8 rounded-[2rem] border border-slate-800 bg-slate-900/55 p-6 sm:p-8">
-      <div class="max-w-3xl">
-        <p class="text-xs font-bold uppercase tracking-[0.24em] text-emerald-300">Возможности</p>
-        <h2 class="mt-3 text-2xl font-black text-white sm:text-3xl">Функции, которые нужны для учебного прототипа</h2>
-        <p class="mt-3 text-sm leading-7 text-slate-400">
-          Интерфейс показывает полный цикл: создание курса, прохождение уроков, проверка знаний и формирование профиля навыков.
+        
+        <h1 class="mt-3 max-w-3xl break-words text-3xl font-black leading-[0.98] text-white sm:text-4xl lg:max-w-[34rem] lg:text-[2.48rem] xl:max-w-[37rem] xl:text-[2.74rem]">
+          ElCourse объединяет обучение, проверку знаний и карьерный рост.
+        </h1>
+        <p class="mt-2.5 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base lg:max-w-[32rem] lg:text-[0.92rem] lg:leading-[1.45rem] xl:max-w-[34rem]">
+          Платформа помогает преподавателям создавать курсы, студентам подтверждать навыки, а работодателям находить подходящих кандидатов.
         </p>
       </div>
 
-      <div class="mt-7 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <article
-          v-for="advantage in advantages"
-          :key="advantage.title"
-          class="rounded-[1.3rem] border border-slate-800 bg-slate-950/35 p-5"
-        >
-          <div class="mb-4 h-1.5 w-10 rounded-full bg-gradient-to-r from-indigo-500 to-emerald-400"></div>
-          <h3 class="text-lg font-black text-white">{{ advantage.title }}</h3>
-          <p class="mt-3 text-sm leading-6 text-slate-400">{{ advantage.text }}</p>
-        </article>
-      </div>
-    </section>
+    
 
-    <section class="mt-8 rounded-[2rem] border border-slate-800 bg-slate-900/55 p-6 sm:p-8">
-      <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p class="text-xs font-bold uppercase tracking-[0.24em] text-slate-500">Каталог</p>
-          <h2 class="mt-3 text-2xl font-black text-white sm:text-3xl">Доступные курсы</h2>
-          <p class="mt-3 max-w-2xl text-sm leading-7 text-slate-400">
-            Выберите программу, изучайте материалы, проходите тесты и фиксируйте прогресс в профиле.
-          </p>
+      <div class="mt-4 grid gap-2.5 sm:flex sm:flex-wrap ">
+        <RouterLink
+          v-for="action in heroActions"
+          :key="action.label"
+          :to="action.to"
+          class="inline-flex items-center justify-center rounded-xl px-[1.125rem] py-2.5 text-center text-sm font-bold transition lg:px-5 lg:py-[0.5625rem]"
+          :class="action.variant === 'primary'
+            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-500'
+            : 'border border-slate-700 bg-slate-950/30 text-slate-100 hover:border-slate-500 hover:bg-slate-900'"
+        >
+          {{ action.label }}
+        </RouterLink>
+      </div>
+    </div>
+
+    <div class="relative w-full lg:ml-auto lg:max-w-[30rem] xl:max-w-[31.75rem] ">
+      <div class="pointer-events-none absolute inset-6 rounded-full bg-indigo-500/10 blur-3xl "></div>
+      
+      <div class="relative w-full rounded-[1.25rem] border border-slate-800 bg-slate-950/35 backdrop-blur pt-3 pb-1.5 sm:pt-4 sm:pb-2 lg:pt-3 lg:pb-1.5 p-2aspect-square ">
+        <div class="relative w-full h-full overflow-hidden rounded-[1rem]">
+          <HeroAnimation />
         </div>
-        <RouterLink
-          to="/courses"
-          class="inline-flex w-full items-center justify-center rounded-2xl border border-slate-700 px-5 py-3 text-center text-sm font-bold text-slate-200 transition hover:border-slate-500 hover:text-white sm:w-fit"
-        >
-          Открыть все курсы
-        </RouterLink>
       </div>
+    </div>
 
-      <div v-if="loading" class="mt-7 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <div v-for="item in 3" :key="item" class="h-72 animate-pulse rounded-[1.5rem] border border-slate-800 bg-slate-950/35"></div>
-      </div>
+  </div>
+</section>
+<section class="mt-5 grid gap-3 lg:grid-cols-3 lg:gap-3.5">
+  <article
+    v-for="role in roleCards"
+    :key="role.title"
+    class="group relative rounded-[1.25rem] border border-slate-800/50 bg-slate-900/30 p-4 transition-all duration-500 hover:border-slate-600 hover:bg-slate-800/30"
+  >
+    <div class="absolute inset-0 rounded-[1.25rem] bg-gradient-to-b from-white/[0.02] to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"></div>
 
-      <div v-else-if="loadError" class="mt-7 rounded-[1.5rem] border border-rose-500/20 bg-rose-500/10 p-6 text-sm text-rose-100">
-        {{ loadError }}
-      </div>
-
-      <div v-else-if="!featuredCourses.length" class="mt-7 rounded-[1.5rem] border border-slate-800 bg-slate-950/35 p-8 text-center">
-        <h3 class="text-xl font-black text-white">Курсы пока не опубликованы</h3>
-        <p class="mt-2 text-sm text-slate-400">После добавления курсов они появятся в этом каталоге.</p>
-      </div>
-
-      <div v-else class="mt-7 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-        <article
-          v-for="course in featuredCourses"
-          :key="course.id"
-          class="group overflow-hidden rounded-[1.5rem] border border-slate-800 bg-slate-950/40 transition hover:-translate-y-1 hover:border-slate-700"
-        >
-          <div class="relative h-40 overflow-hidden border-b border-slate-800 bg-slate-900">
-            <div
-              v-if="course.image"
-              class="absolute inset-0 bg-cover bg-center opacity-80 transition duration-500 group-hover:scale-105"
-              :style="`background-image: url(${course.image})`"
-            ></div>
-            <div v-else class="absolute inset-0 bg-gradient-to-br from-indigo-600/35 via-slate-900 to-slate-950"></div>
-            <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"></div>
-            <div class="absolute bottom-4 left-4 right-4 flex flex-wrap gap-2">
-              <span
-                v-for="skill in (course.skills_covered || []).slice(0, 3)"
-                :key="skill.id || skill.name"
-                class="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold text-white backdrop-blur"
-              >
-                {{ skill.name }}
-              </span>
-            </div>
-          </div>
-
-          <div class="p-5">
-            <h3 class="line-clamp-2 text-xl font-black text-white">{{ course.title }}</h3>
-            <p class="mt-3 line-clamp-3 text-sm leading-6 text-slate-400">{{ course.description || 'Описание курса будет добавлено позже.' }}</p>
-            <div class="mt-5 flex items-center justify-between gap-3 border-t border-slate-800 pt-4 text-xs uppercase tracking-[0.16em] text-slate-500">
-              <span>Автор</span>
-              <span class="truncate text-slate-300">{{ course.author_name || 'Автор курса' }}</span>
-            </div>
-            <RouterLink
-              :to="{ name: 'course-detail', params: { id: course.id } }"
-              class="mt-5 block rounded-2xl bg-white px-4 py-3 text-center text-sm font-bold text-slate-950 transition hover:bg-slate-200"
-            >
-              Открыть курс
-            </RouterLink>
-          </div>
-        </article>
-      </div>
-    </section>
-
-    <section class="mt-8 overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-950 p-6 text-center sm:p-10">
-      <p class="text-xs font-bold uppercase tracking-[0.24em] text-slate-500">Начните работу</p>
-      <h2 class="mx-auto mt-4 max-w-3xl text-2xl font-black leading-tight text-white sm:text-4xl">
-        Превратите учебный процесс в понятный профиль компетенций.
+    <div class="flex items-center justify-between relative z-10">
+      <h2 class="text-[17px] font-bold text-slate-200 tracking-tight transition-colors group-hover:text-white">
+        {{ role.title }}
       </h2>
-      <p class="mx-auto mt-4 max-w-2xl text-sm leading-7 text-slate-400">
-        ElCourse подходит для демонстрации онлайн-обучения, тестирования, активности и карьерной интеграции в одном проекте.
+    </div>
+
+    <p class="mt-2 text-[13px] leading-[1.4] text-slate-500 transition-colors duration-500 group-hover:text-slate-300 relative z-10">
+      {{ role.text }}
+    </p>
+
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 h-[1px] w-0 bg-gradient-to-r from-transparent via-slate-400 to-transparent transition-all duration-700 group-hover:w-full"></div>
+
+    <div class="absolute inset-0 rounded-[1.25rem] ring-1 ring-inset ring-white/5 opacity-100 pointer-events-none"></div>
+  </article>
+</section>
+
+<section class="relative mt-5 overflow-hidden rounded-[1.55rem] border border-white/10 bg-slate-900/30 p-5 sm:p-6 lg:p-6 backdrop-blur-md shadow-[inset_0px_0px_5px_1px_rgba(0,0,0,0)] shadow-black/100">
+  <div class="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(99,102,241,0.08),transparent_40%),radial-gradient(circle_at_80%_80%,rgba(20,184,166,0.05),transparent_40%)] pointer-events-none"></div>
+
+  <div class="max-w-3xl relative z-10">
+    <p class="inline-block px-3 py-1 rounded-full border border-white/10 bg-white/5 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+      Возможности
+    </p>
+    <h2 class="mt-3 text-xl font-black text-white sm:text-[1.65rem] tracking-tight">
+      Основные возможности <span class="text-slate-400/60">платформы</span>
+    </h2>
+  </div>
+
+  <div class="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3 relative z-10">
+    <article
+      v-for="advantage in advantages"
+      :key="advantage.title"
+    
+      class="group relative overflow-hidden rounded-[1.1rem] border border-white/[0.06] bg-black/[0.08] p-5 transition-all duration-500 hover:border-white/20 hover:bg-white/[0.06]"
+    >
+      <div class="absolute top-0 left-1/2 -translate-x-1/2 h-[1px] w-0 bg-gradient-to-r from-transparent via-white/30 to-transparent transition-all duration-700 group-hover:w-full"></div>
+
+      <div class="mb-4 relative h-1 w-12 overflow-hidden rounded-full bg-white/10">
+        <div class="absolute inset-y-0 left-0 w-full -translate-x-full bg-gradient-to-r from-transparent via-slate-200 to-transparent transition-transform duration-700 ease-in-out group-hover:translate-x-full"></div>
+      </div>
+
+      <div class="flex items-center gap-2 mb-3">
+        <h3 class="text-[15px] font-bold text-slate-200 transition-colors group-hover:text-white">
+          {{ advantage.title }}
+        </h3>
+        <svg class="h-4 w-4 text-slate-400 opacity-0 -translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 2L1 7L12 12L21 8.05V13.5H23V7L12 2Z"/>
+          <path d="M5 11.2V14.6C5 14.6 6.5 17 12 17C17.5 17 19 14.6 19 14.6V11.2L12 14.3125L5 11.2Z" opacity="0.4"/>
+        </svg>
+      </div>
+
+      <p class="text-[13px] leading-relaxed text-slate-500 group-hover:text-slate-400 transition-colors">
+        {{ advantage.text }}
       </p>
-      <div class="mt-8 grid gap-3 sm:flex sm:flex-wrap sm:justify-center">
+    </article>
+  </div>
+</section>
+<section class="mt-5 overflow-hidden rounded-[1.55rem] border border-slate-800 bg-slate-950 p-5 text-center sm:p-7 lg:p-7">
+      <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">Начните работу</p>
+      <h2 class="mx-auto mt-2.5 max-w-3xl text-xl font-black leading-tight text-white sm:text-3xl lg:text-[1.85rem]">
+        Объедините обучение, проверку результатов и карьерные сценарии в одной системе.
+      </h2>
+      <p class="mx-auto mt-2.5 max-w-2xl text-sm leading-[1.375rem] text-slate-400">
+        ElCourse подходит для курсов, тестов, подтверждённых навыков и работы с образовательным профилем.
+      </p>
+      <div class="mt-5 grid gap-2.5 sm:flex sm:flex-wrap sm:justify-center">
         <RouterLink
-          to="/courses"
-          class="rounded-2xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white transition hover:bg-indigo-500"
+          v-for="action in finalActions"
+          :key="action.label"
+          :to="action.to"
+          class="inline-flex items-center justify-center rounded-xl px-[1.125rem] py-2.5 text-sm font-bold transition lg:px-5"
+          :class="action.variant === 'primary'
+            ? 'bg-indigo-600 text-white hover:bg-indigo-500'
+            : 'border border-slate-700 text-slate-200 hover:border-slate-500 hover:text-white'"
         >
-          Смотреть курсы
-        </RouterLink>
-        <RouterLink
-          to="/login"
-          class="rounded-2xl border border-slate-700 px-6 py-3 text-sm font-bold text-slate-200 transition hover:border-slate-500 hover:text-white"
-        >
-          Войти / Регистрация
+          {{ action.label }}
         </RouterLink>
       </div>
-    </section>
+</section>
   </div>
 </template>

@@ -77,23 +77,33 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="mx-auto flex min-h-[calc(100vh-140px)] w-full max-w-6xl items-center justify-center py-6 sm:px-4 sm:py-10">
-    <section class="w-full max-w-md">
-      <div class="card-glass rounded-[2rem] p-5 sm:p-9">
+  <div class="mx-auto flex min-h-[calc(100svh-96px)] w-full items-top justify-center px-4 py-4 sm:px-6">
+    <section class="w-full max-w-[380px]">
+      <div class="card-glass rounded-[1.55rem] p-4 sm:p-5">
         <div class="text-center">
-          <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-base font-black text-white shadow-lg shadow-indigo-600/20 sm:h-14 sm:w-14 sm:text-lg">
+          <div class="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-sm font-black text-white shadow-lg shadow-indigo-600/20">
             EL
           </div>
-          <p class="mt-6 text-xs font-bold uppercase tracking-[0.28em] text-indigo-300/70">ElCourse</p>
-          <h1 class="mt-3 text-2xl font-black text-white sm:text-3xl">Вход в аккаунт</h1>
-          <p class="mt-2 text-sm leading-6 text-slate-400">
-            Введите логин и пароль, чтобы продолжить обучение или работу с курсами.
+
+          <p class="mt-3 text-[10px] font-bold uppercase tracking-[0.24em] text-indigo-300/70">
+            ElCourse
+          </p>
+
+          <h1 class="mt-2 text-xl font-black text-white sm:text-2xl">
+            Вход в аккаунт
+          </h1>
+
+          <p class="mx-auto mt-1.5 max-w-xs text-xs leading-5 text-slate-400">
+            Введите логин и пароль, чтобы продолжить работу с платформой.
           </p>
         </div>
 
-        <form class="mt-8 space-y-5" @submit.prevent="handleLogin">
+        <form class="mt-5 space-y-3.5" @submit.prevent="handleLogin">
           <div>
-            <label for="login-username" class="mb-2 block text-sm font-bold text-slate-300">Логин</label>
+            <label for="login-username" class="mb-1.5 block text-xs font-bold text-slate-300">
+              Логин
+            </label>
+
             <input
               id="login-username"
               v-model="username"
@@ -101,13 +111,16 @@ onMounted(() => {
               required
               autocomplete="username"
               maxlength="150"
-              class="input-control px-5 py-3.5"
+              class="input-control rounded-xl px-4 py-2.5 text-sm"
               placeholder="Введите логин"
             >
           </div>
 
           <div>
-            <label for="login-password" class="mb-2 block text-sm font-bold text-slate-300">Пароль</label>
+            <label for="login-password" class="mb-1.5 block text-xs font-bold text-slate-300">
+              Пароль
+            </label>
+
             <div class="relative">
               <input
                 id="login-password"
@@ -116,21 +129,23 @@ onMounted(() => {
                 required
                 autocomplete="current-password"
                 maxlength="128"
-                class="input-control py-3.5 pl-5 pr-14"
+                class="input-control rounded-xl py-2.5 pl-4 pr-12 text-sm"
                 placeholder="Введите пароль"
               >
+
               <button
                 type="button"
-                class="absolute right-3 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-800 hover:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                class="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-800 hover:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                 :aria-label="showPassword ? 'Скрыть пароль' : 'Показать пароль'"
                 :title="showPassword ? 'Скрыть пароль' : 'Показать пароль'"
                 @click="showPassword = !showPassword"
               >
-                <svg v-if="!showPassword" class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <svg v-if="!showPassword" class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <path d="M2.75 12s3.25-6.25 9.25-6.25S21.25 12 21.25 12 18 18.25 12 18.25 2.75 12 2.75 12Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
                   <path d="M12 15.1a3.1 3.1 0 1 0 0-6.2 3.1 3.1 0 0 0 0 6.2Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
-                <svg v-else class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+
+                <svg v-else class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <path d="M3.25 3.25l17.5 17.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
                   <path d="M10.7 5.9c.42-.1.86-.15 1.3-.15 6 0 9.25 6.25 9.25 6.25a17.78 17.78 0 0 1-2.63 3.49" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
                   <path d="M6.46 7.45C4.08 9.06 2.75 12 2.75 12S6 18.25 12 18.25c1.66 0 3.1-.48 4.31-1.18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
@@ -140,20 +155,20 @@ onMounted(() => {
             </div>
           </div>
 
-          <div v-if="formError" class="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+          <div v-if="formError" class="rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-xs text-rose-100">
             {{ formError }}
           </div>
 
           <button
             type="submit"
             :disabled="!canSubmit"
-            class="btn-primary w-full py-4 text-base font-black"
+            class="btn-primary min-h-[42px] w-full rounded-xl py-2.5 text-sm font-black"
           >
             {{ submitting ? 'Вход...' : 'Войти в аккаунт' }}
           </button>
         </form>
 
-        <div class="card-glass mt-7 rounded-2xl p-4 text-center text-sm text-slate-400">
+        <div class="mt-4 rounded-xl border border-slate-800 bg-slate-950/35 px-3 py-3 text-center text-xs text-slate-400">
           Нет аккаунта?
           <RouterLink to="/register" class="font-bold text-indigo-300 transition hover:text-indigo-200">
             Создать аккаунт

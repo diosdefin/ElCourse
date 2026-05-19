@@ -1,44 +1,51 @@
 <template>
-  <footer class="border-t border-slate-800 bg-slate-950/70">
-    <div class="mx-auto w-full max-w-7xl px-4 py-5 text-sm text-slate-400 sm:px-6 sm:py-6 lg:px-8">
-      <div class="grid gap-5 md:grid-cols-[1.2fr_0.8fr_0.9fr] md:gap-8">
-        <div class="min-w-0">
-          <RouterLink to="/" class="inline-flex items-center gap-3 text-white">
-            <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-500 text-[11px] font-black tracking-wide shadow-lg shadow-indigo-500/20 sm:h-9 sm:w-9 sm:text-xs">
+  <footer class="relative border-t border-slate-800/60 bg-gradient-to-b from-slate-950/90 to-slate-950/40 backdrop-blur-sm">
+    <!-- Декоративный элемент сверху -->
+    <div class="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent"></div>
+
+    <div class="mx-auto w-full max-w-[1180px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      <div class="grid gap-8 md:grid-cols-3 lg:gap-12">
+        
+        <!-- Колонка 1: Лого + описание -->
+        <div class="space-y-4">
+          <RouterLink to="/" class="group inline-flex items-center gap-2.5">
+            <span class="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 text-xs font-black tracking-wide text-white shadow-lg shadow-indigo-500/30 transition-all duration-300 group-hover:scale-105 group-hover:shadow-indigo-500/50">
               EL
+              <!-- анимированный градиент при ховере -->
+              <span class="absolute inset-0 rounded-xl bg-gradient-to-br from-indigo-400 to-indigo-600 opacity-0 blur-md transition-opacity group-hover:opacity-100"></span>
             </span>
-            <span class="text-base font-black tracking-[0.16em] sm:text-lg sm:tracking-[0.18em]">COURSE</span>
+            <span class="text-base font-black tracking-[0.14em] text-white transition group-hover:text-indigo-300 sm:text-[1rem] sm:tracking-[0.16em]">COURSE</span>
           </RouterLink>
-          <p class="mt-2 max-w-md text-xs leading-5 text-slate-400 sm:mt-4 sm:text-sm sm:leading-6">
+          <p class="max-w-md text-xs leading-5 text-slate-400 sm:text-[13px] sm:leading-[1.4rem]">
             Образовательная платформа для курсов, тестов, подтверждённых навыков и карьерного взаимодействия.
           </p>
         </div>
 
-        <nav class="grid grid-cols-3 gap-2 text-xs sm:gap-3 sm:text-sm md:grid-cols-1" aria-label="Навигация">
-          <p class="col-span-3 text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 md:col-span-1">Навигация</p>
-          <RouterLink class="font-semibold transition hover:text-white" to="/">Главная</RouterLink>
-          <RouterLink class="font-semibold transition hover:text-white" to="/courses">Курсы</RouterLink>
-          <RouterLink class="font-semibold transition hover:text-white" to="/vacancies">Вакансии</RouterLink>
-        </nav>
+        <!-- Колонка 2: Навигация (вертикальные ссылки) -->
+        <nav class="grid grid-cols-3 gap-3 text-sm sm:grid-cols-2 md:flex md:flex-col" aria-label="Навигация">
+          <p class="col-span-3 text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 sm:col-span-2">Навигация</p>
+          <RouterLink class="text-slate-300 transition hover:text-white hover:translate-x-0.5 inline-block w-fit" to="/">Главная</RouterLink>
+          <RouterLink class="text-slate-300 transition hover:text-white hover:translate-x-0.5 inline-block w-fit" to="/courses">Курсы</RouterLink>
+          <RouterLink class="text-slate-300 transition hover:text-white hover:translate-x-0.5 inline-block w-fit" to="/vacancies">Вакансии</RouterLink>
+          </nav>
 
-        <div class="hidden gap-5 sm:grid sm:grid-cols-2 md:grid-cols-1">
-          <div class="grid gap-3">
-            <p class="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Платформа</p>
-            <span>Для студентов</span>
-            <span>Для преподавателей</span>
-            <span>Для работодателей</span>
-          </div>
-
-          <div>
-            <p class="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Контакты</p>
-            <p class="mt-3 leading-6">Контактная информация указывается администратором платформы.</p>
+        <!-- Колонка 3: Платформа + Контакты в виде кликабельных ссылок -->
+        <div class="grid gap-6 sm:grid-cols-2 md:flex md:flex-col">
+          
+          <div class="space-y-2.5">
+            <p class="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Контакты</p>
+            <p class="text-xs leading-5 text-slate-400 sm:text-[13px]">
+              <a href="mailto:support@elcourse.com" class="transition hover:text-indigo-400">support@elcourse.com</a><br>
+              <span class="text-slate-500">+996 (221) 14-08-07</span>
+            </p>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="border-t border-slate-800/80 px-4 py-3 text-center text-[11px] text-slate-500 sm:py-4 sm:text-xs">
-      © 2026 ElCourse. Образовательная платформа.
+      <!-- Нижняя полоса с копирайтом и языком -->
+      <div class="mt-8 flex flex-col justify-center gap-3 border-t border-slate-800/50 pt-5 text-center text-[11px] text-slate-500 sm:flex-row sm:items-center sm:pt-6 sm:text-left">
+        <p>© 2026 ElCourse. Образовательная платформа.</p>
+      </div>
     </div>
   </footer>
 </template>
