@@ -89,6 +89,14 @@ class Lesson(models.Model):
         return f'{self.course.title} - {self.title}'
 
 
+def student_visible_lessons_queryset(course):
+    return (
+        Lesson.objects
+        .filter(course=course, is_published=True)
+        .order_by('module__order', 'module_id', 'order', 'id')
+    )
+
+
 class LessonProgress(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='lesson_progress')
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='user_progress')

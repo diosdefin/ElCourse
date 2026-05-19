@@ -2,6 +2,7 @@
 
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
+from django.db import transaction
 from django.db.models import Avg, Count, Sum
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
@@ -48,6 +49,15 @@ class TeacherModuleDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         return Module.objects.filter(course__author=self.request.user)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        with transaction.atomic():
+            Lesson.objects.filter(module=instance).delete()
+            self.perform_destroy(instance)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class ReorderModulesView(APIView):

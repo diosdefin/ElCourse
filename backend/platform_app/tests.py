@@ -1,7 +1,7 @@
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from .models import Course, JobOffer, Lesson, User, Vacancy, VacancyApplication
+from .models import Course, JobOffer, Lesson, LessonProgress, Module, User, Vacancy, VacancyApplication
 
 
 class ElCourseSmokeTests(APITestCase):
@@ -33,6 +33,9 @@ class ElCourseSmokeTests(APITestCase):
             order=order,
             is_published=is_published,
         )
+
+    def create_module(self, course, title='Smoke module', order=0):
+        return Module.objects.create(course=course, title=title, order=order)
 
     def create_vacancy(self, employer=None, status_value=Vacancy.STATUS_PUBLISHED):
         employer = employer or self.create_user('employer-owner', User.IS_EMPLOYER)
@@ -208,3 +211,158 @@ class ElCourseSmokeTests(APITestCase):
 
         self.authenticate(teacher)
         self.assertEqual(self.client.get(manifest_url).status_code, status.HTTP_200_OK)
+
+    def test_teacher_delete_module_removes_lessons_from_student_outline(self):
+        teacher = self.create_user('module-delete-teacher', User.IS_TEACHER)
+        student = self.create_user('module-delete-student', User.IS_STUDENT)
+        course = self.create_course(author=teacher)
+        module = self.create_module(course, title='Module to delete', order=0)
+        lesson = Lesson.objects.create(
+            course=course,
+            module=module,
+            title='Lesson in module',
+            type=Lesson.TYPE_TEXT,
+            content='Text content.',
+            order=0,
+            is_published=True,
+        )
+
+        self.authenticate(student)
+        outline_before = self.client.get(f'/api/courses/{course.id}/outline/')
+        self.assertEqual(outline_before.status_code, status.HTTP_200_OK)
+        lesson_ids_before = [
+            item['id']
+            for module_payload in outline_before.data['modules']
+            for item in module_payload.get('lessons', [])
+        ]
+        self.assertIn(lesson.id, lesson_ids_before)
+
+        self.authenticate(teacher)
+        delete_response = self.client.delete(f'/api/teacher/modules/{module.id}/')
+        self.assertEqual(delete_response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Lesson.objects.filter(id=lesson.id).exists())
+
+        self.authenticate(student)
+        outline_after = self.client.get(f'/api/courses/{course.id}/outline/')
+        self.assertEqual(outline_after.status_code, status.HTTP_200_OK)
+        lesson_ids_after = [
+            item['id']
+            for module_payload in outline_after.data['modules']
+            for item in module_payload.get('lessons', [])
+        ]
+        self.assertNotIn(lesson.id, lesson_ids_after)
+
+        lesson_response = self.client.get(f'/api/lessons/{lesson.id}/')
+        self.assertEqual(lesson_response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_teacher_direct_lesson_delete_removes_lesson_from_student_outline(self):
+        teacher = self.create_user('lesson-delete-teacher', User.IS_TEACHER)
+        student = self.create_user('lesson-delete-student', User.IS_STUDENT)
+        course = self.create_course(author=teacher)
+        module = self.create_module(course, title='Existing module', order=0)
+        lesson = Lesson.objects.create(
+            course=course,
+            module=module,
+            title='Lesson to delete',
+            type=Lesson.TYPE_TEXT,
+            content='Text content.',
+            order=0,
+            is_published=True,
+        )
+
+        self.authenticate(teacher)
+        delete_response = self.client.delete(f'/api/teacher/lessons/{lesson.id}/')
+        self.assertEqual(delete_response.status_code, status.HTTP_204_NO_CONTENT)
+
+        self.authenticate(student)
+        outline_response = self.client.get(f'/api/courses/{course.id}/outline/')
+        self.assertEqual(outline_response.status_code, status.HTTP_200_OK)
+        lesson_ids = [
+            item['id']
+            for module_payload in outline_response.data['modules']
+            for item in module_payload.get('lessons', [])
+        ]
+        self.assertNotIn(lesson.id, lesson_ids)
+
+    def test_unpublished_lessons_are_not_counted_in_student_progress(self):
+        teacher = self.create_user('progress-teacher', User.IS_TEACHER)
+        student = self.create_user('progress-student', User.IS_STUDENT)
+        course = self.create_course(author=teacher)
+        published_lesson = Lesson.objects.create(
+            course=course,
+            title='Published text lesson',
+            type=Lesson.TYPE_TEXT,
+            content='Published content.',
+            order=0,
+            is_published=True,
+        )
+        Lesson.objects.create(
+            course=course,
+            title='Hidden draft lesson',
+            type=Lesson.TYPE_TEXT,
+            content='Draft content.',
+            order=1,
+            is_published=False,
+        )
+
+        self.authenticate(student)
+        complete_response = self.client.post(f'/api/lessons/{published_lesson.id}/complete/', {}, format='json')
+        self.assertEqual(complete_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(complete_response.data['course_progress_percentage'], 100)
+        self.assertTrue(complete_response.data['course_completed'])
+
+        course_response = self.client.get(f'/api/courses/{course.id}/')
+        self.assertEqual(course_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(course_response.data['progress_percentage'], 100)
+        self.assertEqual(len(course_response.data['lessons']), 1)
+        self.assertEqual(course_response.data['lessons'][0]['id'], published_lesson.id)
+
+    def test_student_cannot_open_locked_lesson_directly_but_can_open_unlocked_lesson(self):
+        teacher = self.create_user('lock-teacher', User.IS_TEACHER)
+        student = self.create_user('lock-student', User.IS_STUDENT)
+        course = self.create_course(author=teacher)
+        first_lesson = Lesson.objects.create(
+            course=course,
+            title='First lesson',
+            type=Lesson.TYPE_TEXT,
+            content='First content.',
+            order=0,
+            is_published=True,
+        )
+        second_lesson = Lesson.objects.create(
+            course=course,
+            title='Second lesson',
+            type=Lesson.TYPE_TEXT,
+            content='Second content.',
+            order=1,
+            is_published=True,
+        )
+
+        self.authenticate(student)
+        first_response = self.client.get(f'/api/lessons/{first_lesson.id}/')
+        second_response = self.client.get(f'/api/lessons/{second_lesson.id}/')
+
+        self.assertEqual(first_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(second_response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_text_lesson_can_be_completed_without_video_and_updates_progress(self):
+        teacher = self.create_user('text-teacher', User.IS_TEACHER)
+        student = self.create_user('text-student', User.IS_STUDENT)
+        course = self.create_course(author=teacher)
+        lesson = Lesson.objects.create(
+            course=course,
+            title='Text-only lesson',
+            type=Lesson.TYPE_TEXT,
+            content='Text-only content.',
+            order=0,
+            is_published=True,
+        )
+
+        self.authenticate(student)
+        response = self.client.post(f'/api/lessons/{lesson.id}/complete/', {}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['course_progress_percentage'], 100)
+        self.assertTrue(
+            LessonProgress.objects.filter(user=student, lesson=lesson, is_completed=True).exists()
+        )

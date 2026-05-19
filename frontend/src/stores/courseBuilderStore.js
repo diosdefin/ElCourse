@@ -41,6 +41,28 @@ export const useCourseBuilderStore = defineStore('courseBuilder', () => {
     }
   }
 
+  const refetchCourseStructure = async (courseId, preferredModuleId = null) => {
+    await fetchModules(courseId)
+
+    const moduleIds = modules.value.map((item) => item.id)
+    const nextLessonsByModule = {}
+
+    for (const moduleId of moduleIds) {
+      const response = await api.get(`/teacher/courses/${courseId}/lessons/`, {
+        params: { module_id: moduleId },
+      })
+      nextLessonsByModule[moduleId] = response.data
+    }
+
+    lessonsByModule.value = nextLessonsByModule
+
+    if (preferredModuleId && moduleIds.includes(preferredModuleId)) {
+      selectedModuleId.value = preferredModuleId
+    } else if (!moduleIds.includes(selectedModuleId.value)) {
+      selectedModuleId.value = moduleIds[0] || null
+    }
+  }
+
   const createModule = async (courseId, payload) => {
     const response = await api.post('/teacher/modules/', {
       course_id: courseId,
@@ -57,16 +79,9 @@ export const useCourseBuilderStore = defineStore('courseBuilder', () => {
     return response.data
   }
 
-  const deleteModule = async (moduleId) => {
+  const deleteModule = async (courseId, moduleId) => {
     await api.delete(`/teacher/modules/${moduleId}/`)
-    modules.value = modules.value.filter((item) => item.id !== moduleId)
-    const nextLessons = { ...lessonsByModule.value }
-    delete nextLessons[moduleId]
-    lessonsByModule.value = nextLessons
-
-    if (selectedModuleId.value === moduleId) {
-      selectedModuleId.value = modules.value[0]?.id || null
-    }
+    await refetchCourseStructure(courseId, selectedModuleId.value === moduleId ? null : selectedModuleId.value)
   }
 
   const reorderModules = async (courseId, moduleIds) => {
@@ -103,13 +118,9 @@ export const useCourseBuilderStore = defineStore('courseBuilder', () => {
     return response.data
   }
 
-  const deleteLesson = async (lessonId, moduleId) => {
+  const deleteLesson = async (courseId, lessonId, moduleId) => {
     await api.delete(`/teacher/lessons/${lessonId}/`)
-    const current = lessonsByModule.value[moduleId] || []
-    lessonsByModule.value = {
-      ...lessonsByModule.value,
-      [moduleId]: current.filter((item) => item.id !== lessonId),
-    }
+    await refetchCourseStructure(courseId, moduleId || selectedModuleId.value)
   }
 
   const reorderLessons = async (moduleId, lessonIds) => {
@@ -207,6 +218,7 @@ export const useCourseBuilderStore = defineStore('courseBuilder', () => {
     setSelectedModule,
     fetchModules,
     fetchLessons,
+    refetchCourseStructure,
     createModule,
     updateModule,
     deleteModule,

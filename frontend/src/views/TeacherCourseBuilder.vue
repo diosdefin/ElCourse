@@ -225,7 +225,7 @@ const requestDeleteModule = (module) => {
     confirmText: 'Удалить модуль',
     action: async () => {
       try {
-        await store.deleteModule(module.id)
+        await store.deleteModule(courseId.value, module.id)
         showSuccess('Модуль удалён.')
         if (store.selectedModuleId) {
           await loadLessonsForModule(store.selectedModuleId)
@@ -413,7 +413,7 @@ const requestDeleteLesson = (lesson) => {
     confirmText: 'Удалить урок',
     action: async () => {
       try {
-        await store.deleteLesson(lesson.id, moduleId)
+        await store.deleteLesson(courseId.value, lesson.id, moduleId)
         if (activeLessonId.value === lesson.id) {
           activeLessonId.value = null
         }

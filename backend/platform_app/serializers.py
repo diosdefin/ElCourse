@@ -14,6 +14,7 @@ from .models import (
     Question,
     QuizConfig,
     Skill,
+    student_visible_lessons_queryset,
     User,
     Vacancy,
     VacancyApplication,
@@ -350,13 +351,17 @@ class LessonProgressSecondsSerializer(serializers.ModelSerializer):
 
 class CourseSerializer(serializers.ModelSerializer):
     skills_covered = SkillSerializer(many=True, read_only=True)
-    lessons = LessonSerializer(many=True, read_only=True)
+    lessons = serializers.SerializerMethodField()
     author_name = serializers.CharField(source='author.username', read_only=True)
     progress_percentage = serializers.SerializerMethodField()
 
     class Meta:
         model = Course
         fields = ['id', 'title', 'description', 'image', 'author_name', 'skills_covered', 'lessons', 'progress_percentage']
+
+    def get_lessons(self, obj):
+        lessons = student_visible_lessons_queryset(obj)
+        return LessonSerializer(lessons, many=True, context=self.context).data
 
     def get_progress_percentage(self, obj):
         request = self.context.get('request')
@@ -367,13 +372,14 @@ class CourseSerializer(serializers.ModelSerializer):
         if not user.is_authenticated:
             return 0
 
-        total_lessons = obj.lessons.count()
+        visible_lesson_ids = list(student_visible_lessons_queryset(obj).values_list('id', flat=True))
+        total_lessons = len(visible_lesson_ids)
         if total_lessons == 0:
             return 0
 
         completed_lessons = LessonProgress.objects.filter(
             user=user,
-            lesson__course=obj,
+            lesson_id__in=visible_lesson_ids,
             is_completed=True,
         ).count()
         return int((completed_lessons / total_lessons) * 100)

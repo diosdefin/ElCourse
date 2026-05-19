@@ -40,6 +40,7 @@ from .models import (
     User,
     Vacancy,
     VacancyApplication,
+    student_visible_lessons_queryset,
 )
 from .serializers import (
     ActivityDaySerializer,
@@ -111,11 +112,9 @@ def get_activity_year(request, default_year=None):
 
 def _student_visible_lessons(course):
     return (
-        Lesson.objects
-        .filter(course=course, is_published=True)
+        student_visible_lessons_queryset(course)
         .select_related('module')
         .prefetch_related('attachments')
-        .order_by('module__order', 'module_id', 'order', 'id')
     )
 
 
@@ -137,12 +136,7 @@ def _student_can_access_lesson(student, lesson):
     if not lesson.is_published:
         return False
 
-    visible_lessons = list(
-        Lesson.objects
-        .filter(course=lesson.course, is_published=True)
-        .order_by('module__order', 'module_id', 'order', 'id')
-        .only('id')
-    )
+    visible_lessons = list(student_visible_lessons_queryset(lesson.course).only('id'))
     progress_map = {
         row.lesson_id: row
         for row in LessonProgress.objects.filter(user=student, lesson__in=visible_lessons)
@@ -238,10 +232,13 @@ class CompleteLessonView(APIView):
         if newly_completed:
             record_daily_activity(user, ActivityLog.ACTION_LESSON_COMPLETED)
 
-        total_lessons = lesson.course.lessons.count()
+        visible_lesson_ids = list(
+            student_visible_lessons_queryset(lesson.course).values_list('id', flat=True)
+        )
+        total_lessons = len(visible_lesson_ids)
         completed_lessons = LessonProgress.objects.filter(
             user=user,
-            lesson__course=lesson.course,
+            lesson_id__in=visible_lesson_ids,
             is_completed=True,
         ).count()
         progress_percentage = int((completed_lessons / total_lessons) * 100) if total_lessons else 0
@@ -582,11 +579,13 @@ class LessonQuizSubmitView(APIView):
 
             progress.save(update_fields=['attempts_used', 'score', 'is_completed', 'completed_at', 'blocked_until'])
 
-            total_lessons = lesson.course.lessons.filter(is_published=True).count()
+            visible_lesson_ids = list(
+                student_visible_lessons_queryset(lesson.course).values_list('id', flat=True)
+            )
+            total_lessons = len(visible_lesson_ids)
             completed_lessons = LessonProgress.objects.filter(
                 user=request.user,
-                lesson__course=lesson.course,
-                lesson__is_published=True,
+                lesson_id__in=visible_lesson_ids,
                 is_completed=True,
             ).count()
             course_progress_percentage = int((completed_lessons / total_lessons) * 100) if total_lessons else 0
