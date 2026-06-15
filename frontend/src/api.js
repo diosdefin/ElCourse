@@ -4,7 +4,10 @@ import { API_BASE_URL } from './utils/media'
 import { showInfo } from './utils/toast'
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  // 1. Проверяет боевой URL из .env.production на Vercel
+  // 2. Если его нет, берет старый API_BASE_URL
+  // 3. Если и его нет, стучится на локалку
+  baseURL: import.meta.env.VITE_API_URL || API_BASE_URL || 'http://127.0.0.1:8000/',
 })
 
 let handlingUnauthorized = false
