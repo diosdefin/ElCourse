@@ -4,6 +4,7 @@ import { computed, ref } from 'vue'
 import api from '../api'
 
 export const useCourseBuilderStore = defineStore('courseBuilder', () => {
+  const course = ref(null)
   const modules = ref([])
   const lessonsByModule = ref({})
   const selectedModuleId = ref(null)
@@ -14,6 +15,18 @@ export const useCourseBuilderStore = defineStore('courseBuilder', () => {
 
   const setSelectedModule = (moduleId) => {
     selectedModuleId.value = moduleId
+  }
+
+  const fetchCourse = async (courseId) => {
+    const response = await api.get(`/teacher/courses/${courseId}/`)
+    course.value = response.data
+    return response.data
+  }
+
+  const updateCourse = async (courseId, patch) => {
+    const response = await api.patch(`/teacher/courses/${courseId}/`, patch)
+    course.value = response.data
+    return response.data
   }
 
   const fetchModules = async (courseId) => {
@@ -216,6 +229,7 @@ export const useCourseBuilderStore = defineStore('courseBuilder', () => {
   }
 
   return {
+    course,
     modules,
     lessonsByModule,
     selectedModuleId,
@@ -223,6 +237,8 @@ export const useCourseBuilderStore = defineStore('courseBuilder', () => {
     selectedLessons,
     isLoading,
     setSelectedModule,
+    fetchCourse,
+    updateCourse,
     fetchModules,
     fetchLessons,
     refetchCourseStructure,

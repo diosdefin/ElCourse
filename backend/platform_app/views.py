@@ -120,7 +120,10 @@ def _student_visible_lessons(course):
     )
 
 
-def _student_locked_lesson_ids(visible_lessons, progress_map):
+def _student_locked_lesson_ids(course, visible_lessons, progress_map):
+    if not course.sequential_unlock_enabled:
+        return set()
+
     locked_ids = set()
     previous_completed = True
 
@@ -138,12 +141,15 @@ def _student_can_access_lesson(student, lesson):
     if not lesson.is_published:
         return False
 
+    if not lesson.course.sequential_unlock_enabled:
+        return True
+
     visible_lessons = list(student_visible_lessons_queryset(lesson.course).only('id'))
     progress_map = {
         row.lesson_id: row
         for row in LessonProgress.objects.filter(user=student, lesson__in=visible_lessons)
     }
-    locked_ids = _student_locked_lesson_ids(visible_lessons, progress_map)
+    locked_ids = _student_locked_lesson_ids(lesson.course, visible_lessons, progress_map)
     return lesson.id not in locked_ids
 
 
@@ -374,7 +380,7 @@ class CourseOutlineView(APIView):
             visible_lessons = list(_student_visible_lessons(course))
             progress_rows = LessonProgress.objects.filter(user=request.user, lesson__in=visible_lessons)
             progress_map = {row.lesson_id: row for row in progress_rows}
-            locked_ids = _student_locked_lesson_ids(visible_lessons, progress_map)
+            locked_ids = _student_locked_lesson_ids(course, visible_lessons, progress_map)
         elif request.user.is_staff or (request.user.role == User.IS_TEACHER and course.author_id == request.user.id):
             visible_lessons = list(
                 Lesson.objects

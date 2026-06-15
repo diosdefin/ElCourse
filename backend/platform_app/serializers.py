@@ -470,7 +470,17 @@ class CourseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Course
-        fields = ['id', 'title', 'description', 'image', 'author_name', 'skills_covered', 'lessons', 'progress_percentage']
+        fields = [
+            'id',
+            'title',
+            'description',
+            'image',
+            'author_name',
+            'skills_covered',
+            'lessons',
+            'progress_percentage',
+            'sequential_unlock_enabled',
+        ]
 
     def get_lessons(self, obj):
         lessons = student_visible_lessons_queryset(obj)
@@ -753,7 +763,7 @@ class CourseOutlineSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Course
-        fields = ['id', 'title', 'modules']
+        fields = ['id', 'title', 'modules', 'sequential_unlock_enabled']
 
     def get_modules(self, obj):
         modules = getattr(obj, '_visible_modules', list(obj.modules.all()))

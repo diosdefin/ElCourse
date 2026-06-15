@@ -1,10 +1,12 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import api from '../api'
 import LessonView from './LessonView.vue'
 import { showError } from '../utils/toast'
+
+const SIDEBAR_STORAGE_KEY = 'elcourse_course_play_sidebar_collapsed'
 
 const route = useRoute()
 const router = useRouter()
@@ -13,9 +15,11 @@ const loading = ref(true)
 const outline = ref(null)
 const selectedLessonId = ref(null)
 const expandedModules = ref({})
+const sidebarCollapsed = ref(false)
 
 const courseId = computed(() => Number(route.params.id))
 const modules = computed(() => outline.value?.modules || [])
+const sequentialModeEnabled = computed(() => Boolean(outline.value?.sequential_unlock_enabled))
 
 const allLessons = computed(() => modules.value.flatMap((moduleItem) => moduleItem.lessons || []))
 const totalLessons = computed(() => allLessons.value.length)
@@ -84,6 +88,21 @@ const expandAroundSelectedLesson = () => {
   expandedModules.value = expanded
 }
 
+const persistSidebarState = () => {
+  try {
+    window.localStorage.setItem(SIDEBAR_STORAGE_KEY, sidebarCollapsed.value ? '1' : '0')
+  } catch (error) {
+  }
+}
+
+const readSidebarState = () => {
+  try {
+    return window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === '1'
+  } catch (error) {
+    return false
+  }
+}
+
 const fetchOutline = async () => {
   loading.value = true
   try {
@@ -129,7 +148,16 @@ const toggleModule = (moduleId) => {
   }
 }
 
-onMounted(fetchOutline)
+const toggleSidebar = () => {
+  sidebarCollapsed.value = !sidebarCollapsed.value
+}
+
+watch(sidebarCollapsed, persistSidebarState)
+
+onMounted(() => {
+  sidebarCollapsed.value = readSidebarState()
+  fetchOutline()
+})
 </script>
 
 <template>
@@ -152,7 +180,17 @@ onMounted(fetchOutline)
           </svg>
           Описание курса
         </button>
-        <p class="text-xs font-bold uppercase tracking-[0.28em] text-indigo-300/80">Прохождение курса</p>
+        <div class="flex flex-wrap items-center gap-2">
+          <p class="text-xs font-bold uppercase tracking-[0.28em] text-indigo-300/80">Прохождение курса</p>
+          <span
+            class="inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-bold"
+            :class="sequentialModeEnabled
+              ? 'border-indigo-400/30 bg-indigo-500/10 text-indigo-200'
+              : 'border-emerald-400/30 bg-emerald-500/10 text-emerald-200'"
+          >
+            {{ sequentialModeEnabled ? 'Последовательный режим' : 'Свободный доступ' }}
+          </span>
+        </div>
         <h1 class="mt-2 line-clamp-2 text-2xl font-black text-slate-100 sm:text-3xl">{{ outline?.title }}</h1>
       </div>
 
@@ -172,8 +210,33 @@ onMounted(fetchOutline)
       </div>
     </div>
 
-    <div class="grid gap-5 lg:grid-cols-[360px,minmax(0,1fr)]">
-      <aside class="h-fit min-w-0 rounded-3xl border border-slate-800/80 bg-slate-900/70 p-4 shadow-2xl shadow-slate-950/20 lg:sticky lg:top-24">
+    <div class="mb-4 flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        class="inline-flex min-h-10 items-center gap-2 rounded-full border border-slate-700 bg-slate-950/50 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-indigo-400/60 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/80"
+        @click="toggleSidebar"
+      >
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+        {{ sidebarCollapsed ? 'Показать содержание' : 'Скрыть содержание' }}
+      </button>
+
+      <span
+        class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-bold"
+        :class="sequentialModeEnabled
+          ? 'border-indigo-400/25 bg-indigo-500/10 text-indigo-200'
+          : 'border-emerald-400/25 bg-emerald-500/10 text-emerald-200'"
+      >
+        {{ sequentialModeEnabled ? 'Следующие уроки открываются по завершению' : 'Все опубликованные уроки доступны сразу' }}
+      </span>
+    </div>
+
+    <div class="grid gap-5" :class="sidebarCollapsed ? 'lg:grid-cols-[minmax(0,1fr)]' : 'lg:grid-cols-[360px,minmax(0,1fr)]'">
+      <aside
+        v-if="!sidebarCollapsed"
+        class="h-fit min-w-0 rounded-3xl border border-slate-800/80 bg-slate-900/70 p-4 shadow-2xl shadow-slate-950/20 lg:sticky lg:top-24"
+      >
         <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 class="text-lg font-black text-slate-100">Содержание</h2>
@@ -318,6 +381,23 @@ onMounted(fetchOutline)
               {{ lessonStatusLabel(selectedLesson) }}
             </span>
           </div>
+        </div>
+
+        <div
+          v-if="sidebarCollapsed"
+          class="mb-3 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-800 bg-slate-950/35 px-4 py-3"
+        >
+          <button
+            type="button"
+            class="inline-flex min-h-10 items-center gap-2 rounded-full border border-slate-700 bg-slate-900/70 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-indigo-400/60 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/80"
+            @click="toggleSidebar"
+          >
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+            Показать содержание
+          </button>
+          <p class="text-sm text-slate-400">Список модулей скрыт, чтобы оставить больше места для урока.</p>
         </div>
 
         <LessonView

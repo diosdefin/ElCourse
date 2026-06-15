@@ -38,6 +38,7 @@ class Course(models.Model):
     description = models.TextField(verbose_name='Описание')
     image = models.ImageField(upload_to='courses/', blank=True, null=True, verbose_name='Обложка')
     skills_covered = models.ManyToManyField(Skill, related_name='courses', verbose_name='Получаемые навыки')
+    sequential_unlock_enabled = models.BooleanField(default=False)
 
     def __str__(self):
         return self.title

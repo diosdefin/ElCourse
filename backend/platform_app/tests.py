@@ -16,12 +16,13 @@ class ElCourseSmokeTests(APITestCase):
     def authenticate(self, user):
         self.client.force_authenticate(user=user)
 
-    def create_course(self, author=None, title='Smoke course'):
+    def create_course(self, author=None, title='Smoke course', sequential_unlock_enabled=False):
         author = author or self.create_user('teacher-owner', User.IS_TEACHER)
         return Course.objects.create(
             author=author,
             title=title,
             description='Course created by smoke tests.',
+            sequential_unlock_enabled=sequential_unlock_enabled,
         )
 
     def create_lesson(self, course, title='Smoke lesson', is_published=True, order=0):
@@ -249,7 +250,7 @@ class ElCourseSmokeTests(APITestCase):
     def test_student_cannot_get_manifest_for_locked_or_unpublished_lesson(self):
         teacher = self.create_user('hls-guard-teacher', User.IS_TEACHER)
         student = self.create_user('hls-guard-student', User.IS_STUDENT)
-        course = self.create_course(author=teacher)
+        course = self.create_course(author=teacher, sequential_unlock_enabled=True)
         unlocked = self.create_lesson(course, title='Unlocked video', is_published=True, order=0)
         locked = self.create_lesson(course, title='Locked video', is_published=True, order=1)
         hidden = self.create_lesson(course, title='Hidden video', is_published=False, order=2)
@@ -465,7 +466,7 @@ class ElCourseSmokeTests(APITestCase):
     def test_student_cannot_open_locked_lesson_directly_but_can_open_unlocked_lesson(self):
         teacher = self.create_user('lock-teacher', User.IS_TEACHER)
         student = self.create_user('lock-student', User.IS_STUDENT)
-        course = self.create_course(author=teacher)
+        course = self.create_course(author=teacher, sequential_unlock_enabled=True)
         first_lesson = Lesson.objects.create(
             course=course,
             title='First lesson',
@@ -606,7 +607,7 @@ class ElCourseSmokeTests(APITestCase):
     def test_locked_and_unpublished_quiz_lessons_are_blocked_for_student(self):
         teacher = self.create_user('quiz-guard-teacher', User.IS_TEACHER)
         student = self.create_user('quiz-guard-student', User.IS_STUDENT)
-        course = self.create_course(author=teacher)
+        course = self.create_course(author=teacher, sequential_unlock_enabled=True)
         unlocked = Lesson.objects.create(course=course, title='Unlocked quiz', type=Lesson.TYPE_QUIZ, content='', order=0, is_published=True)
         locked = Lesson.objects.create(course=course, title='Locked quiz', type=Lesson.TYPE_QUIZ, content='', order=1, is_published=True)
         hidden = Lesson.objects.create(course=course, title='Hidden quiz', type=Lesson.TYPE_QUIZ, content='', order=2, is_published=False)
@@ -663,3 +664,109 @@ class ElCourseSmokeTests(APITestCase):
         self.assertEqual(lesson_quiz_response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(lesson_quiz_response.data['questions']), 1)
         self.assertEqual(lesson_quiz_response.data['questions'][0]['id'], lesson_question.id)
+
+    def test_default_course_lessons_are_open(self):
+        teacher = self.create_user('default-open-teacher', User.IS_TEACHER)
+        student = self.create_user('default-open-student', User.IS_STUDENT)
+        course = self.create_course(author=teacher, sequential_unlock_enabled=False)
+        first = Lesson.objects.create(course=course, title='Lesson 1', type=Lesson.TYPE_TEXT, content='One.', order=0, is_published=True)
+        second = Lesson.objects.create(course=course, title='Lesson 2', type=Lesson.TYPE_TEXT, content='Two.', order=1, is_published=True)
+        third = Lesson.objects.create(course=course, title='Lesson 3', type=Lesson.TYPE_TEXT, content='Three.', order=2, is_published=True)
+
+        self.authenticate(student)
+        outline_response = self.client.get(f'/api/courses/{course.id}/outline/')
+
+        self.assertEqual(outline_response.status_code, status.HTTP_200_OK)
+        lessons = [
+            item
+            for module_payload in outline_response.data['modules']
+            for item in module_payload.get('lessons', [])
+        ]
+        self.assertEqual({item['id'] for item in lessons}, {first.id, second.id, third.id})
+        self.assertTrue(all(not item['is_locked'] for item in lessons))
+        self.assertEqual(self.client.get(f'/api/lessons/{second.id}/').status_code, status.HTTP_200_OK)
+        self.assertEqual(outline_response.data['sequential_unlock_enabled'], False)
+
+    def test_sequential_mode_unlocks_after_completion(self):
+        teacher = self.create_user('sequential-progress-teacher', User.IS_TEACHER)
+        student = self.create_user('sequential-progress-student', User.IS_STUDENT)
+        course = self.create_course(author=teacher, sequential_unlock_enabled=True)
+        first = Lesson.objects.create(course=course, title='Lesson 1', type=Lesson.TYPE_TEXT, content='One.', order=0, is_published=True)
+        second = Lesson.objects.create(course=course, title='Lesson 2', type=Lesson.TYPE_TEXT, content='Two.', order=1, is_published=True)
+
+        self.authenticate(student)
+        blocked_response = self.client.get(f'/api/lessons/{second.id}/')
+        self.assertEqual(blocked_response.status_code, status.HTTP_403_FORBIDDEN)
+
+        complete_response = self.client.post(f'/api/lessons/{first.id}/complete/', {}, format='json')
+        self.assertEqual(complete_response.status_code, status.HTTP_200_OK)
+
+        unlocked_response = self.client.get(f'/api/lessons/{second.id}/')
+        self.assertEqual(unlocked_response.status_code, status.HTTP_200_OK)
+
+    def test_unpublished_lessons_stay_blocked_in_free_mode(self):
+        teacher = self.create_user('free-hidden-teacher', User.IS_TEACHER)
+        student = self.create_user('free-hidden-student', User.IS_STUDENT)
+        course = self.create_course(author=teacher, sequential_unlock_enabled=False)
+        Lesson.objects.create(course=course, title='Visible lesson', type=Lesson.TYPE_TEXT, content='Visible.', order=0, is_published=True)
+        hidden = Lesson.objects.create(course=course, title='Hidden lesson', type=Lesson.TYPE_TEXT, content='Hidden.', order=1, is_published=False)
+
+        self.authenticate(student)
+        self.assertEqual(self.client.get(f'/api/lessons/{hidden.id}/').status_code, status.HTTP_404_NOT_FOUND)
+
+        outline_response = self.client.get(f'/api/courses/{course.id}/outline/')
+        lesson_ids = [
+            item['id']
+            for module_payload in outline_response.data['modules']
+            for item in module_payload.get('lessons', [])
+        ]
+        self.assertNotIn(hidden.id, lesson_ids)
+
+    def test_teacher_can_update_sequential_unlock_enabled_and_student_outline_reflects_it(self):
+        teacher = self.create_user('sequential-setting-teacher', User.IS_TEACHER)
+        student = self.create_user('sequential-setting-student', User.IS_STUDENT)
+        course = self.create_course(author=teacher, sequential_unlock_enabled=False)
+        Lesson.objects.create(course=course, title='Lesson 1', type=Lesson.TYPE_TEXT, content='One.', order=0, is_published=True)
+        second = Lesson.objects.create(course=course, title='Lesson 2', type=Lesson.TYPE_TEXT, content='Two.', order=1, is_published=True)
+
+        self.authenticate(teacher)
+        update_response = self.client.patch(
+            f'/api/teacher/courses/{course.id}/',
+            {'sequential_unlock_enabled': True},
+            format='json',
+        )
+        self.assertEqual(update_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(update_response.data['sequential_unlock_enabled'], True)
+
+        course.refresh_from_db()
+        self.assertTrue(course.sequential_unlock_enabled)
+
+        self.authenticate(student)
+        outline_response = self.client.get(f'/api/courses/{course.id}/outline/')
+        self.assertEqual(outline_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(outline_response.data['sequential_unlock_enabled'], True)
+
+        lessons = [
+            item
+            for module_payload in outline_response.data['modules']
+            for item in module_payload.get('lessons', [])
+        ]
+        second_payload = next(item for item in lessons if item['id'] == second.id)
+        self.assertTrue(second_payload['is_locked'])
+        self.assertEqual(self.client.get(f'/api/lessons/{second.id}/').status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_another_teacher_cannot_change_foreign_course_sequential_setting(self):
+        owner = self.create_user('sequential-owner-teacher', User.IS_TEACHER)
+        other = self.create_user('sequential-other-teacher', User.IS_TEACHER)
+        course = self.create_course(author=owner, sequential_unlock_enabled=False)
+
+        self.authenticate(other)
+        response = self.client.patch(
+            f'/api/teacher/courses/{course.id}/',
+            {'sequential_unlock_enabled': True},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        course.refresh_from_db()
+        self.assertFalse(course.sequential_unlock_enabled)

@@ -13,6 +13,7 @@ const router = useRouter()
 const store = useCourseBuilderStore()
 
 const courseId = computed(() => Number(route.params.id))
+const courseDetails = computed(() => store.course)
 
 const TITLE_LIMIT = 120
 const CONTENT_LIMIT = 12000
@@ -78,6 +79,7 @@ const editingVideoStatus = ref(null)
 
 const quizConfigOpen = ref(false)
 const quizConfig = ref(null)
+const isSavingCourseSettings = ref(false)
 
 const dirtyLessons = ref(new Map())
 let autosaveTimer = null
@@ -134,6 +136,7 @@ const loadLessonsForModule = async (moduleId) => {
 
 const init = async () => {
   try {
+    await store.fetchCourse(courseId.value)
     await store.fetchModules(courseId.value)
     if (store.selectedModuleId) {
       await loadLessonsForModule(store.selectedModuleId)
@@ -141,6 +144,28 @@ const init = async () => {
   } catch (error) {
     console.error(error)
     showError('Не удалось загрузить конструктор курса.')
+  }
+}
+
+const toggleSequentialUnlock = async () => {
+  if (!courseDetails.value || isSavingCourseSettings.value) {
+    return
+  }
+
+  const nextValue = !courseDetails.value.sequential_unlock_enabled
+  isSavingCourseSettings.value = true
+
+  try {
+    await store.updateCourse(courseId.value, {
+      sequential_unlock_enabled: nextValue,
+    })
+    await store.refetchCourseStructure(courseId.value, store.selectedModuleId)
+    showSuccess(nextValue ? 'Последовательное прохождение включено.' : 'Свободный доступ к урокам включён.')
+  } catch (error) {
+    console.error(error)
+    showError('Не удалось обновить настройки курса.')
+  } finally {
+    isSavingCourseSettings.value = false
   }
 }
 
@@ -716,6 +741,56 @@ onUnmounted(() => {
         Сгенерировать финальный экзамен
       </button>
     </div>
+
+    <section class="mb-6 rounded-3xl border border-slate-800/80 bg-slate-900/65 p-4 shadow-2xl shadow-slate-950/20 sm:p-5">
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-2">
+            <h2 class="text-base font-black text-slate-100 sm:text-lg">Настройки доступа</h2>
+            <span
+              class="inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-bold"
+              :class="courseDetails?.sequential_unlock_enabled
+                ? 'border-indigo-400/30 bg-indigo-500/10 text-indigo-200'
+                : 'border-emerald-400/30 bg-emerald-500/10 text-emerald-200'"
+            >
+              {{ courseDetails?.sequential_unlock_enabled ? 'Последовательный режим' : 'Свободный доступ' }}
+            </span>
+          </div>
+          <p class="mt-2 max-w-3xl text-sm leading-relaxed text-slate-400">
+            Если включено, следующий урок откроется студенту только после завершения предыдущего.
+            Если выключено, все опубликованные уроки доступны сразу.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          class="inline-flex min-h-12 items-center gap-3 rounded-2xl border px-4 py-3 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/80"
+          :class="courseDetails?.sequential_unlock_enabled
+            ? 'border-indigo-400/35 bg-indigo-500/10 text-indigo-100'
+            : 'border-slate-700 bg-slate-950/60 text-slate-200 hover:border-slate-600'"
+          :disabled="isSavingCourseSettings"
+          @click="toggleSequentialUnlock"
+        >
+          <span
+            class="relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition"
+            :class="courseDetails?.sequential_unlock_enabled ? 'bg-indigo-500/70' : 'bg-slate-800'"
+          >
+            <span
+              class="absolute h-5 w-5 rounded-full bg-white shadow-md transition"
+              :class="courseDetails?.sequential_unlock_enabled ? 'translate-x-6' : 'translate-x-1'"
+            ></span>
+          </span>
+          <span class="min-w-0">
+            <span class="block text-sm font-bold">
+              {{ courseDetails?.sequential_unlock_enabled ? 'Последовательное прохождение включено' : 'Последовательное прохождение выключено' }}
+            </span>
+            <span class="block text-xs text-slate-400">
+              {{ isSavingCourseSettings ? 'Сохраняем настройку...' : 'Переключить режим курса' }}
+            </span>
+          </span>
+        </button>
+      </div>
+    </section>
 
     <div class="grid gap-6 xl:grid-cols-[360px,minmax(0,1fr)]">
       <aside class="card-glass min-w-0 rounded-3xl p-4">
