@@ -160,7 +160,11 @@ class ViewerContextMixin:
         return self.context['viewer_friend_ids']
 
     def get_avatar(self, obj):
-        return obj.avatar.url if obj.avatar else None
+        if obj.avatar:
+            request = self.context.get('request')
+            # Используем готовую функцию из твоего файла, чтобы приклеить домен API
+            return _build_absolute_media_url(request, obj.avatar.url)
+        return ''
 
     def get_registration_year(self, obj):
         return obj.date_joined.year
@@ -976,4 +980,7 @@ class VacancyApplicationSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at', 'updated_at']
 
     def get_student_avatar(self, obj):
-        return obj.student.avatar.url if obj.student.avatar else None
+        if obj.student.avatar:
+            request = self.context.get('request')
+            return _build_absolute_media_url(request, obj.student.avatar.url)
+        return ''
