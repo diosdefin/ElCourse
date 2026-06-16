@@ -160,13 +160,11 @@ class ViewerContextMixin:
         return self.context['viewer_friend_ids']
     
     def get_avatar(self, obj):
-        # В Django проверять наличие файла в ImageField нужно через bool(obj.avatar)
-        if obj.avatar and bool(obj.avatar): 
+        # Возвращаем СТРОГО относительный путь, без всяких доменов сервера!
+        if obj.avatar and bool(obj.avatar):
             try:
-                request = self.context.get('request')
-                return _build_absolute_media_url(request, obj.avatar.url)
+                return obj.avatar.url  # Выдаст просто "/media/profile_photos/..."
             except ValueError:
-                # На случай, если Django думает, что файл есть, но пути к нему нет
                 return ''
         return ''
 
@@ -986,8 +984,7 @@ class VacancyApplicationSerializer(serializers.ModelSerializer):
     def get_student_avatar(self, obj):
         if obj.student.avatar and bool(obj.student.avatar):
             try:
-                request = self.context.get('request')
-                return _build_absolute_media_url(request, obj.student.avatar.url)
+                return obj.student.avatar.url  # Тоже строго относительный путь
             except ValueError:
                 return ''
         return ''
