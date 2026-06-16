@@ -212,3 +212,8 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_TRACK_STARTED = True
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://elcourse.app",
+    "https://www.elcourse.app"
+]
