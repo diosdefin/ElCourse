@@ -28,9 +28,8 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'api.elcourse.app']
 
-
+ALLOWED_HOSTS = ['46.101.147.69', 'corsheaders','elcourse.app', 'api.elcourse.app', 'www.elcourse.app']
 # Application definition
 
 INSTALLED_APPS = [
@@ -127,7 +126,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = "static/"
-
+STATIC_ROOT = '/var/www/ElCourse/backend/static/'
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 

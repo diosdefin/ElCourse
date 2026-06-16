@@ -1,0 +1,21 @@
+[0;1;32m●[0m gunicorn.service - gunicorn daemon for ElCourse
+     Loaded: loaded (]8;;file://elcourse-backend/etc/systemd/system/gunicorn.service/etc/systemd/system/gunicorn.service]8;;; [0;1;38;5;185mdisabled[0m; preset: [0;1;32menabled[0m)
+     Active: [0;1;32mactive (running)[0m since Mon 2026-06-15 23:07:24 UTC; 2min 46s ago
+   Main PID: 7764 (gunicorn)
+      Tasks: 5 (limit: 2315)
+     Memory: 129.9M (peak: 130.2M)
+        CPU: 3.997s
+     CGroup: /system.slice/gunicorn.service
+             ├─[0;38;5;245m7764 /var/www/ElCourse/backend/venv/bin/python3 /var/www/ElCourse/backend/venv/bin/gunicorn --access-logfile - --workers 3 --bind unix:/var/www/ElCourse/backend/gunicorn.sock config.wsgi:application[0m
+             ├─[0;38;5;245m7765 /var/www/ElCourse/backend/venv/bin/python3 /var/www/ElCourse/backend/venv/bin/gunicorn --access-logfile - --workers 3 --bind unix:/var/www/ElCourse/backend/gunicorn.sock config.wsgi:application[0m
+             ├─[0;38;5;245m7766 /var/www/ElCourse/backend/venv/bin/python3 /var/www/ElCourse/backend/venv/bin/gunicorn --access-logfile - --workers 3 --bind unix:/var/www/ElCourse/backend/gunicorn.sock config.wsgi:application[0m
+             └─[0;38;5;245m7767 /var/www/ElCourse/backend/venv/bin/python3 /var/www/ElCourse/backend/venv/bin/gunicorn --access-logfile - --workers 3 --bind unix:/var/www/ElCourse/backend/gunicorn.sock config.wsgi:application[0m
+
+Jun 15 23:07:24 elcourse-backend systemd[1]: Started gunicorn.service - gunicorn daemon for ElCourse.
+Jun 15 23:07:24 elcourse-backend gunicorn[7764]: [2026-06-15 23:07:24 +0000] [7764] [INFO] Starting gunicorn 26.0.0
+Jun 15 23:07:24 elcourse-backend gunicorn[7764]: [2026-06-15 23:07:24 +0000] [7764] [INFO] Listening at: unix:/var/www/ElCourse/backend/gunicorn.sock (7764)
+Jun 15 23:07:24 elcourse-backend gunicorn[7764]: [2026-06-15 23:07:24 +0000] [7764] [INFO] Using worker: sync
+Jun 15 23:07:24 elcourse-backend gunicorn[7765]: [2026-06-15 23:07:24 +0000] [7765] [INFO] Booting worker with pid: 7765
+Jun 15 23:07:25 elcourse-backend gunicorn[7766]: [2026-06-15 23:07:25 +0000] [7766] [INFO] Booting worker with pid: 7766
+Jun 15 23:07:25 elcourse-backend gunicorn[7767]: [2026-06-15 23:07:25 +0000] [7767] [INFO] Booting worker with pid: 7767
+Jun 15 23:07:25 elcourse-backend gunicorn[7764]: [2026-06-15 23:07:25 +0000] [7764] [INFO] Control socket listening at /root/.gunicorn/gunicorn.ctl
