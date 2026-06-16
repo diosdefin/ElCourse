@@ -6,6 +6,7 @@
 venv/
 env/
 ENV/
+.env.local/
 .env
 env.bak/
 venv.bak/

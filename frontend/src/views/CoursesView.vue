@@ -166,7 +166,7 @@ const emptyTitle = computed(() => {
 })
 const emptyText = computed(() => {
   if (search.value || selectedSkills.value.length || selectedAuthors.value.length ||
-      lessonMin.value !== globalMinLessons.value || lessonMax.value !== globalMaxLessons.value)
+    lessonMin.value !== globalMinLessons.value || lessonMax.value !== globalMaxLessons.value)
     return 'Попробуйте изменить запрос или сбросить фильтры.'
   if (activeTab.value === 'my') return 'Начните курс из каталога, и он появится в этом разделе.'
   if (activeTab.value === 'continue') return 'Начатые, но не завершённые курсы появятся здесь.'
@@ -284,13 +284,14 @@ onMounted(loadCourses)
     <header class="border-b border-slate-800/80 pb-5">
       <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div class="min-w-0">
-         
+
           <h1 class="mt-3 text-[30px] font-black leading-none tracking-tight text-white sm:text-[38px]">
             Все онлайн-курсы
           </h1>
         </div>
 
-        <div class="grid w-full grid-cols-3 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/30 lg:w-[360px]">
+        <div
+          class="grid w-full grid-cols-3 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/30 lg:w-[360px]">
           <div class="border-r border-slate-800 px-4 py-3">
             <p class="text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">Курсы</p>
             <p class="mt-1 text-xl font-black text-white">{{ totalCourses }}</p>
@@ -308,16 +309,11 @@ onMounted(loadCourses)
 
       <div class="mt-5 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div class="flex gap-2 overflow-x-auto pb-1">
-          <button
-            v-for="tab in availableTabs"
-            :key="tab.key"
-            type="button"
-            class="shrink-0 rounded-full border px-4 py-2 text-xs font-black transition"
-            :class="activeTab === tab.key
+          <button v-for="tab in availableTabs" :key="tab.key" type="button"
+            class="shrink-0 rounded-full border px-4 py-2 text-xs font-black transition" :class="activeTab === tab.key
               ? 'border-indigo-400/60 bg-indigo-500 text-white shadow-lg shadow-indigo-500/15'
               : 'border-slate-700 bg-slate-950/20 text-slate-300 hover:border-slate-500 hover:text-white'"
-            @click="setTab(tab.key)"
-          >
+            @click="setTab(tab.key)">
             {{ tab.label }}
           </button>
         </div>
@@ -325,40 +321,29 @@ onMounted(loadCourses)
         <label class="relative block w-full xl:w-[520px]">
           <span class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500">
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M10.8 18.1a7.3 7.3 0 100-14.6 7.3 7.3 0 000 14.6zM16.2 16.2L21 21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+              <path d="M10.8 18.1a7.3 7.3 0 100-14.6 7.3 7.3 0 000 14.6zM16.2 16.2L21 21" stroke="currentColor"
+                stroke-width="1.8" stroke-linecap="round" />
             </svg>
           </span>
-          <input
-            v-model="searchInput"
-            type="search"
+          <input v-model="searchInput" type="search"
             class="h-10 w-full rounded-full border border-slate-800 bg-slate-950/35 px-4 pl-10 text-sm font-semibold text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-indigo-400/70 focus:bg-slate-950/60"
-            placeholder="Поиск курса, автора или навыка"
-          >
+            placeholder="Поиск курса, автора или навыка">
         </label>
       </div>
 
       <!-- Быстрые чипсы навыков -->
       <div v-if="allSkills.length" class="mt-4 flex gap-2 overflow-x-auto pb-1">
-        <button
-          type="button"
-          class="shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-black transition"
-          :class="selectedSkills.length === 0
-            ? 'border-indigo-400/60 bg-indigo-500 text-white'
-            : 'border-slate-700 bg-slate-950/20 text-slate-300 hover:border-slate-500 hover:text-white'"
-          @click="selectedSkills = []"
-        >
+        <button type="button" class="shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-black transition" :class="selectedSkills.length === 0
+          ? 'border-indigo-400/60 bg-indigo-500 text-white'
+          : 'border-slate-700 bg-slate-950/20 text-slate-300 hover:border-slate-500 hover:text-white'"
+          @click="selectedSkills = []">
           Все направления
         </button>
-        <button
-          v-for="skill in allSkills"
-          :key="skill.id"
-          type="button"
-          class="shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-black transition"
-          :class="selectedSkills.includes(skill.name)
+        <button v-for="skill in allSkills" :key="skill.id" type="button"
+          class="shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-black transition" :class="selectedSkills.includes(skill.name)
             ? 'border-indigo-400/60 bg-indigo-500 text-white'
             : 'border-slate-700 bg-slate-950/20 text-slate-300 hover:border-slate-500 hover:text-white'"
-          @click="toggleSkill(skill.name)"
-        >
+          @click="toggleSkill(skill.name)">
           {{ skill.name }}
         </button>
       </div>
@@ -366,19 +351,18 @@ onMounted(loadCourses)
 
     <div class="mt-6 grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
       <!-- ========== ПРОФЕССИОНАЛЬНАЯ ПАНЕЛЬ ФИЛЬТРОВ (левая колонка) ========== -->
-      <aside class="self-start rounded-2xl border border-slate-800 bg-slate-950/40 p-5 backdrop-blur-sm lg:sticky lg:top-24">
+      <aside
+        class="self-start rounded-2xl border border-slate-800 bg-slate-950/40 p-5 backdrop-blur-sm lg:sticky lg:top-24">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
             </svg>
             <p class="text-[12px] font-black uppercase tracking-[0.22em] text-slate-300">Фильтры</p>
           </div>
-          <button
-            type="button"
-            class="text-xs font-bold text-slate-400 transition hover:text-indigo-300"
-            @click="clearFilters"
-          >
+          <button type="button" class="text-xs font-bold text-slate-400 transition hover:text-indigo-300"
+            @click="clearFilters">
             Сбросить все
           </button>
         </div>
@@ -387,19 +371,15 @@ onMounted(loadCourses)
         <div class="mt-4 border-t border-slate-800 pt-4">
           <p class="mb-2 text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Категория курсов</p>
           <div class="space-y-1">
-            <button
-              v-for="tab in availableTabs"
-              :key="tab.key"
-              type="button"
+            <button v-for="tab in availableTabs" :key="tab.key" type="button"
               class="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-bold transition"
               :class="activeTab === tab.key
                 ? 'bg-indigo-500/20 text-indigo-200 shadow-sm'
-                : 'text-slate-400 hover:bg-slate-800/60 hover:text-white'"
-              @click="setTab(tab.key)"
-            >
+                : 'text-slate-400 hover:bg-slate-800/60 hover:text-white'" @click="setTab(tab.key)">
               <span>{{ tab.label }}</span>
               <span class="text-xs opacity-70">
-                {{ tab.key === 'catalog' ? totalCourses : tab.key === 'my' ? activeCoursesCount : continueCourses.length }}
+                {{ tab.key === 'catalog' ? totalCourses : tab.key === 'my' ? activeCoursesCount : continueCourses.length
+                }}
               </span>
             </button>
           </div>
@@ -409,18 +389,12 @@ onMounted(loadCourses)
         <div class="mt-5 border-t border-slate-800 pt-4">
           <p class="mb-2 text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Навыки</p>
           <div class="max-h-48 space-y-1.5 overflow-y-auto pr-1 custom-scroll">
-            <label
-              v-for="skill in allSkills"
-              :key="skill.id"
-              class="flex cursor-pointer items-center justify-between rounded-lg px-2 py-1.5 text-sm font-medium text-slate-300 transition hover:bg-slate-800/50"
-            >
+            <label v-for="skill in allSkills" :key="skill.id"
+              class="flex cursor-pointer items-center justify-between rounded-lg px-2 py-1.5 text-sm font-medium text-slate-300 transition hover:bg-slate-800/50">
               <span>{{ skill.name }}</span>
-              <input
-                type="checkbox"
+              <input type="checkbox"
                 class="h-3.5 w-3.5 rounded border-slate-600 bg-slate-900 text-indigo-500 focus:ring-indigo-500/20 focus:ring-offset-0"
-                :checked="selectedSkills.includes(skill.name)"
-                @change="toggleSkill(skill.name)"
-              >
+                :checked="selectedSkills.includes(skill.name)" @change="toggleSkill(skill.name)">
             </label>
           </div>
         </div>
@@ -429,41 +403,26 @@ onMounted(loadCourses)
         <div v-if="allAuthors.length" class="mt-5 border-t border-slate-800 pt-4">
           <p class="mb-2 text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Авторы</p>
           <div class="max-h-40 space-y-1.5 overflow-y-auto pr-1 custom-scroll">
-            <label
-              v-for="author in allAuthors"
-              :key="author"
-              class="flex cursor-pointer items-center justify-between rounded-lg px-2 py-1.5 text-sm font-medium text-slate-300 transition hover:bg-slate-800/50"
-            >
+            <label v-for="author in allAuthors" :key="author"
+              class="flex cursor-pointer items-center justify-between rounded-lg px-2 py-1.5 text-sm font-medium text-slate-300 transition hover:bg-slate-800/50">
               <span class="truncate">{{ author }}</span>
-              <input
-                type="checkbox"
+              <input type="checkbox"
                 class="h-3.5 w-3.5 rounded border-slate-600 bg-slate-900 text-indigo-500 focus:ring-indigo-500/20"
-                :checked="selectedAuthors.includes(author)"
-                @change="toggleAuthor(author)"
-              >
+                :checked="selectedAuthors.includes(author)" @change="toggleAuthor(author)">
             </label>
           </div>
         </div>
 
         <!-- Количество уроков (диапазон) -->
         <div class="mt-5 border-t border-slate-800 pt-4">
-          <p class="mb-2 text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Уроков: {{ lessonMin }} – {{ lessonMax }}</p>
+          <p class="mb-2 text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Уроков: {{ lessonMin }} – {{
+            lessonMax }}</p>
           <div class="flex items-center gap-3">
-            <input
-              v-model.number="lessonMin"
-              type="number"
-              :min="globalMinLessons"
-              :max="globalMaxLessons"
-              class="w-full rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-1.5 text-sm font-semibold text-slate-100 outline-none focus:border-indigo-400"
-            />
+            <input v-model.number="lessonMin" type="number" :min="globalMinLessons" :max="globalMaxLessons"
+              class="w-full rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-1.5 text-sm font-semibold text-slate-100 outline-none focus:border-indigo-400" />
             <span class="text-slate-500">—</span>
-            <input
-              v-model.number="lessonMax"
-              type="number"
-              :min="globalMinLessons"
-              :max="globalMaxLessons"
-              class="w-full rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-1.5 text-sm font-semibold text-slate-100 outline-none focus:border-indigo-400"
-            />
+            <input v-model.number="lessonMax" type="number" :min="globalMinLessons" :max="globalMaxLessons"
+              class="w-full rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-1.5 text-sm font-semibold text-slate-100 outline-none focus:border-indigo-400" />
           </div>
           <div class="mt-2 flex justify-between text-[10px] text-slate-500">
             <span>мин: {{ globalMinLessons }}</span>
@@ -474,10 +433,8 @@ onMounted(loadCourses)
         <!-- Сортировка -->
         <div class="mt-5 border-t border-slate-800 pt-4">
           <p class="mb-2 text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Сортировка</p>
-          <select
-            v-model="sortMode"
-            class="h-9 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-3 text-sm font-bold text-slate-100 outline-none focus:border-indigo-400/70"
-          >
+          <select v-model="sortMode"
+            class="h-9 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-3 text-sm font-bold text-slate-100 outline-none focus:border-indigo-400/70">
             <option value="recommended">Рекомендуемые</option>
             <option value="progress">По прогрессу</option>
             <option value="lessons">По урокам</option>
@@ -502,59 +459,56 @@ onMounted(loadCourses)
         </div>
 
         <section v-if="loading" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          <div v-for="item in 9" :key="item" class="h-[260px] animate-pulse rounded-2xl border border-slate-800 bg-slate-900/50"></div>
+          <div v-for="item in 9" :key="item"
+            class="h-[260px] animate-pulse rounded-2xl border border-slate-800 bg-slate-900/50"></div>
         </section>
 
         <section v-else-if="loadError" class="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-8 text-center">
           <h3 class="text-lg font-black text-rose-100">Не удалось загрузить данные</h3>
           <p class="mt-2 text-sm text-rose-200/80">{{ loadError }}</p>
-          <button
-            type="button"
+          <button type="button"
             class="mt-5 rounded-xl bg-rose-500 px-5 py-2.5 text-sm font-black text-white transition hover:bg-rose-400"
-            @click="loadCourses"
-          >
+            @click="loadCourses">
             Повторить
           </button>
         </section>
 
-        <section v-else-if="!filteredCourses.length" class="rounded-2xl border border-slate-800 bg-slate-950/25 p-10 text-center">
+        <section v-else-if="!filteredCourses.length"
+          class="rounded-2xl border border-slate-800 bg-slate-950/25 p-10 text-center">
           <h3 class="text-xl font-black text-white">{{ emptyTitle }}</h3>
           <p class="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-400">{{ emptyText }}</p>
           <button
             v-if="search || selectedSkills.length || selectedAuthors.length || lessonMin !== globalMinLessons || lessonMax !== globalMaxLessons"
             type="button"
             class="mt-5 rounded-xl border border-slate-700 px-5 py-2.5 text-sm font-black text-slate-200 transition hover:border-slate-500 hover:text-white"
-            @click="clearFilters"
-          >
+            @click="clearFilters">
             Сбросить фильтры
           </button>
         </section>
 
         <section v-else class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          <article
-            v-for="course in paginatedCourses"
-            :key="course.id"
-            class="group overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/45 transition hover:-translate-y-0.5 hover:border-slate-600 hover:bg-slate-900/70"
-          >
+          <article v-for="course in paginatedCourses" :key="course.id"
+            class="group overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/45 transition hover:-translate-y-0.5 hover:border-slate-600 hover:bg-slate-900/70">
             <RouterLink :to="{ name: 'course-detail', params: { id: course.id } }" class="block">
               <div class="relative h-28 overflow-hidden bg-slate-950 sm:h-32">
-                <img
-                  v-if="course.image"
-                  :src="mediaUrl(course.image)"
-                  :alt="course.title"
-                  class="h-full w-full object-cover opacity-85 transition duration-500 group-hover:scale-105 group-hover:opacity-100"
-                >
-                <div v-else class="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950/60 text-slate-600">
+                <img v-if="course.image" :src="mediaUrl(course.image)" :alt="course.title"
+                  class="h-full w-full object-cover opacity-85 transition duration-500 group-hover:scale-105 group-hover:opacity-100">
+                <div v-else
+                  class="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950/60 text-slate-600">
                   <svg class="h-10 w-10" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M4 6.5A2.5 2.5 0 016.5 4h11A2.5 2.5 0 0120 6.5v11a2.5 2.5 0 01-2.5 2.5h-11A2.5 2.5 0 014 17.5v-11z" stroke="currentColor" stroke-width="1.5" />
+                    <path
+                      d="M4 6.5A2.5 2.5 0 016.5 4h11A2.5 2.5 0 0120 6.5v11a2.5 2.5 0 01-2.5 2.5h-11A2.5 2.5 0 014 17.5v-11z"
+                      stroke="currentColor" stroke-width="1.5" />
                     <path d="M8 9h8M8 13h8M8 17h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
                   </svg>
                 </div>
 
-                <div class="absolute left-3 top-3 rounded-full border border-slate-700 bg-slate-950/75 px-2.5 py-1 text-[11px] font-black text-slate-200 backdrop-blur">
+                <div
+                  class="absolute left-3 top-3 rounded-full border border-slate-700 bg-slate-950/75 px-2.5 py-1 text-[11px] font-black text-slate-200 backdrop-blur">
                   {{ lessonCountOf(course) }} урок.
                 </div>
-                <div v-if="hasStartedCourse(course)" class="absolute right-3 top-3 rounded-full border border-emerald-400/30 bg-emerald-500/15 px-2.5 py-1 text-[11px] font-black text-emerald-200 backdrop-blur">
+                <div v-if="hasStartedCourse(course)"
+                  class="absolute right-3 top-3 rounded-full border border-emerald-400/30 bg-emerald-500/15 px-2.5 py-1 text-[11px] font-black text-emerald-200 backdrop-blur">
                   {{ progressOf(course) }}%
                 </div>
               </div>
@@ -562,17 +516,15 @@ onMounted(loadCourses)
 
             <div class="p-4">
               <div class="mb-3 flex flex-wrap gap-1.5">
-                <span
-                  v-for="skill in (course.skills_covered || []).slice(0, 2)"
-                  :key="skill.id || skill.name || skill"
-                  class="rounded-full border border-slate-700 bg-slate-950/35 px-2.5 py-1 text-[11px] font-black text-slate-300"
-                >
+                <span v-for="skill in (course.skills_covered || []).slice(0, 2)" :key="skill.id || skill.name || skill"
+                  class="rounded-full border border-slate-700 bg-slate-950/35 px-2.5 py-1 text-[11px] font-black text-slate-300">
                   {{ skill.name || skill }}
                 </span>
               </div>
 
               <RouterLink :to="{ name: 'course-detail', params: { id: course.id } }" class="block">
-                <h3 class="line-clamp-2 min-h-[44px] text-base font-black leading-snug text-white transition group-hover:text-indigo-100">
+                <h3
+                  class="line-clamp-2 min-h-[44px] text-base font-black leading-snug text-white transition group-hover:text-indigo-100">
                   {{ course.title }}
                 </h3>
               </RouterLink>
@@ -585,26 +537,25 @@ onMounted(loadCourses)
               </p>
 
               <div class="mt-4">
-                <div class="mb-1.5 flex items-center justify-between text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">
+                <div
+                  class="mb-1.5 flex items-center justify-between text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">
                   <span>Прогресс</span>
                   <span class="text-slate-300">{{ progressOf(course) }}%</span>
                 </div>
                 <div class="h-1.5 overflow-hidden rounded-full bg-slate-950">
-                  <div class="h-full rounded-full bg-gradient-to-r from-indigo-500 to-emerald-400 transition-all duration-500" :style="{ width: `${progressOf(course)}%` }"></div>
+                  <div
+                    class="h-full rounded-full bg-gradient-to-r from-indigo-500 to-emerald-400 transition-all duration-500"
+                    :style="{ width: `${progressOf(course)}%` }"></div>
                 </div>
               </div>
 
               <div class="mt-4 grid grid-cols-[1fr_auto] gap-2">
-                <RouterLink
-                  :to="actionTarget(course)"
-                  class="inline-flex h-9 items-center justify-center rounded-xl bg-indigo-500 px-3 text-xs font-black text-white transition hover:bg-indigo-400"
-                >
+                <RouterLink :to="actionTarget(course)"
+                  class="inline-flex h-9 items-center justify-center rounded-xl bg-indigo-500 px-3 text-xs font-black text-white transition hover:bg-indigo-400">
                   {{ actionLabel(course) }}
                 </RouterLink>
-                <RouterLink
-                  :to="{ name: 'course-detail', params: { id: course.id } }"
-                  class="inline-flex h-9 items-center justify-center rounded-xl border border-slate-700 px-3 text-xs font-black text-slate-200 transition hover:border-slate-500 hover:text-white"
-                >
+                <RouterLink :to="{ name: 'course-detail', params: { id: course.id } }"
+                  class="inline-flex h-9 items-center justify-center rounded-xl border border-slate-700 px-3 text-xs font-black text-slate-200 transition hover:border-slate-500 hover:text-white">
                   О курсе
                 </RouterLink>
               </div>
@@ -613,32 +564,20 @@ onMounted(loadCourses)
         </section>
 
         <nav v-if="!loading && filteredCourses.length > pageSize" class="mt-6 flex items-center justify-center gap-2">
-          <button
-            type="button"
+          <button type="button"
             class="h-9 rounded-xl border border-slate-700 px-4 text-xs font-black text-slate-300 transition hover:border-slate-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
-            :disabled="currentPage === 1"
-            @click="currentPage -= 1"
-          >
+            :disabled="currentPage === 1" @click="currentPage -= 1">
             Назад
           </button>
-          <button
-            v-for="page in totalPages"
-            :key="page"
-            type="button"
-            class="h-9 min-w-9 rounded-xl border px-3 text-xs font-black transition"
-            :class="page === currentPage
+          <button v-for="page in totalPages" :key="page" type="button"
+            class="h-9 min-w-9 rounded-xl border px-3 text-xs font-black transition" :class="page === currentPage
               ? 'border-indigo-400 bg-indigo-500 text-white'
-              : 'border-slate-700 text-slate-300 hover:border-slate-500 hover:text-white'"
-            @click="currentPage = page"
-          >
+              : 'border-slate-700 text-slate-300 hover:border-slate-500 hover:text-white'" @click="currentPage = page">
             {{ page }}
           </button>
-          <button
-            type="button"
+          <button type="button"
             class="h-9 rounded-xl border border-slate-700 px-4 text-xs font-black text-slate-300 transition hover:border-slate-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
-            :disabled="currentPage === totalPages"
-            @click="currentPage += 1"
-          >
+            :disabled="currentPage === totalPages" @click="currentPage += 1">
             Вперёд
           </button>
         </nav>
@@ -651,14 +590,17 @@ onMounted(loadCourses)
 .custom-scroll::-webkit-scrollbar {
   width: 4px;
 }
+
 .custom-scroll::-webkit-scrollbar-track {
   background: #1e293b;
   border-radius: 8px;
 }
+
 .custom-scroll::-webkit-scrollbar-thumb {
   background: #475569;
   border-radius: 8px;
 }
+
 .custom-scroll::-webkit-scrollbar-thumb:hover {
   background: #64748b;
 }
