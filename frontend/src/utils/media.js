@@ -1,31 +1,26 @@
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api'
 
-export const MEDIA_BASE_URL = API_BASE_URL
-  .replace(/\/api\/?$/, '')
-  .replace(/\/$/, '')
+export const MEDIA_BASE_URL = 'https://api.elcourse.app'
 
 export const resolveMediaUrl = (value) => {
-  if (!value) return ''
+  if (!value) return '/default-avatar.png'
 
   let strValue = String(value).trim()
 
-  // Если строка уже является полной ссылкой, отдаем её как есть
+  // ЕСЛИ У ДАНИЭЛЯ ИЛИ НАЗГУЛЬ ЗАСТРЯЛ ЛОКАЛЬНЫЙ АДРЕС В БАЗЕ:
+  if (strValue.includes('127.0.0.1:8000') || strValue.includes('localhost:8000')) {
+    // Насильно перенаправляем его на твой рабочий сервер!
+    strValue = strValue.replace('http://127.0.0.1:8000', 'https://api.elcourse.app')
+    strValue = strValue.replace('http://localhost:8000', 'https://api.elcourse.app')
+    return strValue
+  }
+
+  // Если ссылка уже нормальная и полная, отдаем её сразу
   if (strValue.startsWith('http://') || strValue.startsWith('https://') || strValue.startsWith('blob:')) {
     return strValue
   }
 
-  // Защита от дублирования "/media//media/" или "/media/media/"
-  if (strValue.startsWith('/media/media/')) {
-    strValue = strValue.replace('/media/media/', '/media/')
-  }
-  if (strValue.startsWith('media/media/')) {
-    strValue = strValue.replace('media/media/', 'media/')
-  }
-
-  // Формируем чистый относительный путь
-  let cleanPath = strValue.startsWith('/') ? strValue : `/${strValue}`
-
-  // Если MEDIA_BASE_URL (https://api.elcourse.app) уже содержит на конце /media, 
-  // или cleanPath начинается с /media, следим чтобы не склеилось два раза
+  // Если пришел просто относительный путь (например /media/avatars/...)
+  const cleanPath = strValue.startsWith('/') ? strValue : `/${strValue}`
   return `${MEDIA_BASE_URL}${cleanPath}`
 }
