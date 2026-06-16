@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 
 import api, { getTeacherActivity } from '../api'
 import Heatmap from '../components/Heatmap.vue'
+import { resolveMediaUrl } from '../utils/media'
 import { showError } from '../utils/toast'
 
 const userData = ref(null)
@@ -21,8 +22,8 @@ const roleLabels = {
 }
 
 const getAvatarUrl = (avatar) => {
-  if (!avatar) return null
-  return avatar
+  if (!avatar) return '/default-avatar.png'
+  return resolveMediaUrl(avatar)
 }
 
 const completedSkills = computed(() => userData.value?.completed_skills || [])
@@ -134,8 +135,8 @@ onMounted(fetchProfile)
           <div class="flex min-w-0 items-center gap-2.5 sm:gap-3">
             <div class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-700 bg-slate-900 p-1 shadow-xl sm:h-24 sm:w-24">
               <img
-                v-if="getAvatarUrl(userData.avatar)"
-                :src="getAvatarUrl(userData.avatar)"
+                v-if="getAvatarUrl(userData?.avatar)"
+                :src="getAvatarUrl(userData?.avatar)"
                 :alt="userData.username"
                 class="h-full w-full rounded-full object-cover"
               >

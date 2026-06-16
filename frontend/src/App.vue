@@ -7,6 +7,7 @@ import AppFooter from './components/AppFooter.vue'
 import AppMobileNav from './components/AppMobileNav.vue'
 import ToastHost from './components/ToastHost.vue'
 import { useAuthStore } from './stores/auth'
+import { resolveMediaUrl } from './utils/media'
 
 const authStore = useAuthStore()
 const route = useRoute()
@@ -234,7 +235,7 @@ onBeforeUnmount(() => {
       <span class="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-slate-600 bg-slate-900">
         <img
           v-if="authStore.user?.avatar"
-          :src="authStore.user?.avatar"
+          :src="authStore.user?.avatar ? resolveMediaUrl(authStore.user.avatar) : '/default-avatar.png'"
           alt="Аватар пользователя"
           class="h-full w-full object-cover"
         >
@@ -273,7 +274,7 @@ onBeforeUnmount(() => {
     <span class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-slate-600/80 bg-slate-900">
       <img
         v-if="authStore.user?.avatar"
-        :src="authStore.user?.avatar"
+        :src="authStore.user?.avatar ? resolveMediaUrl(authStore.user.avatar) : '/default-avatar.png'"
         alt="Аватар пользователя"
         class="h-full w-full object-cover"
       >

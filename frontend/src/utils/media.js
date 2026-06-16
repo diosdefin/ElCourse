@@ -7,28 +7,25 @@ export const MEDIA_BASE_URL = API_BASE_URL
 export const resolveMediaUrl = (value) => {
   if (!value) return ''
 
-  // 1. Принудительно переводим в строку и убираем пробелы
   let strValue = String(value).trim()
 
-  // 2. ЕСЛИ КОДЕКС СДЕЛАЛ ДВОЙНОЙ ДОМЕН (Твой баг со скриншота)
-  if (strValue.includes('https://api.elcourse.app/media/https://api.elcourse.app/media/')) {
-    strValue = strValue.replace('https://api.elcourse.app/media/https://api.elcourse.app/media/', 'https://api.elcourse.app/media/')
-  }
-
-  // 3. Если после этого в строке уже есть ОДИН нормальный домен — отдаем его СРАЗУ
+  // Если строка уже является полной ссылкой, отдаем её как есть
   if (strValue.startsWith('http://') || strValue.startsWith('https://') || strValue.startsWith('blob:')) {
     return strValue
   }
 
-  // 4. Фикс на случай локальной разработки, если дублирует localhost
-  if (strValue.includes('http://127.0.0.1:8000/media/http://127.0.0.1:8000/media/')) {
-    strValue = strValue.replace('http://127.0.0.1:8000/media/http://127.0.0.1:8000/media/', 'http://127.0.0.1:8000/media/')
+  // Защита от дублирования "/media//media/" или "/media/media/"
+  if (strValue.startsWith('/media/media/')) {
+    strValue = strValue.replace('/media/media/', '/media/')
   }
-  if (strValue.startsWith('http://127.0.0.1:8000')) {
-    return strValue
+  if (strValue.startsWith('media/media/')) {
+    strValue = strValue.replace('media/media/', 'media/')
   }
 
-  // 5. Если путь остался относительным (например /media/avatars/...) - склеиваем нормально
-  const cleanPath = strValue.startsWith('/') ? strValue : `/${strValue}`
+  // Формируем чистый относительный путь
+  let cleanPath = strValue.startsWith('/') ? strValue : `/${strValue}`
+
+  // Если MEDIA_BASE_URL (https://api.elcourse.app) уже содержит на конце /media, 
+  // или cleanPath начинается с /media, следим чтобы не склеилось два раза
   return `${MEDIA_BASE_URL}${cleanPath}`
 }

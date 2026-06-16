@@ -38,10 +38,7 @@ const roleLabels = {
 }
 
 const getAvatarUrl = (avatar) => {
-  if (!avatar) {
-    return null
-  }
-
+  if (!avatar) return '/default-avatar.png'
   return resolveMediaUrl(avatar)
 }
 
@@ -301,8 +298,8 @@ watch(selectedYear, () => {
           <div class="flex min-w-0 items-center gap-2.5 sm:gap-3">
             <div class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-700 bg-slate-900 p-1 shadow-xl sm:h-24 sm:w-24">
               <img
-                v-if="profile.avatar"
-                :src="profile.avatar"
+                v-if="getAvatarUrl(profile?.avatar)"
+                :src="getAvatarUrl(profile?.avatar)"
                 :alt="profile.username"
                 class="h-full w-full rounded-full object-cover"
               >
