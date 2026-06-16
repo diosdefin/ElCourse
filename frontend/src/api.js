@@ -3,11 +3,12 @@ import axios from 'axios'
 import { API_BASE_URL } from './utils/media'
 import { showInfo } from './utils/toast'
 
+// Получаем чистый базовый адрес сервера
+const rawBaseURL = import.meta.env.VITE_API_URL || API_BASE_URL || 'http://127.0.0.1:8000/'
+
 const api = axios.create({
-  // 1. Проверяет боевой URL из .env.production на Vercel
-  // 2. Если его нет, берет старый API_BASE_URL
-  // 3. Если и его нет, стучится на локалку
-  baseURL: import.meta.env.VITE_API_URL || API_BASE_URL || 'http://127.0.0.1:8000/',
+  // Автоматически добавляем /api/, если его забыли указать в переменной окружения
+  baseURL: rawBaseURL.endsWith('/api/') ? rawBaseURL : `${rawBaseURL.replace(/\/$/, '')}/api/`,
 })
 
 let handlingUnauthorized = false
