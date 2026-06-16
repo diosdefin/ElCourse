@@ -144,14 +144,13 @@ AUTH_USER_MODEL = 'platform_app.User'
 
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:8080",
-    "http://127.0.0.1:8080",
     "https://elcourse.app",
-    "https://www.elcourse.app"  # <-- ДОБАВЬ ЭТУ СТРОКУ
+    "https://www.elcourse.app",
+    # Если тестируешь локально, добавь и этот адрес:
+    "http://localhost:5173", 
 ]
 # Включаем поддержку credentials (куки, авторизация)
+# Разрешаем отправку кук и заголовков авторизации
 CORS_ALLOW_CREDENTIALS = True
 
 # Разрешаем все методы (или конкретные)
@@ -215,7 +214,7 @@ CELERY_TASK_TRACK_STARTED = True
 
 CSRF_TRUSTED_ORIGINS = [
     "https://elcourse.app",
-    "https://www.elcourse.app"
+    "https://www.elcourse.app",
 ]
 
 APPEND_SLASH = False
