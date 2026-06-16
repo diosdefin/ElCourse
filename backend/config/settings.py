@@ -29,7 +29,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
 
-ALLOWED_HOSTS = ['46.101.147.69', 'corsheaders','elcourse.app', 'api.elcourse.app', 'www.elcourse.app']
+ALLOWED_HOSTS = ['46.101.147.69', 'corsheaders','elcourse.app', 'api.elcourse.app', 'www.elcourse.app', , '127.0.0.1', 'localhost']
 # Application definition
 
 INSTALLED_APPS = [
