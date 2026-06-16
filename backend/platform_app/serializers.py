@@ -158,13 +158,18 @@ class ViewerContextMixin:
             viewer = self._get_viewer()
             self.context['viewer_friend_ids'] = set(viewer.friends.values_list('id', flat=True)) if viewer else set()
         return self.context['viewer_friend_ids']
-
+    
     def get_avatar(self, obj):
-        # Проверяем, что файл физически прикреплен к полю avatar
-        if obj.avatar and hasattr(obj.avatar, 'url'):
-            request = self.context.get('request')
-            return _build_absolute_media_url(request, obj.avatar.url)
-        return '' # Если аватарки нет, возвращаем пустую строку
+        # В Django проверять наличие файла в ImageField нужно через bool(obj.avatar)
+        if obj.avatar and bool(obj.avatar): 
+            try:
+                request = self.context.get('request')
+                return _build_absolute_media_url(request, obj.avatar.url)
+            except ValueError:
+                # На случай, если Django думает, что файл есть, но пути к нему нет
+                return ''
+        return ''
+
     def get_registration_year(self, obj):
         return obj.date_joined.year
 
@@ -979,8 +984,10 @@ class VacancyApplicationSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at', 'updated_at']
 
     def get_student_avatar(self, obj):
-        # Точно так же проверяем существование файла у студента
-        if obj.student.avatar and hasattr(obj.student.avatar, 'url'):
-            request = self.context.get('request')
-            return _build_absolute_media_url(request, obj.student.avatar.url)
+        if obj.student.avatar and bool(obj.student.avatar):
+            try:
+                request = self.context.get('request')
+                return _build_absolute_media_url(request, obj.student.avatar.url)
+            except ValueError:
+                return ''
         return ''
