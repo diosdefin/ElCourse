@@ -137,17 +137,17 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = 'platform_app.User'
 
 # Разрешаем запросы с любых адресов (для разработки)
-# CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = True
 
 
 
 
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173", 
-    "https://elcourse.app",
-    "https://www.elcourse.app",
-]
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:5173", 
+#     "https://elcourse.app",
+#     "https://www.elcourse.app",
+# ]
 # Включаем поддержку credentials (куки, авторизация)
 # Разрешаем отправку кук и заголовков авторизации
 CORS_ALLOW_CREDENTIALS = True
