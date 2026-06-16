@@ -136,7 +136,7 @@ onMounted(fetchProfile)
             <div class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-700 bg-slate-900 p-1 shadow-xl sm:h-24 sm:w-24">
               <img
                 v-if="getAvatarUrl(userData.avatar)"
-                :src="getAvatarUrl(userData.avatar)"
+                :src="$media(userData.avatar)"
                 :alt="userData.username"
                 class="h-full w-full rounded-full object-cover"
               >
