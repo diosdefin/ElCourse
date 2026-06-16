@@ -144,10 +144,9 @@ AUTH_USER_MODEL = 'platform_app.User'
 
 
 CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173", 
     "https://elcourse.app",
     "https://www.elcourse.app",
-    # Если тестируешь локально, добавь и этот адрес:
-    "http://localhost:5173", 
 ]
 # Включаем поддержку credentials (куки, авторизация)
 # Разрешаем отправку кук и заголовков авторизации
@@ -216,5 +215,4 @@ CSRF_TRUSTED_ORIGINS = [
     "https://elcourse.app",
     "https://www.elcourse.app",
 ]
-
 APPEND_SLASH = False
