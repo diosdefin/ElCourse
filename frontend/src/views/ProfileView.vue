@@ -3,7 +3,6 @@ import { computed, onMounted, ref, watch } from 'vue'
 
 import api, { getTeacherActivity } from '../api'
 import Heatmap from '../components/Heatmap.vue'
-import { resolveMediaUrl } from '../utils/media'
 import { showError } from '../utils/toast'
 
 const userData = ref(null)
@@ -23,7 +22,7 @@ const roleLabels = {
 
 const getAvatarUrl = (avatar) => {
   if (!avatar) return null
-  return resolveMediaUrl(avatar)
+  return avatar
 }
 
 const completedSkills = computed(() => userData.value?.completed_skills || [])

@@ -301,8 +301,8 @@ watch(selectedYear, () => {
           <div class="flex min-w-0 items-center gap-2.5 sm:gap-3">
             <div class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-700 bg-slate-900 p-1 shadow-xl sm:h-24 sm:w-24">
               <img
-                v-if="getAvatarUrl(profile.avatar)"
-                :src="getAvatarUrl(profile.avatar)"
+                v-if="profile.avatar"
+                :src="profile.avatar"
                 :alt="profile.username"
                 class="h-full w-full rounded-full object-cover"
               >

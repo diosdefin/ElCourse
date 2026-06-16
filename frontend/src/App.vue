@@ -234,7 +234,7 @@ onBeforeUnmount(() => {
       <span class="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-slate-600 bg-slate-900">
         <img
           v-if="authStore.user?.avatar"
-          :src="$media(authStore.user.avatar)"
+          :src="authStore.user?.avatar"
           alt="Аватар пользователя"
           class="h-full w-full object-cover"
         >
@@ -273,7 +273,7 @@ onBeforeUnmount(() => {
     <span class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-slate-600/80 bg-slate-900">
       <img
         v-if="authStore.user?.avatar"
-        :src="$media(authStore.user.avatar)"
+        :src="authStore.user?.avatar"
         alt="Аватар пользователя"
         class="h-full w-full object-cover"
       >

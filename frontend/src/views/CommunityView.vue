@@ -385,7 +385,7 @@ onUnmounted(() => {
         <div class="flex items-start justify-between gap-3">
           <div class="flex min-w-0 items-center gap-3">
             <div class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-800 bg-slate-950 text-base font-black text-slate-300 sm:h-14 sm:w-14 sm:rounded-2xl sm:text-lg">
-              <img v-if="user.avatar" :src="$media(user.avatar)" :alt="user.username" class="h-full w-full object-cover">
+              <img v-if="user.avatar" :src="user.avatar" :alt="user.username" class="h-full w-full object-cover">
               <span v-else>{{ user.username.charAt(0).toUpperCase() }}</span>
             </div>
             <div class="min-w-0">
