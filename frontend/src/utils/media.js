@@ -8,24 +8,22 @@ export const MEDIA_BASE_URL = API_BASE_URL
 export const resolveMediaUrl = (value) => {
   if (!value) return ''
 
-  // Превращаем в строку на случай, если прилетел объект, и убираем лишние пробелы
-  const strValue = String(value).trim()
+  let strValue = String(value).trim()
 
-  // Если в строке ДВАЖДЫ повторился домен api.elcourse.app (баг Кодекса)
+  // Жёстко вырезаем дублирование, если оно склеилось
   if (strValue.includes('https://api.elcourse.app/media/https://api.elcourse.app/media/')) {
-    return strValue.replace('https://api.elcourse.app/media/https://api.elcourse.app/media/', 'https://api.elcourse.app/media/')
+    strValue = strValue.replace('https://api.elcourse.app/media/https://api.elcourse.app/media/', 'https://api.elcourse.app/media/')
   }
 
-  // Если строка УЖЕ начинается с http:// или https://, возвращаем её КАК ЕСТЬ
+  // Если ссылка уже нормальная и полная — отдаем её как есть
   if (strValue.startsWith('http://') || strValue.startsWith('https://') || strValue.startsWith('blob:')) {
     return strValue
   }
 
-  // Для локальной разработки, если бэкенд успел выдать полную ссылку localhost
+  // На случай локалки
   if (strValue.includes('http://127.0.0.1:8000/media/http://127.0.0.1:8000/media/')) {
-     return strValue.replace('http://127.0.0.1:8000/media/http://127.0.0.1:8000/media/', 'http://127.0.0.1:8000/media/')
+    strValue = strValue.replace('http://127.0.0.1:8000/media/http://127.0.0.1:8000/media/', 'http://127.0.0.1:8000/media/')
   }
 
-  // Во всех остальных случаях склеиваем с базовым URL
   return `${MEDIA_BASE_URL}${strValue.startsWith('/') ? strValue : `/${strValue}`}`
 }
