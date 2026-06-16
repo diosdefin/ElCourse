@@ -250,18 +250,33 @@ const saveProfile = async () => {
     let response
 
     if (needsMultipart) {
+      // Создаем правильный FormData
       const formData = new FormData()
-      for (const [key, value] of Object.entries(patchPayload)) {
-        formData.append(key, value)
-      }
+      
+      // 1. Обязательно добавляем файл аватарки. 
+      // ВНИМАНИЕ: Если в Django поле называется по-другому (например, 'image' или 'profile_photo'), 
+      // замени слово 'avatar' на имя поля из модели Django!
+      formData.append('avatar', patchPayload.avatar)
+
+      // 2. Чтобы Django не ругался на отсутствие остальных полей или не затирал их,
+      // передаем текущие актуальные текстовые данные из формы
+      formData.append('bio', sanitizeText(form.bio))
+      formData.append('location', sanitizeText(form.location))
+      formData.append('telegram', sanitizeText(form.telegram))
+      formData.append('github', sanitizeText(form.github))
+      formData.append('linkedin', sanitizeText(form.linkedin))
+
+      // Отправляем на бэкенд с флагом true
       response = await patchUserSettings(formData, true)
     } else {
+      // Если аватарку не меняли, отправляем обычный чистый JSON (как и было)
       response = await patchUserSettings(patchPayload, false)
     }
 
+    // Сбрасываем форму и применяем новые данные
     applySettings(response.data)
     authStore.updateUserSettings(response.data)
-    showSuccess('Настройки сохранены.')
+    showSuccess('Настройки профиля успешно сохранены.')
   } catch (error) {
     console.error('Ошибка сохранения профиля:', error)
     const detail = error.response?.data
