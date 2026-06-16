@@ -4,7 +4,6 @@ import { useRouter } from 'vue-router'
 
 import api from '../api'
 import { useAuthStore } from '../stores/auth'
-import { resolveMediaUrl } from '../utils/media'
 import { showError, showSuccess } from '../utils/toast'
 
 const router = useRouter()
@@ -33,13 +32,6 @@ const offerModal = ref({
 })
 
 let searchTimer = null
-
-const getAvatarUrl = (user) => {
-  if (!user?.avatar) {
-    return null
-  }
-  return resolveMediaUrl(user.avatar)
-}
 
 const parseListPayload = (payload) => {
   if (Array.isArray(payload)) {
@@ -393,7 +385,7 @@ onUnmounted(() => {
         <div class="flex items-start justify-between gap-3">
           <div class="flex min-w-0 items-center gap-3">
             <div class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-800 bg-slate-950 text-base font-black text-slate-300 sm:h-14 sm:w-14 sm:rounded-2xl sm:text-lg">
-              <img v-if="getAvatarUrl(user)" :src="getAvatarUrl(user)" :alt="user.username" class="h-full w-full object-cover">
+              <img v-if="user.avatar" :src="$media(user.avatar)" :alt="user.username" class="h-full w-full object-cover">
               <span v-else>{{ user.username.charAt(0).toUpperCase() }}</span>
             </div>
             <div class="min-w-0">

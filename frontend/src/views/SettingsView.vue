@@ -7,6 +7,7 @@ import {
   updateUserSettings as patchUserSettings,
 } from '../api'
 import { useAuthStore } from '../stores/auth'
+import { resolveMediaUrl } from '@/utils/media'
 import { showError, showSuccess } from '../utils/toast'
 
 const authStore = useAuthStore()
@@ -95,7 +96,7 @@ const applySettings = (data) => {
   form.telegram = data.telegram || ''
   form.github = data.github || ''
   form.linkedin = data.linkedin || ''
-  avatarPreview.value = data.avatar || null
+  avatarPreview.value = data.avatar ? resolveMediaUrl(data.avatar) : null
   avatarInputKey.value += 1
 }
 

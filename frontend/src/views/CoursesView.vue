@@ -4,7 +4,6 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 
 import api from '../api'
 import { useAuthStore } from '../stores/auth'
-import { resolveMediaUrl } from '../utils/media'
 import { showError } from '../utils/toast'
 
 const authStore = useAuthStore()
@@ -64,7 +63,6 @@ const allSkills = computed(() => {
 })
 
 // ==========  вспомогательные функции ==========
-const mediaUrl = (value) => resolveMediaUrl(value)
 const normalizeText = (value) => String(value || '').trim().toLowerCase()
 const lessonsOf = (course) => (Array.isArray(course?.lessons) ? course.lessons : [])
 const progressOf = (course) => Number(course?.progress_percentage || 0)
@@ -491,7 +489,7 @@ onMounted(loadCourses)
             class="group overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/45 transition hover:-translate-y-0.5 hover:border-slate-600 hover:bg-slate-900/70">
             <RouterLink :to="{ name: 'course-detail', params: { id: course.id } }" class="block">
               <div class="relative h-28 overflow-hidden bg-slate-950 sm:h-32">
-                <img v-if="course.image" :src="mediaUrl(course.image)" :alt="course.title"
+                <img v-if="course.image" :src="$media(course.image)" :alt="course.title"
                   class="h-full w-full object-cover opacity-85 transition duration-500 group-hover:scale-105 group-hover:opacity-100">
                 <div v-else
                   class="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950/60 text-slate-600">
