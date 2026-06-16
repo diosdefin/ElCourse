@@ -217,3 +217,5 @@ CSRF_TRUSTED_ORIGINS = [
     "https://elcourse.app",
     "https://www.elcourse.app"
 ]
+
+APPEND_SLASH = False
