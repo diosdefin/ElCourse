@@ -160,12 +160,11 @@ class ViewerContextMixin:
         return self.context['viewer_friend_ids']
 
     def get_avatar(self, obj):
-        if obj.avatar:
+        # Проверяем, что файл физически прикреплен к полю avatar
+        if obj.avatar and hasattr(obj.avatar, 'url'):
             request = self.context.get('request')
-            # Используем готовую функцию из твоего файла, чтобы приклеить домен API
             return _build_absolute_media_url(request, obj.avatar.url)
-        return ''
-
+        return '' # Если аватарки нет, возвращаем пустую строку
     def get_registration_year(self, obj):
         return obj.date_joined.year
 
@@ -980,7 +979,8 @@ class VacancyApplicationSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at', 'updated_at']
 
     def get_student_avatar(self, obj):
-        if obj.student.avatar:
+        # Точно так же проверяем существование файла у студента
+        if obj.student.avatar and hasattr(obj.student.avatar, 'url'):
             request = self.context.get('request')
             return _build_absolute_media_url(request, obj.student.avatar.url)
         return ''
