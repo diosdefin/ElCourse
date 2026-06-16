@@ -1,5 +1,4 @@
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api'
-
 export const MEDIA_BASE_URL = 'https://api.elcourse.app'
 
 export const resolveMediaUrl = (value) => {
@@ -9,7 +8,6 @@ export const resolveMediaUrl = (value) => {
 
   // ЕСЛИ У ДАНИЭЛЯ ИЛИ НАЗГУЛЬ ЗАСТРЯЛ ЛОКАЛЬНЫЙ АДРЕС В БАЗЕ:
   if (strValue.includes('127.0.0.1:8000') || strValue.includes('localhost:8000')) {
-    // Насильно перенаправляем его на твой рабочий сервер!
     strValue = strValue.replace('http://127.0.0.1:8000', 'https://api.elcourse.app')
     strValue = strValue.replace('http://localhost:8000', 'https://api.elcourse.app')
     return strValue
@@ -20,7 +18,14 @@ export const resolveMediaUrl = (value) => {
     return strValue
   }
 
-  // Если пришел просто относительный путь (например /media/avatars/...)
+  // ЖЕСТКИЙ ФИКС ДЛЯ HLS (Убираем дублирование слова media, если бэкенд его шлет)
+  if (strValue.startsWith('media/')) {
+    strValue = strValue.replace('media/', '')
+  } else if (strValue.startsWith('/media/')) {
+    strValue = strValue.replace('/media/', '')
+  }
+
+  // Собираем идеальную ссылку
   const cleanPath = strValue.startsWith('/') ? strValue : `/${strValue}`
-  return `${MEDIA_BASE_URL}${cleanPath}`
+  return `${MEDIA_BASE_URL}/media${cleanPath}`
 }

@@ -1,4 +1,5 @@
 <script setup>
+import { resolveMediaUrl } from '@/utils/media'
 import Hls from 'hls.js'
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 
@@ -12,7 +13,10 @@ const props = defineProps({
   preview: { type: Boolean, default: false },
   readonly: { type: Boolean, default: false },
 })
-
+// Наш железный фикс путей
+const safeManifestUrl = computed(() => {
+  return resolveMediaUrl(props.manifestUrl)
+})
 const emit = defineEmits([
   'ready',
   'timeupdate',
@@ -613,7 +617,7 @@ async function setupPlayerSource() {
     hls.attachMedia(video)
 
     hls.on(Hls.Events.MEDIA_ATTACHED, () => {
-      hls.loadSource(props.manifestUrl)
+    hls.loadSource(resolveMediaUrl(props.manifestUrl))
     })
 
     hls.on(Hls.Events.MANIFEST_PARSED, (_, data) => {
@@ -635,7 +639,7 @@ async function setupPlayerSource() {
   }
 
   if (video.canPlayType('application/vnd.apple.mpegurl')) {
-    video.src = props.manifestUrl
+    video.src = resolveMediaUrl(props.manifestUrl)
     video.load()
     return
   }
